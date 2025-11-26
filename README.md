@@ -1,6 +1,6 @@
 # ARC Saga Memory Layer
 
-Enterprise-grade persistent memory for AI conversations.
+Enterprise-grade persistent memory for AI conversations with full-text search, auto-tagging, and multi-provider support.
 
 ## Phase 1a: Foundation Complete ✅
 
