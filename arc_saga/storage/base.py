@@ -8,7 +8,7 @@ Follows: Dependency Injection, Interface Segregation
 
 from abc import ABC, abstractmethod
 from typing import Optional
-from arc_saga.arc_saga.models import Message, File, SearchResult
+from ..models import Message, File, SearchResult
 
 
 class StorageBackend(ABC):

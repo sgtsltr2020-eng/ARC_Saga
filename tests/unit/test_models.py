@@ -5,7 +5,7 @@ Unit tests for data models.
 
 import pytest
 from datetime import datetime
-from arc_saga.arc_saga.models import (
+from arc_saga.models import (
     Message, File, Provider, MessageRole, FileType,
     SearchResult, ValidationResult
 )

@@ -3,7 +3,7 @@ arc_saga/models/__init__.py
 Export all models for easy importing.
 """
 
-from arc_saga.arc_saga.models.message import (
+from .message import (
     Provider,
     MessageRole,
     FileType,

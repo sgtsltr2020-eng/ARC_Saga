@@ -10,9 +10,9 @@ import asyncio
 from pathlib import Path
 import tempfile
 
-from arc_saga.arc_saga.storage.sqlite import SQLiteStorage
-from arc_saga.arc_saga.models import Message, Provider, MessageRole, File, FileType
-from arc_saga.arc_saga.exceptions import StorageError
+from arc_saga.storage.sqlite import SQLiteStorage
+from arc_saga.models import Message, Provider, MessageRole, File, FileType
+from arc_saga.exceptions import StorageError
 
 
 @pytest.fixture
