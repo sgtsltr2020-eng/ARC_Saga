@@ -6,7 +6,7 @@ Custom exceptions with actionable error messages.
 
 class ArcSagaException(Exception):
     """Base exception for all ARC Saga errors."""
-    
+
     def __init__(self, message: str, error_code: str = "UNKNOWN") -> None:
         self.message = message
         self.error_code = error_code
@@ -15,7 +15,7 @@ class ArcSagaException(Exception):
 
 class StorageError(ArcSagaException):
     """Raised when storage operations fail."""
-    
+
     def __init__(self, message: str, operation: str = "") -> None:
         super().__init__(
             f"Storage operation '{operation}' failed: {message}",
@@ -26,7 +26,7 @@ class StorageError(ArcSagaException):
 
 class ValidationError(ArcSagaException):
     """Raised when data validation fails."""
-    
+
     def __init__(self, message: str, field_name: str = "") -> None:
         super().__init__(
             f"Validation failed on field '{field_name}': {message}",
@@ -37,7 +37,7 @@ class ValidationError(ArcSagaException):
 
 class FileProcessingError(ArcSagaException):
     """Raised when file processing fails."""
-    
+
     def __init__(self, filename: str, reason: str) -> None:
         super().__init__(
             f"Failed to process file '{filename}': {reason}",
@@ -48,7 +48,7 @@ class FileProcessingError(ArcSagaException):
 
 class MonitoringError(ArcSagaException):
     """Raised when monitoring systems fail."""
-    
+
     def __init__(self, provider: str, message: str) -> None:
         super().__init__(
             f"Monitoring error for provider '{provider}': {message}",

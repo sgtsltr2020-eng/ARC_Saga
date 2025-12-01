@@ -9,24 +9,29 @@ import pytest
 import asyncio
 from pathlib import Path
 import tempfile
+import pytest_asyncio
+import shutil
 
 from arc_saga.storage.sqlite import SQLiteStorage
 from arc_saga.models import Message, Provider, MessageRole, File, FileType
 from arc_saga.exceptions import StorageError
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def storage():
-    """Create temporary storage for testing."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        db_path = str(Path(tmpdir) / "test.db")
-        store = SQLiteStorage(db_path=db_path)
-        await store.initialize()
-        yield store
-        # Close connection before cleanup
-        if store._connection:
-            store._connection.close()
-            store._connection = None
+    """Create temporary storage for testing"""
+    tmpdir = tempfile.mkdtemp()
+    try:
+        db_path = Path(tmpdir) / "test.db"
+        stor = SQLiteStorage(str(db_path))
+        await stor.initialize()
+        yield stor
+    finally:
+        # Simple cleanup - just remove directory
+        try:
+            shutil.rmtree(tmpdir, ignore_errors=True)
+        except Exception:
+            pass
 
 
 @pytest.mark.asyncio

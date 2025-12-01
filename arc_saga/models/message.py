@@ -6,7 +6,7 @@ Follows: Single Responsibility Principle (data only, no logic)
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Optional, Any
 from uuid import uuid4
@@ -40,6 +40,7 @@ class FileType(str, Enum):
     IMAGE = "image"
     MARKDOWN = "markdown"
     TEXT = "text"
+    DOCUMENT = "document"
 
 
 # DATACLASSES
@@ -52,17 +53,17 @@ class Message:
     content: str
     tags: list[str] = field(default_factory=list)
     id: str = field(default_factory=lambda: str(uuid4()))
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     metadata: dict[str, Any] = field(default_factory=dict)
     session_id: Optional[str] = None
-    
+
     def __post_init__(self) -> None:
         """Validate message after initialization."""
         if not self.content.strip():
             raise ValueError("Message content cannot be empty")
         if len(self.content) > 100_000:
             raise ValueError("Message content exceeds 100KB limit")
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for storage."""
         return {
@@ -89,7 +90,7 @@ class File:
     file_size: int = 0
     uploaded_at: datetime = field(default_factory=datetime.utcnow)
     metadata: dict[str, Any] = field(default_factory=dict)
-    
+
     def __post_init__(self) -> None:
         """Validate file after initialization."""
         if not self.filename.strip():
@@ -115,7 +116,7 @@ class ValidationResult:
     is_valid: bool
     errors: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
-    
+
     def raise_if_invalid(self) -> None:
         """Raise exception if validation failed."""
         if not self.is_valid:
@@ -131,7 +132,7 @@ class MessageCreateRequest(BaseModel):
     role: str = Field(..., description="Message role")
     content: str = Field(..., min_length=1, max_length=100_000)
     session_id: Optional[str] = None
-    
+
     @field_validator("provider")
     @classmethod
     def validate_provider(cls, v: str) -> str:
@@ -139,7 +140,7 @@ class MessageCreateRequest(BaseModel):
         if v.lower() not in [p.value for p in Provider]:
             raise ValueError(f"Unknown provider: {v}")
         return v.lower()
-    
+
     @field_validator("role")
     @classmethod
     def validate_role(cls, v: str) -> str:
