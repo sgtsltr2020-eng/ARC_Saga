@@ -1,0 +1,30 @@
+---
+alwaysApply: true
+---
+# AI Context Management Rules
+
+## Context Inclusion Priority
+1. Current file being edited
+2. Test file for current file
+3. Related domain models
+4. Interface definitions
+5. Recent error logs
+6. Architectural decision records
+
+## Automatic Context Tags
+Use `@workspace` for architecture discussions
+Use `@codebase` for finding similar patterns
+Use `@file:<path>` for specific file context
+Use `@docs` for architecture decision records
+
+## Context Size Management
+- Claude 3.5 Sonnet: 200K tokens context
+- Monitor context usage in responses
+- Summarize when context > 150K tokens
+- Priority: code > docs > logs
+
+## Conversation History Management
+- Keep last 20 messages in context
+- Summarize older messages
+- Preserve error messages and fixes
+- Store full history in event store

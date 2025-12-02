@@ -1,0 +1,47 @@
+---
+alwaysApply: true
+---
+python_standards.mdc (Open this file and paste content)
+text
+# Python Code Standards - FAANG Level
+
+## Type System Requirements
+- Use `from __future__ import annotations` for forward references
+- Generic types with TypeVar for reusability
+- Literal types for string constants
+- Protocol classes for structural typing
+- No `Any` without explicit `# type: ignore[any-specific]` comment
+
+## Exception Hierarchy
+class ArcSagaError(Exception):
+"""Base exception for ARC SAGA."""
+pass
+
+class ConversationCaptureError(ArcSagaError):
+"""Error during conversation capture."""
+pass
+
+class DatabaseError(ArcSagaError):
+"""Database operation failed."""
+pass
+
+class RateLimitError(ArcSagaError):
+"""Rate limit exceeded."""
+def init(self, provider: str, retry_after: int):
+self.provider = provider
+self.retry_after = retry_after
+super().init(f"Rate limited by {provider}, retry after {retry_after}s")
+
+text
+
+## Async/Await Patterns
+- Use `async def` for I/O operations (database, API, file)
+- Use `asyncio.gather()` for concurrent operations
+- Implement timeouts on all external calls
+- Use `asyncio.Queue` for producer-consumer patterns
+
+## Code Organization
+- One class per file (unless tightly coupled)
+- Max 300 lines per file (refactor if larger)
+- Public API at top, private methods at bottom
+- Group related methods together

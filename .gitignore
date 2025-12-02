@@ -8,3 +8,7 @@ env/
 venv/
 *.log
 .DS_Store
+
+# OpenMemory - IDE/Assistant specific rules
+.github\instructions\openmemory.instructions.md
+.cursor\rules\openmemory.mdc

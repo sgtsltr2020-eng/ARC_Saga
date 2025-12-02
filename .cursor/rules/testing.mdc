@@ -1,0 +1,58 @@
+---
+alwaysApply: true
+---
+# ARC SAGA Testing Standards
+
+## Test Structure: Arrange-Act-Assert
+
+### Test File Organization
+tests/
+├── unit/                  # Fast, isolated tests
+├── integration/           # Database, API tests
+├── contract/             # AI provider contracts
+├── performance/          # Load and latency tests
+├── fixtures/             # Shared test data
+└── conftest.py          # Pytest configuration
+
+### Required Test Fixtures
+@pytest.fixture
+async def db_session():
+"""Async database session for testing."""
+engine = create_async_engine("sqlite+aiosqlite:///:memory:")
+async with engine.begin() as conn:
+await conn.run_sync(Base.metadata.create_all)
+
+text
+async_session = async_sessionmaker(engine, expire_on_commit=False)
+async with async_session() as session:
+    yield session
+
+await engine.dispose()
+@pytest.fixture
+def mock_perplexity_client():
+"""Mock Perplexity API client."""
+client = Mock()
+client.get_conversations.return_value = create_test_conversations()
+return client
+
+text
+
+### Test Naming Convention
+`test_<function_name>_<condition>_<expected_result>`
+
+Examples:
+- `test_capture_conversation_with_valid_data_succeeds`
+- `test_capture_conversation_with_rate_limit_retries`
+- `test_search_conversations_with_empty_query_returns_recent`
+
+### Coverage Requirements by Layer
+- Domain Logic: 98%
+- Application Services: 95%
+- Infrastructure: 85%
+- API Endpoints: 90%
+
+### Performance Test Benchmarks
+- Conversation capture: <50ms (p95)
+- Search query: <100ms (p95)
+- Event processing: <20ms (p95)
+- Database write: <30ms (p95)

@@ -1,0 +1,81 @@
+# Python cache and compilation
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# Testing and coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+
+# Build and distribution
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+
+# IDE specific
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs and databases
+*.log
+*.sqlite
+*.db
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Test fixtures and mock data (don't index test data)
+test_fixtures/
+mock_data/
+tests/fixtures/data/
+
+# Large data files
+*.csv
+*.json
+*.parquet
+*.pkl
+*.pickle
+
+# Documentation builds
+docs/_build/
+docs/.doctrees/
+
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints/
+
+# mypy type checker
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Environment files (keep private)
+.env
+.env.local
+.env.*.local
+
+# Dependency directories
+node_modules/
+# Add directories or file patterns to ignore during indexing (e.g. foo/ or *.csv)

@@ -1,0 +1,50 @@
+---
+alwaysApply: true
+---
+# ARC SAGA Architecture Rules
+
+## System Architecture: Event-Driven CQRS with Event Sourcing
+
+### Core Components
+
+**Command Side (Write Model)**
+- ConversationCapture: Captures conversations from AI providers
+- EventStore: Persists events immutably
+- CommandHandlers: Process write operations
+
+**Query Side (Read Model)**
+- ConversationQueryService: Optimized read models
+- SearchIndex: Vector database for semantic search
+- MaterializedViews: Pre-computed aggregations
+
+**Event Bus**
+- Pub/Sub for cross-context communication
+- Async processing for heavy operations
+- Guaranteed delivery with retry logic
+
+### Data Flow
+1. AI Provider → Conversation Captured Event
+2. Event Store → Persists event
+3. Event Bus → Publishes to subscribers
+4. Query Model Updater → Updates read models
+5. Search Indexer → Updates vector embeddings
+
+### Technology Stack Recommendations
+- **Database**: PostgreSQL (ACID, JSONB, full-text search)
+- **Event Store**: EventStoreDB or PostgreSQL with temporal tables
+- **Vector DB**: Qdrant or Pinecone (semantic search)
+- **Message Queue**: Redis Streams or RabbitMQ
+- **Cache**: Redis (conversation metadata, search results)
+- **API**: FastAPI (async, type-safe, auto-docs)
+
+### Scalability Patterns
+- Sharding by provider_id for event store
+- Read replicas for query operations
+- Connection pooling (min: 5, max: 20)
+- Async I/O throughout
+
+### Data Synchronization Strategy
+- Change Data Capture (CDC) for database changes
+- Event-driven replication to read models
+- Eventual consistency acceptable (target: <100ms)
+- Conflict resolution: Last-write-wins with timestamps
