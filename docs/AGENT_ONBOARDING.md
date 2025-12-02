@@ -798,24 +798,24 @@ async def storage():
 
 | Issue | Location | Impact | Priority |
 |-------|----------|--------|----------|
-| Perplexity client storage method mismatch | `perplexity_client.py:54` | Uses `store_message` instead of `save_message` | 🔴 High |
-| Message model field mismatch | `perplexity_client.py:46-53` | Uses `thread_id` instead of `session_id` | 🔴 High |
+| Perplexity client storage method mismatch | `arc_saga/integrations/perplexity_client.py` - `ask_streaming()` method | Uses `store_message` instead of `save_message` | 🔴 High |
+| Message model field mismatch | `arc_saga/integrations/perplexity_client.py` - Message creation | Uses `thread_id` instead of `session_id` | 🔴 High |
 
 ### 9.2 Warnings
 
 | Issue | Location | Impact | Priority |
 |-------|----------|--------|----------|
-| Duplicate test files | `tests/` | Root and unit/ have duplicates | 🟡 Medium |
+| Duplicate test files | `tests/test_*.py` and `tests/unit/test_*.py` | Root and unit/ have duplicates | 🟡 Medium |
 | Missing integration tests | `tests/integration/` | Only `__init__.py` present | 🟡 Medium |
-| File storage not fully integrated | `server.py:313-321` | Files saved but not stored in DB | 🟡 Medium |
+| File storage not fully integrated | `arc_saga/api/server.py` - `attach_file()` endpoint | Files saved to disk but not stored in DB | 🟡 Medium |
 
 ### 9.3 Technical Debt
 
-1. **Search query workaround** - Using "a" as default query to avoid FTS5 empty query error
-2. **Hardcoded port** - Server port 8421 should be configurable
-3. **No connection pooling** - SQLite connection created per request
-4. **Missing retry logic** - External calls don't have retry with backoff
-5. **No request validation** - API requests not fully validated
+1. **Search query workaround** - Using "a" as default query to avoid FTS5 empty query error. Location: `arc_saga/api/server.py` in `get_recent_context()` and `list_threads()` endpoints
+2. **Hardcoded port** - Server port 8421 should be configurable. Location: `arc_saga/api/server.py` at bottom
+3. **No connection pooling** - SQLite connection created per request. Location: `arc_saga/storage/sqlite.py` - `_get_connection()` method
+4. **Missing retry logic** - External calls don't have retry with backoff. Location: `arc_saga/integrations/perplexity_client.py`
+5. **No request validation** - API requests not fully validated. Location: Various endpoints in `arc_saga/api/server.py`
 
 ### 9.4 Missing Features (Documented but Not Implemented)
 

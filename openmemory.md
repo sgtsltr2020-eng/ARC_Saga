@@ -84,10 +84,10 @@ Client → FastAPI → Services → StorageBackend → SQLite
 
 ## Known Issues
 
-1. **Perplexity client** uses `store_message` instead of `save_message`
-2. **Perplexity client** uses `thread_id` field instead of `session_id`
-3. **Duplicate test files** in root and unit/ directories
-4. **File storage** not fully integrated with database
+1. **Perplexity client** uses `store_message` instead of `save_message` - Location: `arc_saga/integrations/perplexity_client.py`
+2. **Perplexity client** uses `thread_id` field instead of `session_id` - Location: `arc_saga/integrations/perplexity_client.py`
+3. **Duplicate test files** in `tests/` root and `tests/unit/` directories
+4. **File storage** not fully integrated with database - Location: `arc_saga/api/server.py` `attach_file()` endpoint
 
 ---
 
