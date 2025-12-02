@@ -25,6 +25,11 @@ from ..error_instrumentation import (
     request_context,
 )
 from ..models import Message, MessageRole, Provider
+from .circuit_breaker import (
+    CircuitBreaker,
+    CircuitBreakerOpenError,
+    retry_with_backoff,
+)
 
 if TYPE_CHECKING:
     from ..storage.base import StorageBackend
@@ -71,13 +76,23 @@ class PerplexityClient:
         ...     print(chunk)
     """
 
-    def __init__(self, api_key: str, storage: StorageBackend) -> None:
+    def __init__(
+        self,
+        api_key: str,
+        storage: StorageBackend,
+        failure_threshold: int = 5,
+        success_threshold: int = 2,
+        timeout_seconds: int = 60,
+    ) -> None:
         """
         Initialize Perplexity client.
 
         Args:
             api_key: Perplexity API key
             storage: StorageBackend instance for message persistence
+            failure_threshold: Circuit breaker failure threshold (default: 5)
+            success_threshold: Circuit breaker success threshold (default: 2)
+            timeout_seconds: Circuit breaker timeout in seconds (default: 60)
 
         Raises:
             ValueError: If api_key is empty
@@ -91,10 +106,19 @@ class PerplexityClient:
         )
         self.storage: StorageBackend = storage
 
+        # Initialize circuit breaker for Perplexity API
+        self.circuit_breaker = CircuitBreaker(
+            service_name="perplexity",
+            failure_threshold=failure_threshold,
+            success_threshold=success_threshold,
+            timeout_seconds=timeout_seconds,
+        )
+
         log_with_context(
             "info",
             "perplexity_client_initialized",
-            base_url="https://api.perplexity.ai"
+            base_url="https://api.perplexity.ai",
+            circuit_breaker_enabled=True,
         )
 
     async def ask_streaming(
@@ -190,27 +214,51 @@ class PerplexityClient:
                 original_error=e
             ) from e
 
-        # Call Perplexity API
+        # Call Perplexity API with circuit breaker and retry
         full_response = ""
         start_time = datetime.now(timezone.utc)
 
-        try:
+        async def _call_api() -> list[str]:
+            """
+            Internal function to call API and collect all chunks.
+
+            This function is wrapped by circuit breaker and retry logic.
+            """
             stream = await self.client.chat.completions.create(
                 model=model,
                 messages=api_messages,
                 stream=True
             )
 
+            chunks: list[str] = []
             async for chunk in stream:
                 if chunk.choices and chunk.choices[0].delta.content:
                     content = chunk.choices[0].delta.content
-                    full_response += content
+                    chunks.append(content)
 
-                    # Yield chunk to client
-                    yield json.dumps({
-                        "type": "chunk",
-                        "content": content
-                    })
+            return chunks
+
+        try:
+            # Wrap API call with circuit breaker, then retry with backoff
+            async def _api_with_circuit_breaker() -> list[str]:
+                """Call API through circuit breaker."""
+                return await self.circuit_breaker.call(_call_api)
+
+            # Retry with exponential backoff for transient errors
+            chunks = await retry_with_backoff(
+                _api_with_circuit_breaker,
+                max_attempts=3,
+                base_delay=1.0,
+                max_delay=60.0
+            )
+
+            # Yield chunks to client
+            for content in chunks:
+                full_response += content
+                yield json.dumps({
+                    "type": "chunk",
+                    "content": content
+                })
 
             # Calculate duration
             end_time = datetime.now(timezone.utc)
@@ -274,6 +322,30 @@ class PerplexityClient:
                 "session_id": session_id,
                 "correlation_id": correlation_id
             })
+
+        except CircuitBreakerOpenError:
+            # Circuit breaker is open - graceful degradation
+            log_with_context(
+                "warning",
+                "perplexity_circuit_open_graceful_degradation",
+                session_id=session_id,
+                circuit_state=self.circuit_breaker.state.value,
+                metrics=self.circuit_breaker.metrics.to_dict(),
+            )
+
+            # Return cached/fallback response if available
+            # For now, yield error message
+            yield json.dumps({
+                "type": "error",
+                "message": "Perplexity service is temporarily unavailable. Circuit breaker is open.",
+                "error_type": "CircuitBreakerOpenError",
+                "correlation_id": correlation_id,
+                "circuit_state": self.circuit_breaker.state.value,
+            })
+
+            # Still store user message (it was already stored)
+            # Don't store assistant message since we didn't get a response
+            return
 
         except PerplexityStorageError:
             # Re-raise storage errors
