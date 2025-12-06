@@ -4,6 +4,7 @@
 
 **Last Updated:** 2025-12-02  
 **Document Purpose:** Comprehensive onboarding for development-steering agents  
+**Version:** 1.0.0  
 **Version:** 1.0.0
 
 ---
@@ -44,6 +45,16 @@ ARC Saga (Advanced Reasoning and Context - Saga) is an **enterprise-grade persis
 
 ### Technology Stack
 
+| Layer | Technology | Purpose |
+|-------|------------|---------|
+| **API** | FastAPI 0.104.1 | REST API server |
+| **Database** | SQLite + FTS5 | Persistent storage with full-text search |
+| **Validation** | Pydantic 2.5.0 | Data validation and serialization |
+| **Server** | Uvicorn 0.24.0 | ASGI server |
+| **File Processing** | PyMuPDF, python-docx | Text extraction |
+| **Auto-Tagging** | scikit-learn TF-IDF | Keyword extraction |
+| **Monitoring** | watchdog | File system monitoring |
+| **Logging** | Python logging + JSON | Structured logging |
 | Layer               | Technology            | Purpose                                  |
 | ------------------- | --------------------- | ---------------------------------------- |
 | **API**             | FastAPI 0.104.1       | REST API server                          |
@@ -70,6 +81,14 @@ Create a world-class, FAANG-quality persistent memory system that:
 
 ### Quality Standards (Non-Negotiable)
 
+| Standard | Target | Current Status |
+|----------|--------|----------------|
+| Type Safety | mypy --strict | ✅ Implemented |
+| Test Coverage | 95%+ | 🔄 ~80% (improving) |
+| Error Handling | Complete | ✅ Implemented |
+| Logging | Comprehensive JSON | ✅ Implemented |
+| Security | 0 vulnerabilities | ✅ Passing |
+| Performance | Benchmarks met | 🔄 Needs verification |
 | Standard       | Target             | Current Status        |
 | -------------- | ------------------ | --------------------- |
 | Type Safety    | mypy --strict      | ✅ Implemented        |
@@ -277,6 +296,44 @@ CREATE VIRTUAL TABLE files_fts USING fts5(
 
 ### Phase 1a: Foundation ✅ COMPLETE
 
+| Component | Status | Location | Description |
+|-----------|--------|----------|-------------|
+| Data Models | ✅ Complete | `arc_saga/models/message.py` | Message, File, SearchResult, ValidationResult |
+| SQLite Storage | ✅ Complete | `arc_saga/storage/sqlite.py` | Full CRUD + FTS5 search |
+| Storage Interface | ✅ Complete | `arc_saga/storage/base.py` | Abstract StorageBackend |
+| Exceptions | ✅ Complete | `arc_saga/exceptions/` | StorageError, ValidationError, etc. |
+| Logging | ✅ Complete | `arc_saga/logging_config.py` | JSON structured logging |
+| Shared Config | ✅ Complete | `shared/config.py` | SharedConfig class |
+| Unit Tests | ✅ Complete | `tests/unit/` | Model and storage tests |
+
+### Phase 1b: API & Services 🔄 IN PROGRESS
+
+| Component | Status | Location | Description |
+|-----------|--------|----------|-------------|
+| FastAPI Server | ✅ Complete | `arc_saga/api/server.py` | REST API on port 8421 |
+| AutoTagger | ✅ Complete | `arc_saga/services/auto_tagger.py` | TF-IDF keyword extraction |
+| FileProcessor | ✅ Complete | `arc_saga/services/file_processor.py` | PDF/DOCX text extraction |
+| Perplexity Client | 🔄 Partial | `arc_saga/integrations/perplexity_client.py` | Needs storage method alignment |
+| Error Instrumentation | ✅ Complete | `arc_saga/error_instrumentation.py` | Comprehensive error tracking |
+| CORS Configuration | ✅ Complete | `arc_saga/api/server.py` | VSCode extension support |
+
+### Phase 1c: Monitoring & Validators ⏳ NOT STARTED
+
+| Component | Status | Location | Description |
+|-----------|--------|----------|-------------|
+| Monitor Services | ⏳ Planned | `arc_saga/monitors/` | Health checks, metrics |
+| Validator Integration | ⏳ Planned | TBD | AI config validation |
+| Circuit Breaker | ⏳ Planned | TBD | External call resilience |
+| Rate Limiting | ⏳ Planned | TBD | API rate limits |
+
+### Phase 2: Advanced Features ⏳ NOT STARTED
+
+| Component | Status | Description |
+|-----------|--------|-------------|
+| Event Sourcing | ⏳ Planned | Complete audit trail |
+| CQRS Implementation | ⏳ Planned | Separated read/write models |
+| Vector Search | ⏳ Planned | Semantic similarity search |
+| Multi-Agent Sync | ⏳ Planned | Cross-agent memory sharing |
 | Component         | Status      | Location                     | Description                                   |
 | ----------------- | ----------- | ---------------------------- | --------------------------------------------- |
 | Data Models       | ✅ Complete | `arc_saga/models/message.py` | Message, File, SearchResult, ValidationResult |
@@ -385,6 +442,16 @@ class Message:
 ```python
 class StorageBackend(ABC):
     """Abstract interface for data persistence."""
+    
+    @abstractmethod
+    async def initialize(self) -> None: ...
+    
+    @abstractmethod
+    async def save_message(self, message: Message) -> str: ...
+    
+    @abstractmethod
+    async def save_file(self, file: File) -> str: ...
+    
 
     @abstractmethod
     async def initialize(self) -> None: ...
@@ -399,6 +466,16 @@ class StorageBackend(ABC):
     async def search_messages(
         self, query: str, tags: Optional[list[str]] = None, limit: int = 50
     ) -> list[SearchResult]: ...
+    
+    @abstractmethod
+    async def get_message_by_id(self, message_id: str) -> Optional[Message]: ...
+    
+    @abstractmethod
+    async def get_file_by_id(self, file_id: str) -> Optional[File]: ...
+    
+    @abstractmethod
+    async def get_by_session(self, session_id: str) -> list[Message]: ...
+    
 
     @abstractmethod
     async def get_message_by_id(self, message_id: str) -> Optional[Message]: ...
@@ -437,6 +514,16 @@ class StorageBackend(ABC):
 
 #### Endpoints
 
+| Method | Path | Description | Status |
+|--------|------|-------------|--------|
+| POST | `/capture` | Store a conversation message | ✅ Working |
+| GET | `/context/recent` | Get recent context | ✅ Working |
+| GET | `/thread/{thread_id}` | Get complete thread history | ✅ Working |
+| POST | `/search` | Search across all conversations | ✅ Working |
+| POST | `/attach/file` | Attach file to thread | ✅ Working |
+| POST | `/perplexity/ask` | Ask Perplexity with context | 🔄 Requires API key |
+| GET | `/health` | Server health check | ✅ Working |
+| GET | `/threads` | List all threads | ✅ Working |
 | Method | Path                  | Description                     | Status              |
 | ------ | --------------------- | ------------------------------- | ------------------- |
 | POST   | `/capture`            | Store a conversation message    | ✅ Working          |
@@ -548,6 +635,13 @@ correlation_id = get_correlation_id()
 
 ### 6.1 Code Quality Standards
 
+| Tool | Purpose | Target |
+|------|---------|--------|
+| `mypy --strict` | Type checking | 0 errors |
+| `pylint` | Linting | >= 8.0 |
+| `black` | Code formatting | Compliant |
+| `isort` | Import sorting | Compliant |
+| `bandit` | Security scanning | 0 issues |
 | Tool            | Purpose           | Target    |
 | --------------- | ----------------- | --------- |
 | `mypy --strict` | Type checking     | 0 errors  |
@@ -730,6 +824,12 @@ async def storage():
 
 ### 7.4 Coverage Targets
 
+| Category | Target | Current |
+|----------|--------|---------|
+| Unit Tests | 95%+ | ~80% |
+| Integration Tests | 85%+ | ~50% |
+| Error Paths | 100% | ~70% |
+| Edge Cases | 100% | ~60% |
 | Category          | Target | Current |
 | ----------------- | ------ | ------- |
 | Unit Tests        | 95%+   | ~80%    |
@@ -765,6 +865,9 @@ async def storage():
    - AI config validation
    - Antigravity log monitoring
 
+### Phase 2: Advanced Features
+
+1. **Event Sourcing**
 ### Feature Ideas Backlog (living)
 
 A concise, living backlog of feature and control-plane ideas lives in docs/feature_ideas_backlog.md. This file is intended to capture brainstormed features, orchestration patterns, UX ideas (Audit tab, Agent Activity, Command Console), provider adaptors, and stability primitives so they are not lost. The backlog items are grouped by their rough phase alignment below for discoverability; consult the standalone file for full details.
@@ -832,6 +935,17 @@ Refer to docs/feature_ideas_backlog.md for the full backlog and concise one-line
 
 ### 9.1 Critical Issues
 
+| Issue | Location | Impact | Priority |
+|-------|----------|--------|----------|
+| Perplexity client storage method mismatch | `arc_saga/integrations/perplexity_client.py` - `ask_streaming()` method | Uses `store_message` instead of `save_message` | 🔴 High |
+| Message model field mismatch | `arc_saga/integrations/perplexity_client.py` - Message creation | Uses `thread_id` instead of `session_id` | 🔴 High |
+
+### 9.2 Warnings
+
+| Issue | Location | Impact | Priority |
+|-------|----------|--------|----------|
+| Duplicate test files | `tests/test_*.py` and `tests/unit/test_*.py` | Root and unit/ have duplicates | 🟡 Medium |
+| Missing integration tests | `tests/integration/` | Only `__init__.py` present | 🟡 Medium |
 | Issue                                     | Location                                                                | Impact                                         | Priority |
 | ----------------------------------------- | ----------------------------------------------------------------------- | ---------------------------------------------- | -------- |
 | Perplexity client storage method mismatch | `arc_saga/integrations/perplexity_client.py` - `ask_streaming()` method | Uses `store_message` instead of `save_message` | 🔴 High  |
@@ -869,6 +983,36 @@ Refer to docs/feature_ideas_backlog.md for the full backlog and concise one-line
 
 ### Configuration Files
 
+| File | Purpose | Key Contents |
+|------|---------|--------------|
+| `.cursorrules` | Cursor AI configuration | Quality standards, patterns, checklists |
+| `shared/config.py` | Shared configuration | Paths, limits, settings |
+| `requirements.txt` | Python dependencies | All package requirements |
+| `setup.py` | Package installation | Install configuration |
+
+### Documentation Files
+
+| File | Purpose | When to Reference |
+|------|---------|-------------------|
+| `docs/arc_saga_master_index.md` | System overview | Understanding the system |
+| `docs/decision_catalog.md` | Architectural decisions | Making design choices |
+| `docs/error_catalog.md` | Error solutions | Debugging errors |
+| `docs/prompts_library.md` | Cursor prompts | Generating code |
+| `docs/verification_checklist.md` | Quality gates | Before deploying |
+
+### Source Files
+
+| File | Purpose | Key Classes/Functions |
+|------|---------|----------------------|
+| `arc_saga/models/message.py` | Data models | Message, File, Provider, MessageRole |
+| `arc_saga/storage/base.py` | Storage interface | StorageBackend (ABC) |
+| `arc_saga/storage/sqlite.py` | SQLite implementation | SQLiteStorage |
+| `arc_saga/api/server.py` | REST API | FastAPI app, all endpoints |
+| `arc_saga/services/auto_tagger.py` | Auto-tagging | AutoTagger |
+| `arc_saga/services/file_processor.py` | File processing | FileProcessor |
+| `arc_saga/error_instrumentation.py` | Error tracking | All instrumentation classes |
+| `arc_saga/logging_config.py` | Logging setup | setup_logging, get_logger |
+| `arc_saga/exceptions/storage_exceptions.py` | Custom exceptions | All exception classes |
 | File               | Purpose                 | Key Contents                            |
 | ------------------ | ----------------------- | --------------------------------------- |
 | `.cursorrules`     | Cursor AI configuration | Quality standards, patterns, checklists |
@@ -1008,6 +1152,16 @@ export PPLX_API_KEY="your-api-key"
 
 ## Appendix A: Environment Variables
 
+| Variable | Purpose | Required | Default |
+|----------|---------|----------|---------|
+| `PPLX_API_KEY` | Perplexity API key | Optional | None |
+| `ARC_SAGA_LOG_LEVEL` | Logging level | Optional | INFO |
+| `ANTIGRAVITY_LOGS` | Antigravity log path | Optional | `~/AppData/Roaming/Antigravity/logs` |
+
+## Appendix B: Port Assignments
+
+| Service | Port | Purpose |
+|---------|------|---------|
 | Variable             | Purpose              | Required | Default                              |
 | -------------------- | -------------------- | -------- | ------------------------------------ |
 | `PPLX_API_KEY`       | Perplexity API key   | Optional | None                                 |
