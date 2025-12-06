@@ -19,6 +19,23 @@ Status: Ideas only. Not commitments. Reference AGENT_ONBOARDING.md for current i
   - Automatically attaches .cursorrules, onboarding docs, verification checklist, decision/error catalogs, and relevant code excerpts to every command.
 
 - Agent Registry & Capabilities
+
+  - A controller inside Saga that classifies intent, enforces policies, packages context, and routes actions to IDEs/providers. Prevents IDEs from acting on brainstorms.
+
+- Policy Engine (user-customizable)
+
+  - Loads project-wide rules (“cursorrules”), quality gates, and guardrails. Blocks or requires confirmation for actions based on intent and policy.
+
+- CommandEnvelope (standard action payload)
+
+  - Provider-agnostic command package including intent, constraints, attachments (rules/docs), acceptance criteria, and rollback policy. Ensures consistency and quality.
+
+- Context Packager (automatic attachments)
+
+  - Automatically attaches .cursorrules, onboarding docs, verification checklist, decision/error catalogs, and relevant code excerpts to every command.
+
+- Agent Registry & Capabilities
+
   - Register and track connected agents (IDE, LLM, controller) with capability descriptors (streaming, tool-use, max tokens) used to route tasks.
 
 - Intent Classification & Action Gating
@@ -36,6 +53,19 @@ Status: Ideas only. Not commitments. Reference AGENT_ONBOARDING.md for current i
   - Add api_version field to requests/responses. Evolve contracts additively to avoid breaking clients.
 
 - Idempotency Envelope
+
+  - Formal adapter interface for all providers (Perplexity, OpenAI, Anthropic, Groq, etc.) with a central registry for hot-swapping and capability lookup.
+
+- IdeAdapter ABC
+
+  - Standard interface for IDE integrations (Cursor, VSCode, Copilot) so orchestrator sends uniform commands regardless of IDE specifics.
+
+- API Versioning (additive)
+
+  - Add api_version field to requests/responses. Evolve contracts additively to avoid breaking clients.
+
+- Idempotency Envelope
+
   - Require message_id and correlation_id in write endpoints to deduplicate and trace operations reliably.
 
 - RetrievalStrategy Abstraction
@@ -50,6 +80,15 @@ Status: Ideas only. Not commitments. Reference AGENT_ONBOARDING.md for current i
   - Uniform transient error handling for all network interactions.
 
 - Rate Limiting (per endpoint/client)
+
+  - Guard Perplexity and other provider calls with open/half-open/closed states to prevent cascading failures.
+
+- Retry with Exponential Backoff + Jitter
+
+  - Uniform transient error handling for all network interactions.
+
+- Rate Limiting (per endpoint/client)
+
   - Control usage for fairness and protection under load.
 
 - Configurable Server Port & Settings
@@ -69,12 +108,27 @@ Status: Ideas only. Not commitments. Reference AGENT_ONBOARDING.md for current i
 - Actionable Audit Notes
   - Users create "AuditNotes" with severity/category/suggested action and attachments. Orchestrator routes them to the right agent as CommandEnvelopes.
 
+  - UI showing health, metrics, errors, and rule compliance with live updates (WebSocket). Pulls from error_instrumentation and storage health.
+
+- Agent Activity Tab
+
+  - Shows each agent’s current status, intent, active session, and last action. Ties into agent registry and orchestrator events.
+
+- Command Console Tab
+
+  - Text box to send follow-ups; routes through Orchestrator with automatic attachments. Includes intent override and confirmation toggles.
+
+- Actionable Audit Notes
+
+  - Users create “AuditNotes” with severity/category/suggested action and attachments. Orchestrator routes them to the right agent as CommandEnvelopes.
+
 - WebSocket Event Bus
   - /ws/events streams core events (MessageCaptured, IntentClassified, ActionRequested, ActionApproved, NoteCreated/Routed/Completed, ErrorLogged).
 
 ## OSS Default Model & BYOK
 
 - Default Open-Source Orchestrator LLM
+
   - Local, no token/rate limits by default (e.g., Llama 3.1 70B via vLLM; fallback Mixtral/Qwen). Used for governance, rules enforcement, and planning.
 
 - BYOK Provider Support
@@ -83,6 +137,7 @@ Status: Ideas only. Not commitments. Reference AGENT_ONBOARDING.md for current i
 ## Perplexity & Multi-Provider Flows
 
 - ARC Saga–Proxied Perplexity Endpoint
+
   - /perplexity/ask performs context injection, calls provider, streams response, and persists messages. Centralizes retries/logging/policies.
 
 - Direct Capture/Search Flow
@@ -97,6 +152,15 @@ Status: Ideas only. Not commitments. Reference AGENT_ONBOARDING.md for current i
   - Separate read/write models; optimize read projections and maintain eventual consistency.
 
 - Vector/Semantic Search
+
+  - Immutable event log for audit, replay, and incident forensics (Phase 2 feature).
+
+- CQRS
+
+  - Separate read/write models; optimize read projections and maintain eventual consistency.
+
+- Vector/Semantic Search
+
   - Embedding-based retrieval using Qdrant/Pinecone to complement FTS5; switchable via RetrievalStrategy.
 
 - OAuth Authentication
@@ -108,6 +172,11 @@ Status: Ideas only. Not commitments. Reference AGENT_ONBOARDING.md for current i
   - Team/org isolation, roles, and granular permissions for agents and endpoints.
 
 - Analytics Dashboard
+
+  - Team/org isolation, roles, and granular permissions for agents and endpoints.
+
+- Analytics Dashboard
+
   - Usage metrics, search analytics, performance monitoring; policy violation tracking.
 
 - Export/Import & Backups
@@ -119,6 +188,11 @@ Status: Ideas only. Not commitments. Reference AGENT_ONBOARDING.md for current i
   - Fail actions that produce code without full type hints and Google-style docstrings.
 
 - Logging & Error Handling Requirements
+
+  - Fail actions that produce code without full type hints and Google-style docstrings.
+
+- Logging & Error Handling Requirements
+
   - Require contextual logging and structured error handling in all generated code.
 
 - Test Coverage & Security Gates
@@ -130,6 +204,11 @@ Status: Ideas only. Not commitments. Reference AGENT_ONBOARDING.md for current i
   - Curated prompts tied to policies and acceptance criteria for repeatable, high-quality generation across agents.
 
 - Decision & Error Catalog Attachments
+
+  - Curated prompts tied to policies and acceptance criteria for repeatable, high-quality generation across agents.
+
+- Decision & Error Catalog Attachments
+
   - Automatically attach relevant decisions/errors from catalogs to guide agents toward known patterns and pitfalls.
 
 - Health Check & Diagnostics Endpoints
@@ -138,5 +217,6 @@ Status: Ideas only. Not commitments. Reference AGENT_ONBOARDING.md for current i
 ---
 
 Maintenance:
+
 - Keep entries brief; link to detailed specs when available.
 - Update statuses in AGENT_ONBOARDING.md when ideas transition to planned/implemented.
