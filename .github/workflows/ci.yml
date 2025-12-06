@@ -49,9 +49,7 @@ jobs:
 
       - name: Run Bandit security scan
         run: bandit -r arc_saga -x tests -f json -o bandit-report.json
-        continue-on-error: true
-        # Visible in CI logs but non-blocking; security issues are critical but don't hard-fail
-        # Set to false to make security a hard blocker for prod environments
+        continue-on-error: false
 
       - name: Run tests with coverage
         run: |
