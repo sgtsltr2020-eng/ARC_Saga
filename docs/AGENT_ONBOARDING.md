@@ -5,6 +5,7 @@
 **Last Updated:** 2025-12-02  
 **Document Purpose:** Comprehensive onboarding for development-steering agents  
 **Version:** 1.0.0  
+**Version:** 1.0.0
 
 ---
 
@@ -54,6 +55,16 @@ ARC Saga (Advanced Reasoning and Context - Saga) is an **enterprise-grade persis
 | **Auto-Tagging** | scikit-learn TF-IDF | Keyword extraction |
 | **Monitoring** | watchdog | File system monitoring |
 | **Logging** | Python logging + JSON | Structured logging |
+| Layer               | Technology            | Purpose                                  |
+| ------------------- | --------------------- | ---------------------------------------- |
+| **API**             | FastAPI 0.104.1       | REST API server                          |
+| **Database**        | SQLite + FTS5         | Persistent storage with full-text search |
+| **Validation**      | Pydantic 2.5.0        | Data validation and serialization        |
+| **Server**          | Uvicorn 0.24.0        | ASGI server                              |
+| **File Processing** | PyMuPDF, python-docx  | Text extraction                          |
+| **Auto-Tagging**    | scikit-learn TF-IDF   | Keyword extraction                       |
+| **Monitoring**      | watchdog              | File system monitoring                   |
+| **Logging**         | Python logging + JSON | Structured logging                       |
 
 ---
 
@@ -62,6 +73,7 @@ ARC Saga (Advanced Reasoning and Context - Saga) is an **enterprise-grade persis
 ### Project Mission
 
 Create a world-class, FAANG-quality persistent memory system that:
+
 - Never loses conversation context
 - Makes searching past conversations trivial
 - Enables AI assistants to learn from historical interactions
@@ -77,6 +89,14 @@ Create a world-class, FAANG-quality persistent memory system that:
 | Logging | Comprehensive JSON | ✅ Implemented |
 | Security | 0 vulnerabilities | ✅ Passing |
 | Performance | Benchmarks met | 🔄 Needs verification |
+| Standard       | Target             | Current Status        |
+| -------------- | ------------------ | --------------------- |
+| Type Safety    | mypy --strict      | ✅ Implemented        |
+| Test Coverage  | 95%+               | 🔄 ~80% (improving)   |
+| Error Handling | Complete           | ✅ Implemented        |
+| Logging        | Comprehensive JSON | ✅ Implemented        |
+| Security       | 0 vulnerabilities  | ✅ Passing            |
+| Performance    | Benchmarks met     | 🔄 Needs verification |
 
 ### Design Principles
 
@@ -206,6 +226,7 @@ ARC_Saga/
 ### Database Schema
 
 #### Messages Table
+
 ```sql
 CREATE TABLE messages (
     id TEXT PRIMARY KEY,           -- UUID
@@ -226,6 +247,7 @@ CREATE INDEX idx_messages_session ON messages(session_id);
 ```
 
 #### Files Table
+
 ```sql
 CREATE TABLE files (
     id TEXT PRIMARY KEY,           -- UUID
@@ -246,6 +268,7 @@ CREATE INDEX idx_files_uploaded ON files(uploaded_at DESC);
 ```
 
 #### FTS5 Virtual Tables
+
 ```sql
 -- Full-text search for messages
 CREATE VIRTUAL TABLE messages_fts USING fts5(
@@ -311,6 +334,44 @@ CREATE VIRTUAL TABLE files_fts USING fts5(
 | CQRS Implementation | ⏳ Planned | Separated read/write models |
 | Vector Search | ⏳ Planned | Semantic similarity search |
 | Multi-Agent Sync | ⏳ Planned | Cross-agent memory sharing |
+| Component         | Status      | Location                     | Description                                   |
+| ----------------- | ----------- | ---------------------------- | --------------------------------------------- |
+| Data Models       | ✅ Complete | `arc_saga/models/message.py` | Message, File, SearchResult, ValidationResult |
+| SQLite Storage    | ✅ Complete | `arc_saga/storage/sqlite.py` | Full CRUD + FTS5 search                       |
+| Storage Interface | ✅ Complete | `arc_saga/storage/base.py`   | Abstract StorageBackend                       |
+| Exceptions        | ✅ Complete | `arc_saga/exceptions/`       | StorageError, ValidationError, etc.           |
+| Logging           | ✅ Complete | `arc_saga/logging_config.py` | JSON structured logging                       |
+| Shared Config     | ✅ Complete | `shared/config.py`           | SharedConfig class                            |
+| Unit Tests        | ✅ Complete | `tests/unit/`                | Model and storage tests                       |
+
+### Phase 1b: API & Services 🔄 IN PROGRESS
+
+| Component             | Status      | Location                                     | Description                    |
+| --------------------- | ----------- | -------------------------------------------- | ------------------------------ |
+| FastAPI Server        | ✅ Complete | `arc_saga/api/server.py`                     | REST API on port 8421          |
+| AutoTagger            | ✅ Complete | `arc_saga/services/auto_tagger.py`           | TF-IDF keyword extraction      |
+| FileProcessor         | ✅ Complete | `arc_saga/services/file_processor.py`        | PDF/DOCX text extraction       |
+| Perplexity Client     | 🔄 Partial  | `arc_saga/integrations/perplexity_client.py` | Needs storage method alignment |
+| Error Instrumentation | ✅ Complete | `arc_saga/error_instrumentation.py`          | Comprehensive error tracking   |
+| CORS Configuration    | ✅ Complete | `arc_saga/api/server.py`                     | VSCode extension support       |
+
+### Phase 1c: Monitoring & Validators ⏳ NOT STARTED
+
+| Component             | Status     | Location             | Description              |
+| --------------------- | ---------- | -------------------- | ------------------------ |
+| Monitor Services      | ⏳ Planned | `arc_saga/monitors/` | Health checks, metrics   |
+| Validator Integration | ⏳ Planned | TBD                  | AI config validation     |
+| Circuit Breaker       | ⏳ Planned | TBD                  | External call resilience |
+| Rate Limiting         | ⏳ Planned | TBD                  | API rate limits          |
+
+### Phase 2: Advanced Features ⏳ NOT STARTED
+
+| Component            | Status     | Description                 |
+| -------------------- | ---------- | --------------------------- |
+| Event Sourcing       | ⏳ Planned | Complete audit trail        |
+| CQRS Implementation  | ⏳ Planned | Separated read/write models |
+| Vector Search        | ⏳ Planned | Semantic similarity search  |
+| Multi-Agent Sync     | ⏳ Planned | Cross-agent memory sharing  |
 | OAuth Authentication | ⏳ Planned | Google/GitHub/Microsoft SSO |
 
 ---
@@ -391,6 +452,16 @@ class StorageBackend(ABC):
     @abstractmethod
     async def save_file(self, file: File) -> str: ...
     
+
+    @abstractmethod
+    async def initialize(self) -> None: ...
+
+    @abstractmethod
+    async def save_message(self, message: Message) -> str: ...
+
+    @abstractmethod
+    async def save_file(self, file: File) -> str: ...
+
     @abstractmethod
     async def search_messages(
         self, query: str, tags: Optional[list[str]] = None, limit: int = 50
@@ -412,6 +483,7 @@ class StorageBackend(ABC):
 #### SQLite Implementation (`sqlite.py`)
 
 **Key Features:**
+
 - FTS5 full-text search indexes
 - JSON serialization for tags and metadata
 - Session-based message grouping
@@ -422,6 +494,7 @@ class StorageBackend(ABC):
 **Default Database Location:** `~/.arc-saga/memory.db`
 
 **FTS5 Search Syntax:**
+
 - Simple word search: `"Python"`
 - Phrase search: `"machine learning"`
 - Boolean operators: `Python AND Flask`
@@ -441,10 +514,21 @@ class StorageBackend(ABC):
 | POST | `/perplexity/ask` | Ask Perplexity with context | 🔄 Requires API key |
 | GET | `/health` | Server health check | ✅ Working |
 | GET | `/threads` | List all threads | ✅ Working |
+| Method | Path                  | Description                     | Status              |
+| ------ | --------------------- | ------------------------------- | ------------------- |
+| POST   | `/capture`            | Store a conversation message    | ✅ Working          |
+| GET    | `/context/recent`     | Get recent context              | ✅ Working          |
+| GET    | `/thread/{thread_id}` | Get complete thread history     | ✅ Working          |
+| POST   | `/search`             | Search across all conversations | ✅ Working          |
+| POST   | `/attach/file`        | Attach file to thread           | ✅ Working          |
+| POST   | `/perplexity/ask`     | Ask Perplexity with context     | 🔄 Requires API key |
+| GET    | `/health`             | Server health check             | ✅ Working          |
+| GET    | `/threads`            | List all threads                | ✅ Working          |
 
 #### Request/Response Models
 
 **CaptureRequest:**
+
 ```python
 class CaptureRequest(BaseModel):
     source: str              # "perplexity", "copilot", etc.
@@ -455,6 +539,7 @@ class CaptureRequest(BaseModel):
 ```
 
 **SearchRequest:**
+
 ```python
 class SearchRequest(BaseModel):
     query: str                       # Search query
@@ -479,12 +564,14 @@ class SearchRequest(BaseModel):
 **Purpose:** Extract keywords from message content using TF-IDF
 
 **Configuration:**
+
 - Max features: 10
 - Stop words: English
 - N-gram range: (1, 2) - unigrams and bigrams
 - Minimum score threshold: 0.1
 
 **Usage:**
+
 ```python
 tagger = AutoTagger()
 tags = tagger.extract_tags("Python programming with machine learning", max_tags=5)
@@ -545,19 +632,29 @@ correlation_id = get_correlation_id()
 | `black` | Code formatting | Compliant |
 | `isort` | Import sorting | Compliant |
 | `bandit` | Security scanning | 0 issues |
+| Tool            | Purpose           | Target    |
+| --------------- | ----------------- | --------- |
+| `mypy --strict` | Type checking     | 0 errors  |
+| `pylint`        | Linting           | >= 8.0    |
+| `black`         | Code formatting   | Compliant |
+| `isort`         | Import sorting    | Compliant |
+| `bandit`        | Security scanning | 0 issues  |
 
 ### 6.2 Type Hints
 
 **Mandatory on:**
+
 - All function parameters
 - All function return types
 - All class attributes
 
 **Prohibited:**
+
 - Bare `Any` types without justification comment
 - Untyped function signatures
 
 **Example:**
+
 ```python
 from typing import Optional, List, Dict, Any
 
@@ -640,6 +737,7 @@ except Exception as e:
 4. **Failure** with full error context
 
 **All logs include:**
+
 - `request_id` - Correlation ID
 - `trace_id` - Distributed tracing
 - `timestamp` - ISO 8601
@@ -650,6 +748,7 @@ except Exception as e:
 Format: `<type>: <description>`
 
 Types:
+
 - `feat:` - New feature
 - `fix:` - Bug fix
 - `refactor:` - Code refactoring
@@ -698,6 +797,7 @@ pytest -v --asyncio-mode=auto
 ### 7.3 Test Fixtures
 
 **Temporary Storage Fixture:**
+
 ```python
 @pytest_asyncio.fixture
 async def storage():
@@ -720,6 +820,12 @@ async def storage():
 | Integration Tests | 85%+ | ~50% |
 | Error Paths | 100% | ~70% |
 | Edge Cases | 100% | ~60% |
+| Category          | Target | Current |
+| ----------------- | ------ | ------- |
+| Unit Tests        | 95%+   | ~80%    |
+| Integration Tests | 85%+   | ~50%    |
+| Error Paths       | 100%   | ~70%    |
+| Edge Cases        | 100%   | ~60%    |
 
 ---
 
@@ -728,16 +834,19 @@ async def storage():
 ### Phase 1c: Monitoring & Resilience (Next)
 
 1. **Health Check System**
+
    - Database health
    - Storage space monitoring
    - API latency tracking
 
 2. **Circuit Breaker Implementation**
+
    - For Perplexity API calls
    - For file processing
    - Configurable thresholds
 
 3. **Rate Limiting**
+
    - Per-client limits
    - Per-endpoint limits
    - Graceful degradation
@@ -759,21 +868,25 @@ Refer to docs/feature_ideas_backlog.md for the full backlog and concise one-line
 ### Phase 2: Advanced Features
 
 1. **Event Sourcing**
+
    - Immutable event log
    - Event replay capability
    - Audit trail
 
 2. **CQRS Pattern**
+
    - Separated read/write models
    - Optimized read projections
    - Eventually consistent updates
 
 3. **Vector Search (Semantic)**
+
    - Embedding generation
    - Qdrant/Pinecone integration
    - Similarity search
 
 4. **Multi-Agent Memory Sync**
+
    - Cross-agent context sharing
    - Conflict resolution
    - Privacy controls
@@ -787,11 +900,13 @@ Refer to docs/feature_ideas_backlog.md for the full backlog and concise one-line
 ### Phase 3: Enterprise Features
 
 1. **Multi-Tenancy**
+
    - User isolation
    - Team/org support
    - Role-based access
 
 2. **Analytics Dashboard**
+
    - Usage metrics
    - Search analytics
    - Performance monitoring
@@ -818,6 +933,17 @@ Refer to docs/feature_ideas_backlog.md for the full backlog and concise one-line
 |-------|----------|--------|----------|
 | Duplicate test files | `tests/test_*.py` and `tests/unit/test_*.py` | Root and unit/ have duplicates | 🟡 Medium |
 | Missing integration tests | `tests/integration/` | Only `__init__.py` present | 🟡 Medium |
+| Issue                                     | Location                                                                | Impact                                         | Priority |
+| ----------------------------------------- | ----------------------------------------------------------------------- | ---------------------------------------------- | -------- |
+| Perplexity client storage method mismatch | `arc_saga/integrations/perplexity_client.py` - `ask_streaming()` method | Uses `store_message` instead of `save_message` | 🔴 High  |
+| Message model field mismatch              | `arc_saga/integrations/perplexity_client.py` - Message creation         | Uses `thread_id` instead of `session_id`       | 🔴 High  |
+
+### 9.2 Warnings
+
+| Issue                             | Location                                            | Impact                                   | Priority  |
+| --------------------------------- | --------------------------------------------------- | ---------------------------------------- | --------- |
+| Duplicate test files              | `tests/test_*.py` and `tests/unit/test_*.py`        | Root and unit/ have duplicates           | 🟡 Medium |
+| Missing integration tests         | `tests/integration/`                                | Only `__init__.py` present               | 🟡 Medium |
 | File storage not fully integrated | `arc_saga/api/server.py` - `attach_file()` endpoint | Files saved to disk but not stored in DB | 🟡 Medium |
 
 ### 9.3 Technical Debt
@@ -874,6 +1000,36 @@ Refer to docs/feature_ideas_backlog.md for the full backlog and concise one-line
 | `arc_saga/error_instrumentation.py` | Error tracking | All instrumentation classes |
 | `arc_saga/logging_config.py` | Logging setup | setup_logging, get_logger |
 | `arc_saga/exceptions/storage_exceptions.py` | Custom exceptions | All exception classes |
+| File               | Purpose                 | Key Contents                            |
+| ------------------ | ----------------------- | --------------------------------------- |
+| `.cursorrules`     | Cursor AI configuration | Quality standards, patterns, checklists |
+| `shared/config.py` | Shared configuration    | Paths, limits, settings                 |
+| `requirements.txt` | Python dependencies     | All package requirements                |
+| `setup.py`         | Package installation    | Install configuration                   |
+
+### Documentation Files
+
+| File                             | Purpose                 | When to Reference        |
+| -------------------------------- | ----------------------- | ------------------------ |
+| `docs/arc_saga_master_index.md`  | System overview         | Understanding the system |
+| `docs/decision_catalog.md`       | Architectural decisions | Making design choices    |
+| `docs/error_catalog.md`          | Error solutions         | Debugging errors         |
+| `docs/prompts_library.md`        | Cursor prompts          | Generating code          |
+| `docs/verification_checklist.md` | Quality gates           | Before deploying         |
+
+### Source Files
+
+| File                                        | Purpose               | Key Classes/Functions                |
+| ------------------------------------------- | --------------------- | ------------------------------------ |
+| `arc_saga/models/message.py`                | Data models           | Message, File, Provider, MessageRole |
+| `arc_saga/storage/base.py`                  | Storage interface     | StorageBackend (ABC)                 |
+| `arc_saga/storage/sqlite.py`                | SQLite implementation | SQLiteStorage                        |
+| `arc_saga/api/server.py`                    | REST API              | FastAPI app, all endpoints           |
+| `arc_saga/services/auto_tagger.py`          | Auto-tagging          | AutoTagger                           |
+| `arc_saga/services/file_processor.py`       | File processing       | FileProcessor                        |
+| `arc_saga/error_instrumentation.py`         | Error tracking        | All instrumentation classes          |
+| `arc_saga/logging_config.py`                | Logging setup         | setup_logging, get_logger            |
+| `arc_saga/exceptions/storage_exceptions.py` | Custom exceptions     | All exception classes                |
 
 ---
 
@@ -943,6 +1099,7 @@ pytest tests/unit/test_storage.py -v
 **Status:** 🔄 Partial (requires API key)
 
 **Configuration:**
+
 ```bash
 export PPLX_API_KEY="your-api-key"
 ```
@@ -950,6 +1107,7 @@ export PPLX_API_KEY="your-api-key"
 **Endpoint:** `POST /perplexity/ask`
 
 **Features:**
+
 - Streaming responses
 - Context injection from stored messages
 - Automatic conversation storage
@@ -959,6 +1117,7 @@ export PPLX_API_KEY="your-api-key"
 **CORS Configuration:** Allows `vscode-webview://*`
 
 **Typical Usage:**
+
 1. Extension captures user query
 2. Sends to `/capture` endpoint
 3. Retrieves context via `/context/recent`
@@ -971,6 +1130,7 @@ export PPLX_API_KEY="your-api-key"
 **Location:** `arc_saga/monitors/`
 
 **Planned Features:**
+
 - Watchdog file monitoring
 - Log parsing
 - Automatic ingestion
@@ -989,6 +1149,16 @@ export PPLX_API_KEY="your-api-key"
 
 | Service | Port | Purpose |
 |---------|------|---------|
+| Variable             | Purpose              | Required | Default                              |
+| -------------------- | -------------------- | -------- | ------------------------------------ |
+| `PPLX_API_KEY`       | Perplexity API key   | Optional | None                                 |
+| `ARC_SAGA_LOG_LEVEL` | Logging level        | Optional | INFO                                 |
+| `ANTIGRAVITY_LOGS`   | Antigravity log path | Optional | `~/AppData/Roaming/Antigravity/logs` |
+
+## Appendix B: Port Assignments
+
+| Service      | Port | Purpose       |
+| ------------ | ---- | ------------- |
 | ARC Saga API | 8421 | Main REST API |
 
 ## Appendix C: Quick Commands
