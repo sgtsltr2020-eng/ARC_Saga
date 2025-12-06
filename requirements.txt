@@ -1,7 +1,7 @@
 # Core
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
-pydantic==2.5.0
+pydantic==2.12.5
 pydantic-settings==2.1.0
 
 # Database
@@ -9,18 +9,25 @@ sqlalchemy==2.0.23
 aiosqlite==0.19.0
 
 # HTTP & Encryption
-aiohttp==3.9.1
-cryptography==41.0.7
+aiohttp==3.12.14
+cryptography==46.0.3
+httpx>=0.24.0,<0.28
 
 # File Processing
-Py
+PyPDF2>=3.0.0
 python-docx==0.8.11
-pillow==10.1.0
+pillow==10.3.0
+PyMuPDF>=1.24.0
+python-multipart>=0.0.9
+
+# ML/AI Integrations
+scikit-learn>=1.5.0
+openai>=1.0.0
 
 # Monitoring
 watchdog==3.0.0
 python-json-logger==2.0.7
-prometheus-client==0.20.0
+prometheus-client==0.23.1
 opentelemetry-api==1.21.0
 opentelemetry-sdk==1.21.0
 slowapi==0.1.9
@@ -30,9 +37,9 @@ isort==5.12.0
 pytest==7.4.3
 pytest-cov==4.1.0
 pytest-asyncio==0.21.1
-mypy==1.7.0
-black==23.12.0
-ruff==0.1.8
+mypy==1.19.0
+black==24.3.0
+ruff==0.14.8
 pylint>=3.0.0
 bandit>=1.7.0
-typing-extensions==4.8.0
+typing-extensions>=4.14.1

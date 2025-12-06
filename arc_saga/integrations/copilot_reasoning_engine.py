@@ -463,9 +463,9 @@ class CopilotReasoningEngine:
             "info",
             "copilot_streaming_complete",
             task_id=task.id,
-            tokens_yielded=len(result.output_data.response.split(" "))
-            if result.output_data
-            else 0,
+            tokens_yielded=(
+                len(result.output_data.response.split(" ")) if result.output_data else 0
+            ),
         )
 
     def _parse_copilot_response(

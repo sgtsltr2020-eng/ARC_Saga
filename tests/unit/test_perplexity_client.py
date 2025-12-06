@@ -467,4 +467,3 @@ class TestExceptionHierarchy:
 
         assert error.original_error is original
         assert "Storage error" in str(error)
-

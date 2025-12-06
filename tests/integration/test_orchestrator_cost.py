@@ -64,8 +64,8 @@ async def test_router_with_optimizer_selects_cheapest(monkeypatch, restore_profi
     cheap = CostProfile(
         provider=AIProvider.GROQ,
         cost_per_1k=Decimal("0.0005"),
-        latency_p95_ms=400.0,
-        quality=0.8,
+        latency_p95_ms=120.0,
+        quality=0.9,
     )
     pricey = CostProfile(
         provider=AIProvider.OPENAI,

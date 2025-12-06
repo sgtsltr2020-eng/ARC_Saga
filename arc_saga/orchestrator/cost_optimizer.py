@@ -11,7 +11,7 @@ from collections import OrderedDict
 from dataclasses import dataclass
 from decimal import Decimal
 from enum import Enum
-from typing import Iterable, Tuple
+from typing import Iterable
 
 from arc_saga.error_instrumentation import log_with_context
 from arc_saga.orchestrator.cost_models import (
@@ -69,20 +69,26 @@ class CostOptimizer:
 
         self._settings = settings or CostSettings()  # env validated here
         self._strategy = SelectionStrategy(self._settings.strategy)
-        self._weights = self._derive_weights(self._strategy, self._settings.parsed_weights())
+        self._weights = self._derive_weights(
+            self._strategy, self._settings.parsed_weights()
+        )
         self._budget = BudgetConfig(
             enforce_hard_limits=self._settings.enforce_hard_limits,
             max_usd=self._settings.max_usd,
         )
         self._cache_size = self._settings.cache_size
-        self._cache: OrderedDict[tuple[AIProvider, int, SelectionStrategy], Decimal] = OrderedDict()
+        self._cache: OrderedDict[tuple[AIProvider, int, SelectionStrategy], Decimal] = (
+            OrderedDict()
+        )
         self._disabled = self._settings.disable
         self._initialized = True
 
     def is_disabled(self) -> bool:
         return self._disabled
 
-    def rank_providers(self, task: AITask, providers: Iterable[AIProvider]) -> list[AIProvider]:
+    def rank_providers(
+        self, task: AITask, providers: Iterable[AIProvider]
+    ) -> list[AIProvider]:
         """Return providers ordered by score (lower first)."""
 
         if self._disabled:
@@ -128,11 +134,17 @@ class CostOptimizer:
             self._cache.popitem(last=False)
         return score
 
-    def _derive_weights(self, strategy: SelectionStrategy, base: CostWeights) -> CostWeights:
+    def _derive_weights(
+        self, strategy: SelectionStrategy, base: CostWeights
+    ) -> CostWeights:
         if strategy == SelectionStrategy.FASTEST:
-            return CostWeights(cost=Decimal("0.2"), latency=Decimal("0.6"), quality=Decimal("0.2"))
+            return CostWeights(
+                cost=Decimal("0.2"), latency=Decimal("0.6"), quality=Decimal("0.2")
+            )
         if strategy == SelectionStrategy.CHEAPEST:
-            return CostWeights(cost=Decimal("0.6"), latency=Decimal("0.2"), quality=Decimal("0.2"))
+            return CostWeights(
+                cost=Decimal("0.6"), latency=Decimal("0.2"), quality=Decimal("0.2")
+            )
         return base
 
     def _estimate_tokens(self, task: AITask) -> int:
@@ -145,7 +157,9 @@ class CostOptimizer:
         est_cost = (profile_openai.cost_per_1k * Decimal(est_tokens)) / Decimal("1000")
 
         if _COST_TOTAL_USD:
-            _COST_TOTAL_USD.labels(provider=AIProvider.OPENAI.value).inc(float(est_cost))
+            _COST_TOTAL_USD.labels(provider=AIProvider.OPENAI.value).inc(
+                float(est_cost)
+            )
 
         if est_tokens > 1_000_000 and self._budget.enforce_hard_limits:
             if _TIER_ESCALATIONS:

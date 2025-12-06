@@ -78,7 +78,7 @@ class SQLiteStorage(StorageBackend):
             self._connection = sqlite3.connect(
                 str(self.db_path),
                 timeout=SharedConfig.DB_TIMEOUT,
-                check_same_thread=SharedConfig.DB_CHECK_SAME_THREAD
+                check_same_thread=SharedConfig.DB_CHECK_SAME_THREAD,
             )
             self._connection.row_factory = sqlite3.Row
             self._connection.execute("PRAGMA foreign_keys = ON")
@@ -101,7 +101,8 @@ class SQLiteStorage(StorageBackend):
             cursor = conn.cursor()
 
             # Messages table
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS messages (
                     id TEXT PRIMARY KEY,
                     provider TEXT NOT NULL,
@@ -113,10 +114,12 @@ class SQLiteStorage(StorageBackend):
                     session_id TEXT,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
 
             # Files table
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS files (
                     id TEXT PRIMARY KEY,
                     filename TEXT NOT NULL,
@@ -129,10 +132,12 @@ class SQLiteStorage(StorageBackend):
                     metadata TEXT,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
 
             # Full-text search indexes (FTS5)
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE VIRTUAL TABLE IF NOT EXISTS messages_fts
                 USING fts5(
                     id UNINDEXED,
@@ -141,9 +146,11 @@ class SQLiteStorage(StorageBackend):
                     content='messages',
                     content_rowid='rowid'
                 )
-            """)
+            """
+            )
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE VIRTUAL TABLE IF NOT EXISTS files_fts
                 USING fts5(
                     id UNINDEXED,
@@ -153,33 +160,44 @@ class SQLiteStorage(StorageBackend):
                     content='files',
                     content_rowid='rowid'
                 )
-            """)
+            """
+            )
 
             # Regular indexes for common queries
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_messages_provider
                 ON messages(provider)
-            """)
+            """
+            )
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_messages_timestamp
                 ON messages(timestamp DESC)
-            """)
+            """
+            )
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_messages_session
                 ON messages(session_id)
-            """)
+            """
+            )
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_files_type
                 ON files(file_type)
-            """)
+            """
+            )
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_files_uploaded
                 ON files(uploaded_at DESC)
-            """)
+            """
+            )
 
             conn.commit()
             logger.info(f"Storage initialized successfully at {self.db_path}")
@@ -206,36 +224,42 @@ class SQLiteStorage(StorageBackend):
             cursor = conn.cursor()
 
             # Insert into messages table
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO messages
                 (id, provider, role, content, tags, timestamp, metadata, session_id)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                message.id,
-                message.provider.value,
-                message.role.value,
-                message.content,
-                json.dumps(message.tags) if message.tags else "[]",
-                message.timestamp.isoformat(),
-                json.dumps(message.metadata) if message.metadata else "{}",
-                message.session_id
-            ))
+            """,
+                (
+                    message.id,
+                    message.provider.value,
+                    message.role.value,
+                    message.content,
+                    json.dumps(message.tags) if message.tags else "[]",
+                    message.timestamp.isoformat(),
+                    json.dumps(message.metadata) if message.metadata else "{}",
+                    message.session_id,
+                ),
+            )
 
             # Update FTS index
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO messages_fts (id, content, tags)
                 VALUES (?, ?, ?)
-            """, (
-                message.id,
-                message.content,
-                " ".join(message.tags) if message.tags else ""
-            ))
+            """,
+                (
+                    message.id,
+                    message.content,
+                    " ".join(message.tags) if message.tags else "",
+                ),
+            )
 
             conn.commit()
-            logger.debug(f"Saved message {message.id}", extra={
-                "provider": message.provider.value,
-                "tags": len(message.tags)
-            })
+            logger.debug(
+                f"Saved message {message.id}",
+                extra={"provider": message.provider.value, "tags": len(message.tags)},
+            )
 
             return message.id
 
@@ -261,32 +285,38 @@ class SQLiteStorage(StorageBackend):
             cursor = conn.cursor()
 
             # Insert into files table
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO files
                 (id, filename, filepath, file_type, extracted_text, tags, file_size, uploaded_at, metadata)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                file.id,
-                file.filename,
-                file.filepath,
-                file.file_type.value,
-                file.extracted_text,
-                json.dumps(file.tags) if file.tags else "[]",
-                file.file_size,
-                file.uploaded_at.isoformat(),
-                json.dumps(file.metadata) if file.metadata else "{}"
-            ))
+            """,
+                (
+                    file.id,
+                    file.filename,
+                    file.filepath,
+                    file.file_type.value,
+                    file.extracted_text,
+                    json.dumps(file.tags) if file.tags else "[]",
+                    file.file_size,
+                    file.uploaded_at.isoformat(),
+                    json.dumps(file.metadata) if file.metadata else "{}",
+                ),
+            )
 
             # Update FTS index
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO files_fts (id, filename, extracted_text, tags)
                 VALUES (?, ?, ?, ?)
-            """, (
-                file.id,
-                file.filename,
-                file.extracted_text,
-                " ".join(file.tags) if file.tags else ""
-            ))
+            """,
+                (
+                    file.id,
+                    file.filename,
+                    file.extracted_text,
+                    " ".join(file.tags) if file.tags else "",
+                ),
+            )
 
             conn.commit()
             logger.debug(
@@ -301,10 +331,7 @@ class SQLiteStorage(StorageBackend):
             raise StorageError(str(e), operation="save_file")
 
     async def search_messages(
-        self,
-        query: str,
-        tags: Optional[list[str]] = None,
-        limit: int = 50
+        self, query: str, tags: Optional[list[str]] = None, limit: int = 50
     ) -> list[SearchResult]:
         """
         Search messages using FTS5.
@@ -336,10 +363,7 @@ class SQLiteStorage(StorageBackend):
 
             # Add tag filters
             if tags:
-                tag_conditions = " AND ".join([
-                    "m.tags LIKE ?"
-                    for _ in tags
-                ])
+                tag_conditions = " AND ".join(["m.tags LIKE ?" for _ in tags])
                 sql += f" AND ({tag_conditions})"
                 params.extend([f"%{tag}%" for tag in tags])
 
@@ -350,19 +374,24 @@ class SQLiteStorage(StorageBackend):
 
             results = []
             for row in cursor.fetchall():
-                results.append(SearchResult(
-                    entity_id=row['id'],
-                    entity_type="message",
-                    content=row['content'],
-                    tags=json.loads(row['tags'] or '[]'),
-                    timestamp=datetime.fromisoformat(row['timestamp'])
-                ))
+                results.append(
+                    SearchResult(
+                        entity_id=row["id"],
+                        entity_type="message",
+                        content=row["content"],
+                        tags=json.loads(row["tags"] or "[]"),
+                        timestamp=datetime.fromisoformat(row["timestamp"]),
+                    )
+                )
 
-            logger.debug("Search completed", extra={
-                "query": query,
-                "result_count": len(results),
-                "tag_count": len(tags) if tags else 0
-            })
+            logger.debug(
+                "Search completed",
+                extra={
+                    "query": query,
+                    "result_count": len(results),
+                    "tag_count": len(tags) if tags else 0,
+                },
+            )
 
             return results
 
@@ -387,22 +416,21 @@ class SQLiteStorage(StorageBackend):
             conn = self._get_connection()
             cursor = conn.cursor()
 
-            cursor.execute(
-                "SELECT * FROM messages WHERE id = ?", (message_id,))
+            cursor.execute("SELECT * FROM messages WHERE id = ?", (message_id,))
             row = cursor.fetchone()
 
             if not row:
                 return None
 
             return Message(
-                id=row['id'],
-                provider=Provider(row['provider']),
-                role=MessageRole(row['role']),
-                content=row['content'],
-                tags=json.loads(row['tags'] or '[]'),
-                timestamp=datetime.fromisoformat(row['timestamp']),
-                metadata=json.loads(row['metadata'] or '{}'),
-                session_id=row['session_id']
+                id=row["id"],
+                provider=Provider(row["provider"]),
+                role=MessageRole(row["role"]),
+                content=row["content"],
+                tags=json.loads(row["tags"] or "[]"),
+                timestamp=datetime.fromisoformat(row["timestamp"]),
+                metadata=json.loads(row["metadata"] or "{}"),
+                session_id=row["session_id"],
             )
 
         except sqlite3.Error as e:
@@ -433,15 +461,15 @@ class SQLiteStorage(StorageBackend):
                 return None
 
             return File(
-                id=row['id'],
-                filename=row['filename'],
-                filepath=row['filepath'],
-                file_type=FileType(row['file_type']),
-                extracted_text=row['extracted_text'] or "",
-                tags=json.loads(row['tags'] or '[]'),
-                file_size=row['file_size'] or 0,
-                uploaded_at=datetime.fromisoformat(row['uploaded_at']),
-                metadata=json.loads(row['metadata'] or '{}')
+                id=row["id"],
+                filename=row["filename"],
+                filepath=row["filepath"],
+                file_type=FileType(row["file_type"]),
+                extracted_text=row["extracted_text"] or "",
+                tags=json.loads(row["tags"] or "[]"),
+                file_size=row["file_size"] or 0,
+                uploaded_at=datetime.fromisoformat(row["uploaded_at"]),
+                metadata=json.loads(row["metadata"] or "{}"),
             )
 
         except sqlite3.Error as e:
@@ -467,25 +495,28 @@ class SQLiteStorage(StorageBackend):
 
             cursor.execute(
                 "SELECT * FROM messages WHERE session_id = ? ORDER BY timestamp ASC",
-                (session_id,)
+                (session_id,),
             )
 
             messages = []
             for row in cursor.fetchall():
-                messages.append(Message(
-                    id=row['id'],
-                    provider=Provider(row['provider']),
-                    role=MessageRole(row['role']),
-                    content=row['content'],
-                    tags=json.loads(row['tags'] or '[]'),
-                    timestamp=datetime.fromisoformat(row['timestamp']),
-                    metadata=json.loads(row['metadata'] or '{}'),
-                    session_id=row['session_id']
-                ))
+                messages.append(
+                    Message(
+                        id=row["id"],
+                        provider=Provider(row["provider"]),
+                        role=MessageRole(row["role"]),
+                        content=row["content"],
+                        tags=json.loads(row["tags"] or "[]"),
+                        timestamp=datetime.fromisoformat(row["timestamp"]),
+                        metadata=json.loads(row["metadata"] or "{}"),
+                        session_id=row["session_id"],
+                    )
+                )
 
-            logger.debug(f"Retrieved session {session_id}", extra={
-                "message_count": len(messages)
-            })
+            logger.debug(
+                f"Retrieved session {session_id}",
+                extra={"message_count": len(messages)},
+            )
 
             return messages
 

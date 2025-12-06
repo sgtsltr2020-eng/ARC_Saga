@@ -6,8 +6,7 @@ Tests log levels, latency metrics, and error tracking.
 
 from __future__ import annotations
 
-from unittest.mock import patch, MagicMock
-
+from unittest.mock import MagicMock, patch
 
 from arc_saga.error_instrumentation import LatencyMetrics, log_with_context
 

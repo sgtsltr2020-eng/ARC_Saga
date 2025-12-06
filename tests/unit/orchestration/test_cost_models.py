@@ -34,7 +34,9 @@ def test_score_provider_custom_weights_cost_heavy():
         latency_p95_ms=10.0,
         quality=0.99,
     )
-    weight = CostWeights(cost=Decimal("0.9"), latency=Decimal("0.05"), quality=Decimal("0.05"))
+    weight = CostWeights(
+        cost=Decimal("0.9"), latency=Decimal("0.05"), quality=Decimal("0.05")
+    )
 
     score = score_provider(profile, est_tokens=1000, weights=weight.as_tuple())
 
