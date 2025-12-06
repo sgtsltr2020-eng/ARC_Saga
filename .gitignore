@@ -68,7 +68,7 @@ desktop.ini
 .env.*.local
 *.env
 
-# === BUT ALWAYS TRACK OUR CODE (negate any accidental blanket ignores) ===
+# === ALWAYS TRACK PROJECT FILES ===
 !arc_saga/
 !tests/
 !shared/
@@ -76,7 +76,13 @@ desktop.ini
 !*.md
 !*.yml
 !*.yaml
-!*.json
-# OpenMemory - IDE/Assistant specific rules
-.github\instructions\openmemory.instructions.md
-.cursor\rules\openmemory.mdc
+
+# === DOCUMENT CONFIGURATION (selectively) ===
+!docs/
+!.github/
+!.github/workflows/
+!.github/dependabot.yml
+
+# === OPENAI CONFIG & RULES ===
+.github/instructions/openmemory.instructions.md
+.cursor/rules/openmemory.mdc
