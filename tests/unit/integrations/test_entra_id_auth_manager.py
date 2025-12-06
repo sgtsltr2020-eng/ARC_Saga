@@ -23,8 +23,8 @@ from arc_saga.exceptions.integration_exceptions import (
     TransientError,
 )
 from arc_saga.integrations.entra_id_auth_manager import (
-    EntraIDAuthManager,
     MAX_REFRESH_RETRIES,
+    EntraIDAuthManager,
 )
 
 

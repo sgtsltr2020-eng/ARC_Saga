@@ -34,10 +34,7 @@ from arc_saga.orchestrator.core import (
     WorkflowError,
     WorkflowPattern,
 )
-from arc_saga.orchestrator.events import (
-    InMemoryEventStore,
-    OrchestratorEvent,
-)
+from arc_saga.orchestrator.events import InMemoryEventStore, OrchestratorEvent
 from arc_saga.orchestrator.types import Result, Task, TaskStatus
 
 
@@ -422,10 +419,7 @@ class TestOrchestratorTaskExecution:
     @pytest.mark.asyncio
     async def test_task_execution_with_open_circuit_breaker(self) -> None:
         """Test task execution when circuit breaker is open."""
-        from arc_saga.integrations.circuit_breaker import (
-            CircuitBreaker,
-            CircuitState,
-        )
+        from arc_saga.integrations.circuit_breaker import CircuitBreaker, CircuitState
 
         store = InMemoryEventStore()
         breaker = CircuitBreaker("test-service", failure_threshold=2)

@@ -495,9 +495,10 @@ class TestLatencyTrackingMiddleware:
     @pytest.mark.asyncio
     async def test_middleware_tracks_latency(self) -> None:
         """Test middleware tracks endpoint latency."""
-        from arc_saga.api.health_monitor import LatencyTrackingMiddleware
-        from starlette.responses import Response
         from starlette.requests import Request
+        from starlette.responses import Response
+
+        from arc_saga.api.health_monitor import LatencyTrackingMiddleware
 
         # Clear latencies
         health_monitor._endpoint_latencies.clear()
@@ -529,8 +530,9 @@ class TestLatencyTrackingMiddleware:
     @pytest.mark.asyncio
     async def test_middleware_handles_errors(self) -> None:
         """Test middleware handles errors and records them."""
-        from arc_saga.api.health_monitor import LatencyTrackingMiddleware
         from starlette.requests import Request
+
+        from arc_saga.api.health_monitor import LatencyTrackingMiddleware
 
         # Clear errors
         health_monitor._recent_errors.clear()

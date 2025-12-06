@@ -102,7 +102,7 @@ async def test_response_mode_complete_returns_airesult(
 
     copilot_engine.http_client.post = MagicMock(return_value=mock_post)
 
-    await copilot_engine.reason(task)
+    result = await copilot_engine.reason(task)
 
     # Check if it's an AIResult instance (AIResult is a type alias, check attributes)
     assert hasattr(result, "task_id")
@@ -275,7 +275,7 @@ async def test_response_mode_complete_with_system_prompt(
 
     copilot_engine.http_client.post = MagicMock(return_value=mock_post)
 
-    result = await copilot_engine.reason(task)
+    _ = await copilot_engine.reason(task)
 
     # Verify request included system prompt
     call_args = copilot_engine.http_client.post.call_args

@@ -98,4 +98,3 @@ async def test_metrics_reflect_circuit_breaker_state(test_client: AsyncClient) -
     metrics_json = metrics_resp.json()
     assert "dummy" in metrics_json["circuit_breakers"]
     assert metrics_json["circuit_breakers"]["dummy"]["total_calls"] >= 0
-

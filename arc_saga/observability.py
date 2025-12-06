@@ -176,4 +176,3 @@ def init_observability(app: Any) -> None:
     middleware_names = {mw.cls for mw in app.user_middleware}
     if ObservabilityMiddleware not in middleware_names:
         app.add_middleware(ObservabilityMiddleware)
-

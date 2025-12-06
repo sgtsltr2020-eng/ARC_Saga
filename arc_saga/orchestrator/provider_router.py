@@ -50,11 +50,11 @@ from arc_saga.exceptions.integration_exceptions import (
 from arc_saga.exceptions.integration_exceptions import (
     TransientError as EngineTransientError,
 )
-from arc_saga.orchestrator.engine_registry import ReasoningEngineRegistry
 from arc_saga.orchestrator.cost_optimizer import (
     CostOptimizer,
     reorder_candidates_with_optimizer,
 )
+from arc_saga.orchestrator.engine_registry import ReasoningEngineRegistry
 from arc_saga.orchestrator.errors import PermanentError, ProviderError, TransientError
 from arc_saga.orchestrator.protocols import IReasoningEngine
 from arc_saga.orchestrator.types import AIProvider, AIResult, AITask
@@ -380,7 +380,9 @@ class ProviderRouter:
                     )
                     if attempt_idx > max_retries:
                         break
-                    await asyncio.sleep(self._compute_backoff(attempt_idx, base_backoff, max_backoff))
+                    await asyncio.sleep(
+                        self._compute_backoff(attempt_idx, base_backoff, max_backoff)
+                    )
                     continue
                 except Exception as ex:
                     finished_at = time.perf_counter()
@@ -392,7 +394,9 @@ class ProviderRouter:
                             started_at=started_at,
                             finished_at=finished_at,
                             outcome="exception",
-                            error_type="TransientError" if classify_transient else "PermanentError",
+                            error_type="TransientError"
+                            if classify_transient
+                            else "PermanentError",
                             error_message=str(ex),
                         )
                     )
@@ -407,13 +411,21 @@ class ProviderRouter:
                         ex,
                     )
                     if classify_transient and attempt_idx <= max_retries:
-                        await asyncio.sleep(self._compute_backoff(attempt_idx, base_backoff, max_backoff))
+                        await asyncio.sleep(
+                            self._compute_backoff(
+                                attempt_idx, base_backoff, max_backoff
+                            )
+                        )
                         continue
                     break
 
         end = time.perf_counter()
         final_type = attempts[-1].error_type if attempts else "PermanentError"
-        final_msg = attempts[-1].error_message if attempts else "No candidate providers available"
+        final_msg = (
+            attempts[-1].error_message
+            if attempts
+            else "No candidate providers available"
+        )
         tried = [a.provider.value for a in attempts]
         logger.error(
             "event='routing_failed' task_type='%s' correlation_id='%s' tried=%s attempts=%d latency_ms=%.2f final_error_type='%s'",
@@ -468,7 +480,9 @@ class ProviderRouter:
         try:
             engine = ReasoningEngineRegistry.get(provider)
         except Exception as ex:
-            logger.error("event='registry_error' provider='%s' msg='%s'", provider.value, ex)
+            logger.error(
+                "event='registry_error' provider='%s' msg='%s'", provider.value, ex
+            )
             raise PermanentError(f"Registry access failed for {provider.value}: {ex}")
         if engine is None:
             logger.error("event='engine_missing' provider='%s'", provider.value)

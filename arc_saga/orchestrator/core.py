@@ -33,13 +33,9 @@ from typing import Any, Awaitable, Callable, TypeVar
 from uuid import uuid4
 
 from ..error_instrumentation import log_with_context
-from ..integrations.circuit_breaker import (
-    CircuitBreaker,
-    CircuitBreakerOpenError,
-)
+from ..integrations.circuit_breaker import CircuitBreaker, CircuitBreakerOpenError
 from .cost_models import CostSettings
 from .cost_optimizer import CostOptimizer
-from .provider_router import ProviderRouter, RoutingRule
 from .events import (
     IEventStore,
     OperationLoggedEvent,
@@ -49,15 +45,9 @@ from .events import (
     WorkflowCompletedEvent,
     WorkflowStartedEvent,
 )
+from .provider_router import ProviderRouter, RoutingRule
 from .token_manager import TokenBudgetManager, TokenUsage
-from .types import (
-    AIProvider,
-    AIResultOutput,
-    AITaskInput,
-    Result,
-    Task,
-    TaskStatus,
-)
+from .types import AIProvider, AIResultOutput, AITaskInput, Result, Task, TaskStatus
 
 # Type variables
 T = TypeVar("T")  # Task input type
