@@ -19,6 +19,7 @@
 6. [Development Conventions](#6-development-conventions)
 7. [Testing Infrastructure](#7-testing-infrastructure)
 8. [Planned Features & Roadmap](#8-planned-features--roadmap)
+   - 8.1 [Feature Ideas Backlog (living)](#feature-ideas-backlog-living)
    - 8.1 Feature Ideas Backlog (living)
 9. [Known Issues & Technical Debt](#9-known-issues--technical-debt)
 10. [Critical Files Reference](#10-critical-files-reference)
