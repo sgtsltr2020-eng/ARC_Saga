@@ -338,6 +338,9 @@ async def test_route_method_returns_result() -> None:
     task = make_task("reasoning", "h8")
     result = await router.route(task, {"correlation_id": "h8"})
 
+    # Note: Use Result instead of AIResult for isinstance() check since
+    # AIResult is a subscripted generic (Result[AIResultOutput]) which
+    # cannot be used with isinstance() in Python's typing system
     assert isinstance(result, Result)
     assert result.success is True
 

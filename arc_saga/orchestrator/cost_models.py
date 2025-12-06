@@ -10,7 +10,7 @@ from __future__ import annotations
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Dict, Iterable, Tuple
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, ValidationInfo, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from arc_saga.error_instrumentation import log_with_context
@@ -33,8 +33,8 @@ class CostWeights(BaseModel):
 
     @field_validator("quality")
     @classmethod
-    def _weights_not_all_zero(cls, value: Decimal, info: object) -> Decimal:
-        data = getattr(info, "data", {})
+    def _weights_not_all_zero(cls, value: Decimal, info: ValidationInfo) -> Decimal:
+        data = info.data
         if "cost" in data and "latency" in data:
             total = data["cost"] + data["latency"] + value
             _require(

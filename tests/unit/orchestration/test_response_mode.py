@@ -275,6 +275,7 @@ async def test_response_mode_complete_with_system_prompt(
 
     copilot_engine.http_client.post = MagicMock(return_value=mock_post)
 
+    # Result not needed - this test only verifies the request payload
     await copilot_engine.reason(task)
 
     # Verify request included system prompt
