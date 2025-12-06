@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, List, Optional
 
-from fastapi import FastAPI, File, HTTPException, Response, UploadFile
+from fastapi import FastAPI, File, HTTPException, Request, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
@@ -171,14 +171,14 @@ if RateLimitExceeded:
 
 
 @app.post("/capture")
-async def capture_message(request: CaptureRequest):
+async def capture_message(request: Request, capture_req: CaptureRequest):
     """Store a conversation message from any source"""
 
     validate_capture_request(
-        source=request.source,
-        role=request.role,
-        content=request.content,
-        metadata_keys=(request.metadata or {}).keys(),
+        source=capture_req.source,
+        role=capture_req.role,
+        content=capture_req.content,
+        metadata_keys=(capture_req.metadata or {}).keys(),
     )
 
     # Map source string to Provider enum (verified from diagnostic)
@@ -193,19 +193,23 @@ async def capture_message(request: CaptureRequest):
         "test": Provider.OPENAI,
     }
 
-    provider = provider_map.get(request.source.lower(), Provider.OPENAI)
+    provider = provider_map.get(capture_req.source.lower(), Provider.OPENAI)
 
     # Map role string to MessageRole enum
-    role = MessageRole.USER if request.role.lower() == "user" else MessageRole.ASSISTANT
+    role = (
+        MessageRole.USER
+        if capture_req.role.lower() == "user"
+        else MessageRole.ASSISTANT
+    )
 
     # Create Message object (matches verified Phase 1a model)
     message = Message(
         provider=provider,
         role=role,
-        content=request.content,
+        content=capture_req.content,
         tags=[],  # Will be filled by auto_tagger
-        session_id=request.thread_id,  # thread_id maps to session_id
-        metadata=request.metadata or {},
+        session_id=capture_req.thread_id,  # thread_id maps to session_id
+        metadata=capture_req.metadata or {},
     )
 
     # Store in database (MUST use await - verified async)
@@ -213,11 +217,11 @@ async def capture_message(request: CaptureRequest):
         message_id = await storage.save_message(message)
 
         # Auto-tag
-        tags = auto_tagger.extract_tags(request.content)
+        tags = auto_tagger.extract_tags(capture_req.content)
 
         return {
             "message_id": message_id,
-            "thread_id": request.thread_id or message.session_id,
+            "thread_id": capture_req.thread_id or message.session_id,
             "tags": tags,
             "status": "stored",
         }
@@ -231,7 +235,9 @@ async def capture_message(request: CaptureRequest):
 
 
 @app.get("/context/recent")
-async def get_recent_context(sources: Optional[str] = None, limit: int = 10):
+async def get_recent_context(
+    request: Request, sources: Optional[str] = None, limit: int = 10
+):
     """Get recent conversation context across all sources"""
 
     try:
@@ -279,7 +285,7 @@ async def get_recent_context(sources: Optional[str] = None, limit: int = 10):
 
 
 @app.get("/thread/{thread_id}")
-async def get_thread(thread_id: str):
+async def get_thread(request: Request, thread_id: str):
     """Get complete thread history"""
 
     try:
@@ -317,21 +323,21 @@ async def get_thread(thread_id: str):
 
 
 @app.post("/search")
-async def search_memory(request: SearchRequest):
+async def search_memory(request: Request, search_req: SearchRequest):
     """Search across all conversations"""
 
-    validate_search_request(query=request.query or "", limit=request.limit)
+    validate_search_request(query=search_req.query or "", limit=search_req.limit)
 
     try:
         # Handle empty query for "recent" search
-        query = request.query.strip() if request.query else "test"
+        query = search_req.query.strip() if search_req.query else "test"
 
         results = await storage.search_messages(
-            query=query, tags=None, limit=request.limit
+            query=query, tags=None, limit=search_req.limit
         )
 
         return {
-            "query": request.query,
+            "query": search_req.query,
             "results": [
                 {
                     "id": r.entity_id,
@@ -386,10 +392,10 @@ async def attach_file(thread_id: str, file: UploadFile = File(...)):
 
 
 @app.post("/perplexity/ask")
-async def ask_perplexity(request: PerplexityRequest):
+async def ask_perplexity(request: Request, perplexity_req: PerplexityRequest):
     """Ask Perplexity with automatic context injection"""
 
-    validate_perplexity_request(query=request.query)
+    validate_perplexity_request(query=perplexity_req.query)
 
     if not perplexity_client:
         raise HTTPException(
@@ -399,8 +405,8 @@ async def ask_perplexity(request: PerplexityRequest):
 
     # Get context if requested
     context_messages = []
-    if request.inject_context and request.thread_id:
-        messages = await storage.get_by_session(request.thread_id)
+    if perplexity_req.inject_context and perplexity_req.thread_id:
+        messages = await storage.get_by_session(perplexity_req.thread_id)
         context_messages = [
             {"role": msg.role.value, "content": msg.content} for msg in messages
         ]
@@ -408,7 +414,9 @@ async def ask_perplexity(request: PerplexityRequest):
     # Stream response
     async def stream_response():
         async for chunk in perplexity_client.ask_streaming(
-            query=request.query, context=context_messages, thread_id=request.thread_id
+            query=perplexity_req.query,
+            context=context_messages,
+            thread_id=perplexity_req.thread_id,
         ):
             yield f"data: {chunk}\n\n"
 

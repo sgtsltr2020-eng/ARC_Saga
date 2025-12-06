@@ -3,5 +3,18 @@
   "test_server.py::test_health": true,
   "test_server.py::test_capture": true,
   "test_server.py::test_search": true,
-  "test_server.py::test_threads": true
+  "test_server.py::test_threads": true,
+  "tests/integration/test_orchestrator_cost.py::test_router_with_optimizer_selects_cheapest": true,
+  "tests/integration/test_orchestrator_cost.py::test_router_budget_exceeded": true,
+  "tests/unit/orchestration/test_cost_models.py::test_score_provider_custom_weights_cost_heavy": true,
+  "tests/unit/orchestration/test_cost_models.py::test_cost_settings_env_parsing": true,
+  "tests/unit/orchestration/test_cost_models.py::test_cost_weights_require_positive_total": true,
+  "tests/unit/orchestration/test_cost_optimizer.py::test_rank_cheapest_prefers_lower_cost": true,
+  "tests/unit/orchestration/test_cost_optimizer.py::test_budget_exceeded_raises": true,
+  "tests/unit/orchestration/test_cost_optimizer.py::test_disabled_returns_original_order": true,
+  "tests/unit/orchestration/test_cost_optimizer.py::test_fastest_prefers_low_latency": true,
+  "tests/unit/orchestration/test_provider_router.py::test_route_method_returns_result": true,
+  "tests/integration/test_orchestration_e2e.py::test_capture_search_thread_flow": true,
+  "tests/integration/test_orchestration_e2e.py::test_perplexity_endpoint_graceful_unavailable": true,
+  "tests/integration/test_orchestration_e2e.py::test_metrics_reflect_circuit_breaker_state": true
 }
