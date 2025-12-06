@@ -553,4 +553,3 @@ class EntraIDAuthManager:
         except Exception:
             # Any error parsing JWT - return None (will trigger refresh)
             return None
-

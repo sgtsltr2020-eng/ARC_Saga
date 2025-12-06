@@ -168,4 +168,3 @@ class ReasoningEngineRegistry:
             Dictionary mapping providers to engines (copy, not reference)
         """
         return dict(cls._engines)  # Return copy to prevent accidental modification
-

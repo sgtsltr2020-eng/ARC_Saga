@@ -1,12 +1,14 @@
 """Test SQLite storage"""
 
+import shutil
+import tempfile
+from pathlib import Path
+
 import pytest
 import pytest_asyncio
-import tempfile
-import shutil
-from pathlib import Path
-from arc_saga.storage.sqlite import SQLiteStorage
+
 from arc_saga.models import Message, MessageRole, Provider
+from arc_saga.storage.sqlite import SQLiteStorage
 
 
 @pytest_asyncio.fixture

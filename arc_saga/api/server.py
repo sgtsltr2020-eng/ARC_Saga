@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, List, Optional
 
-from fastapi import FastAPI, File, HTTPException, Response, UploadFile
+from fastapi import FastAPI, File, HTTPException, Request, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
@@ -68,14 +68,13 @@ perplexity_client = None
 if os.getenv("PPLX_API_KEY"):
     try:
         from ..integrations.perplexity_client import PerplexityClient
+
         perplexity_client = PerplexityClient(
-            api_key=os.getenv("PPLX_API_KEY"),
-            storage=storage
+            api_key=os.getenv("PPLX_API_KEY"), storage=storage
         )
         # Register circuit breaker with health monitor
         health_monitor.register_circuit_breaker(
-            "perplexity",
-            perplexity_client.circuit_breaker
+            "perplexity", perplexity_client.circuit_breaker
         )
     except Exception as e:
         print(f"Perplexity client disabled: {e}")
@@ -85,7 +84,7 @@ if os.getenv("PPLX_API_KEY"):
 
 class CaptureRequest(BaseModel):
     source: str  # "perplexity" or "copilot"
-    role: str    # "user" or "assistant"
+    role: str  # "user" or "assistant"
     content: str
     thread_id: Optional[str] = None
     metadata: Optional[dict] = None
@@ -104,6 +103,7 @@ class PerplexityRequest(BaseModel):
     query: str
     thread_id: Optional[str] = None
     inject_context: bool = True
+
 
 # ═══════════════════════════════════════════════════════════
 # LIFESPAN CONTEXT MANAGER - INITIALIZE DATABASE
@@ -124,16 +124,19 @@ async def lifespan(app: FastAPI):
 
     # Shutdown (if needed in future)
 
+
 # Initialize FastAPI with lifespan context manager
 app = FastAPI(
     title="ARC Saga Memory API",
     description="Unified conversation memory for AI assistants",
     version="1.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 # Rate limiter (gracefully disabled if slowapi not installed)
-limiter = Limiter(key_func=get_remote_address) if Limiter and get_remote_address else None
+limiter = (
+    Limiter(key_func=get_remote_address) if Limiter and get_remote_address else None
+)
 if limiter and SlowAPIMiddleware:
     app.state.limiter = limiter
     app.add_middleware(SlowAPIMiddleware)
@@ -153,6 +156,7 @@ app.add_middleware(ObservabilityMiddleware)
 init_observability(app)
 
 if RateLimitExceeded:
+
     @app.exception_handler(RateLimitExceeded)  # type: ignore[arg-type]
     async def rate_limit_handler(request, exc):  # type: ignore[no-untyped-def]
         return JSONResponse(
@@ -160,20 +164,21 @@ if RateLimitExceeded:
             content={"detail": "Rate limit exceeded. Please retry shortly."},
         )
 
+
 # ═══════════════════════════════════════════════════════════
 # CONVERSATION CAPTURE
 # ═══════════════════════════════════════════════════════════
 
 
 @app.post("/capture")
-async def capture_message(request: CaptureRequest):
+async def capture_message(request: Request, capture_req: CaptureRequest):
     """Store a conversation message from any source"""
 
     validate_capture_request(
-        source=request.source,
-        role=request.role,
-        content=request.content,
-        metadata_keys=(request.metadata or {}).keys(),
+        source=capture_req.source,
+        role=capture_req.role,
+        content=capture_req.content,
+        metadata_keys=(capture_req.metadata or {}).keys(),
     )
 
     # Map source string to Provider enum (verified from diagnostic)
@@ -185,22 +190,26 @@ async def capture_message(request: CaptureRequest):
         "google": Provider.GOOGLE,
         "antigravity": Provider.ANTIGRAVITY,
         "groq": Provider.GROQ,
-        "test": Provider.OPENAI
+        "test": Provider.OPENAI,
     }
 
-    provider = provider_map.get(request.source.lower(), Provider.OPENAI)
+    provider = provider_map.get(capture_req.source.lower(), Provider.OPENAI)
 
     # Map role string to MessageRole enum
-    role = MessageRole.USER if request.role.lower() == "user" else MessageRole.ASSISTANT
+    role = (
+        MessageRole.USER
+        if capture_req.role.lower() == "user"
+        else MessageRole.ASSISTANT
+    )
 
     # Create Message object (matches verified Phase 1a model)
     message = Message(
         provider=provider,
         role=role,
-        content=request.content,
+        content=capture_req.content,
         tags=[],  # Will be filled by auto_tagger
-        session_id=request.thread_id,  # thread_id maps to session_id
-        metadata=request.metadata or {}
+        session_id=capture_req.thread_id,  # thread_id maps to session_id
+        metadata=capture_req.metadata or {},
     )
 
     # Store in database (MUST use await - verified async)
@@ -208,16 +217,17 @@ async def capture_message(request: CaptureRequest):
         message_id = await storage.save_message(message)
 
         # Auto-tag
-        tags = auto_tagger.extract_tags(request.content)
+        tags = auto_tagger.extract_tags(capture_req.content)
 
         return {
             "message_id": message_id,
-            "thread_id": request.thread_id or message.session_id,
+            "thread_id": capture_req.thread_id or message.session_id,
             "tags": tags,
-            "status": "stored"
+            "status": "stored",
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Storage error: {str(e)}")
+
 
 # ═══════════════════════════════════════════════════════════
 # CONTEXT RETRIEVAL
@@ -226,17 +236,13 @@ async def capture_message(request: CaptureRequest):
 
 @app.get("/context/recent")
 async def get_recent_context(
-    sources: Optional[str] = None,
-    limit: int = 10
+    request: Request, sources: Optional[str] = None, limit: int = 10
 ):
     """Get recent conversation context across all sources"""
 
     try:
         # Use non-empty query to avoid FTS5 error
-        results = await storage.search_messages(
-            query="a",
-            limit=limit * 2
-        )
+        results = await storage.search_messages(query="a", limit=limit * 2)
 
         # Get full messages
         messages = []
@@ -252,13 +258,10 @@ async def get_recent_context(
                 "perplexity": "perplexity",
                 "copilot": "openai",
                 "openai": "openai",
-                "anthropic": "anthropic"
+                "anthropic": "anthropic",
             }
-            allowed_providers = [
-                provider_map.get(
-                    s.lower()) for s in source_list]
-            messages = [
-                m for m in messages if m.provider.value in allowed_providers]
+            allowed_providers = [provider_map.get(s.lower()) for s in source_list]
+            messages = [m for m in messages if m.provider.value in allowed_providers]
 
         # Take only requested limit
         messages = messages[:limit]
@@ -271,18 +274,18 @@ async def get_recent_context(
                     "content": msg.content,
                     "provider": msg.provider.value,
                     "timestamp": msg.timestamp.isoformat(),
-                    "session_id": msg.session_id
+                    "session_id": msg.session_id,
                 }
                 for msg in messages
             ],
-            "count": len(messages)
+            "count": len(messages),
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Search error: {str(e)}")
 
 
 @app.get("/thread/{thread_id}")
-async def get_thread(thread_id: str):
+async def get_thread(request: Request, thread_id: str):
     """Get complete thread history"""
 
     try:
@@ -302,19 +305,17 @@ async def get_thread(thread_id: str):
                     "provider": msg.provider.value,
                     "timestamp": msg.timestamp.isoformat(),
                     "tags": msg.tags,
-                    "metadata": msg.metadata
+                    "metadata": msg.metadata,
                 }
                 for msg in messages
             ],
-            "count": len(messages)
+            "count": len(messages),
         }
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Retrieval error: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Retrieval error: {str(e)}")
+
 
 # ═══════════════════════════════════════════════════════════
 # SEARCH
@@ -322,23 +323,21 @@ async def get_thread(thread_id: str):
 
 
 @app.post("/search")
-async def search_memory(request: SearchRequest):
+async def search_memory(request: Request, search_req: SearchRequest):
     """Search across all conversations"""
 
-    validate_search_request(query=request.query or "", limit=request.limit)
+    validate_search_request(query=search_req.query or "", limit=search_req.limit)
 
     try:
         # Handle empty query for "recent" search
-        query = request.query.strip() if request.query else "test"
+        query = search_req.query.strip() if search_req.query else "test"
 
         results = await storage.search_messages(
-            query=query,
-            tags=None,
-            limit=request.limit
+            query=query, tags=None, limit=search_req.limit
         )
 
         return {
-            "query": request.query,
+            "query": search_req.query,
             "results": [
                 {
                     "id": r.entity_id,
@@ -346,14 +345,17 @@ async def search_memory(request: SearchRequest):
                     "tags": r.tags,
                     "timestamp": r.timestamp.isoformat(),
                     "score": r.relevance_score,
-                    "snippet": r.content[:200] + "..." if len(r.content) > 200 else r.content
+                    "snippet": r.content[:200] + "..."
+                    if len(r.content) > 200
+                    else r.content,
                 }
                 for r in results
             ],
-            "count": len(results)
+            "count": len(results),
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Search error: {str(e)}")
+
 
 # ═══════════════════════════════════════════════════════════
 # FILE MANAGEMENT
@@ -361,18 +363,14 @@ async def search_memory(request: SearchRequest):
 
 
 @app.post("/attach/file")
-async def attach_file(
-    thread_id: str,
-    file: UploadFile = File(...)
-):
+async def attach_file(thread_id: str, file: UploadFile = File(...)):
     """Attach file to conversation thread"""
 
     try:
         # Save file and extract text
         file_id = str(uuid.uuid4())
         filepath, extracted_text = await file_processor.process_file(
-            file_id=file_id,
-            file=file
+            file_id=file_id, file=file
         )
 
         # Note: Phase 1a doesn't have file storage yet
@@ -382,13 +380,11 @@ async def attach_file(
             "file_id": file_id,
             "filename": file.filename,
             "thread_id": thread_id,
-            "extracted_text_length": len(extracted_text) if extracted_text else 0
+            "extracted_text_length": len(extracted_text) if extracted_text else 0,
         }
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"File processing error: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"File processing error: {str(e)}")
+
 
 # ═══════════════════════════════════════════════════════════
 # PERPLEXITY INTEGRATION
@@ -396,39 +392,36 @@ async def attach_file(
 
 
 @app.post("/perplexity/ask")
-async def ask_perplexity(request: PerplexityRequest):
+async def ask_perplexity(request: Request, perplexity_req: PerplexityRequest):
     """Ask Perplexity with automatic context injection"""
 
-    validate_perplexity_request(query=request.query)
+    validate_perplexity_request(query=perplexity_req.query)
 
     if not perplexity_client:
         raise HTTPException(
             status_code=503,
-            detail="Perplexity integration not available (missing API key)"
+            detail="Perplexity integration not available (missing API key)",
         )
 
     # Get context if requested
     context_messages = []
-    if request.inject_context and request.thread_id:
-        messages = await storage.get_by_session(request.thread_id)
+    if perplexity_req.inject_context and perplexity_req.thread_id:
+        messages = await storage.get_by_session(perplexity_req.thread_id)
         context_messages = [
-            {"role": msg.role.value, "content": msg.content}
-            for msg in messages
+            {"role": msg.role.value, "content": msg.content} for msg in messages
         ]
 
     # Stream response
     async def stream_response():
         async for chunk in perplexity_client.ask_streaming(
-            query=request.query,
+            query=perplexity_req.query,
             context=context_messages,
-            thread_id=request.thread_id
+            thread_id=perplexity_req.thread_id,
         ):
             yield f"data: {chunk}\n\n"
 
-    return StreamingResponse(
-        stream_response(),
-        media_type="text/event-stream"
-    )
+    return StreamingResponse(stream_response(), media_type="text/event-stream")
+
 
 # ═══════════════════════════════════════════════════════════
 # UTILITY
@@ -438,6 +431,7 @@ async def ask_perplexity(request: PerplexityRequest):
 # ═══════════════════════════════════════════════════════════
 # HEALTH CHECK ENDPOINTS
 # ═══════════════════════════════════════════════════════════
+
 
 # Pydantic models for health responses
 class HealthStatusResponse(BaseModel):
@@ -640,7 +634,10 @@ async def get_metrics() -> MetricsResponse:
 
         # Build metrics
         circuit_breakers: dict[str, dict[str, Any]] = {}
-        for service_name, breaker_data in health_monitor.get_circuit_breaker_states().items():
+        for (
+            service_name,
+            breaker_data,
+        ) in health_monitor.get_circuit_breaker_states().items():
             circuit_breakers[service_name] = breaker_data["metrics"]
 
         endpoint_latencies = health_monitor.get_endpoint_latencies()
@@ -715,7 +712,7 @@ async def list_threads(limit: int = 50):
                     "first_message": msg.content[:100],
                     "last_updated": msg.timestamp,
                     "message_count": 1,
-                    "providers": [msg.provider.value]
+                    "providers": [msg.provider.value],
                 }
             else:
                 threads[sid]["message_count"] += 1
@@ -732,15 +729,10 @@ async def list_threads(limit: int = 50):
         for thread in thread_list:
             thread["last_updated"] = thread["last_updated"].isoformat()
 
-        return {
-            "threads": thread_list[:limit],
-            "total": len(threads)
-        }
+        return {"threads": thread_list[:limit], "total": len(threads)}
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Thread listing error: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Thread listing error: {str(e)}")
+
 
 if limiter:
     capture_message = limiter.limit("30/minute")(capture_message)  # type: ignore[assignment]
@@ -752,4 +744,5 @@ if limiter:
 # Server startup
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="127.0.0.1", port=8421)

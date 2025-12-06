@@ -8,7 +8,8 @@ Follows: Dependency Injection, Interface Segregation
 
 from abc import ABC, abstractmethod
 from typing import Optional
-from ..models import Message, File, SearchResult
+
+from ..models import File, Message, SearchResult
 
 
 class StorageBackend(ABC):

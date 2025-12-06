@@ -21,12 +21,7 @@ from arc_saga.exceptions.integration_exceptions import (
     TransientError,
 )
 from arc_saga.integrations.copilot_reasoning_engine import CopilotReasoningEngine
-from arc_saga.orchestrator.types import (
-    AIProvider,
-    AITask,
-    AITaskInput,
-    TaskStatus,
-)
+from arc_saga.orchestrator.types import AIProvider, AITask, AITaskInput, TaskStatus
 
 
 @pytest_asyncio.fixture

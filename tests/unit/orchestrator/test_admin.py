@@ -701,4 +701,3 @@ class TestEdgeCases:
 
             # Should handle unicode gracefully
             assert result is not None
-

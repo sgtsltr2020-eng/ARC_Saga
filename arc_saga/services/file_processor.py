@@ -4,10 +4,11 @@ Handles file uploads, storage, and text extraction
 """
 
 from pathlib import Path
-from typing import Tuple, Optional
-from fastapi import UploadFile
+from typing import Optional, Tuple
+
 import fitz  # PyMuPDF
 from docx import Document
+from fastapi import UploadFile
 
 
 class FileProcessor:

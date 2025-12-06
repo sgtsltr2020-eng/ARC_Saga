@@ -850,4 +850,3 @@ class QualityGateManager:
             return await self._executor.run_pylint(target)
         else:  # BANDIT
             return await self._executor.run_bandit(target)
-

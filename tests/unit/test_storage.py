@@ -5,17 +5,18 @@ Unit tests for SQLite storage backend.
 Covers: CRUD operations, FTS search, session grouping, error handling
 """
 
-import pytest
-from pathlib import Path
-import tempfile
-import pytest_asyncio
 import shutil
 import sqlite3
-from unittest.mock import patch, MagicMock
+import tempfile
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
-from arc_saga.storage.sqlite import SQLiteStorage
-from arc_saga.models import Message, Provider, MessageRole, File, FileType
+import pytest
+import pytest_asyncio
+
 from arc_saga.exceptions import StorageError
+from arc_saga.models import File, FileType, Message, MessageRole, Provider
+from arc_saga.storage.sqlite import SQLiteStorage
 
 
 @pytest_asyncio.fixture
