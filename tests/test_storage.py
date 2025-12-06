@@ -30,13 +30,11 @@ async def storage():
 async def test_save_message(storage):
     """Test saving a message"""
     msg = Message(
-        provider=Provider.OPENAI,
-        role=MessageRole.USER,
-        content="Test message"
+        provider=Provider.OPENAI, role=MessageRole.USER, content="Test message"
     )
-    
+
     message_id = await storage.save_message(msg)
-    
+
     assert message_id == msg.id
 
 
@@ -44,14 +42,12 @@ async def test_save_message(storage):
 async def test_get_message_by_id(storage):
     """Test retrieving a message"""
     msg = Message(
-        provider=Provider.OPENAI,
-        role=MessageRole.USER,
-        content="Test message"
+        provider=Provider.OPENAI, role=MessageRole.USER, content="Test message"
     )
-    
+
     await storage.save_message(msg)
     retrieved = await storage.get_message_by_id(msg.id)
-    
+
     assert retrieved is not None
     assert retrieved.content == "Test message"
 
@@ -60,20 +56,18 @@ async def test_get_message_by_id(storage):
 async def test_search_messages(storage):
     """Test searching messages"""
     msg1 = Message(
-        provider=Provider.OPENAI,
-        role=MessageRole.USER,
-        content="Python programming"
+        provider=Provider.OPENAI, role=MessageRole.USER, content="Python programming"
     )
     msg2 = Message(
         provider=Provider.OPENAI,
         role=MessageRole.USER,
-        content="JavaScript development"
+        content="JavaScript development",
     )
-    
+
     await storage.save_message(msg1)
     await storage.save_message(msg2)
-    
+
     results = await storage.search_messages("Python", limit=10)
-    
+
     assert len(results) >= 1
     assert any("Python" in r.content for r in results)

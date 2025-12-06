@@ -239,7 +239,7 @@ class CircuitBreaker:
             self._state = CircuitState.OPEN
             self._success_count = 0
             self.metrics.record_circuit_open()
-            
+
             # If transitioning from HALF_OPEN, recovery attempt failed
             if was_half_open:
                 self.metrics.record_recovery_attempt(success=False)
@@ -338,7 +338,11 @@ def is_transient_error(error: Exception) -> bool:
         return True
 
     # Permanent errors
-    if "401" in error_str or "unauthorized" in error_str or "authentication" in error_str:
+    if (
+        "401" in error_str
+        or "unauthorized" in error_str
+        or "authentication" in error_str
+    ):
         return False
 
     if "403" in error_str or "forbidden" in error_str:
@@ -390,7 +394,9 @@ async def retry_with_backoff(
     for attempt in range(max_attempts):
         try:
             return await func(*args, **kwargs)
-        except Exception as e:  # noqa: BLE001 - intentionally catching all exceptions for retry logic
+        except (
+            Exception
+        ) as e:  # noqa: BLE001 - intentionally catching all exceptions for retry logic
             last_error = e
 
             # Don't retry permanent errors
@@ -409,8 +415,10 @@ async def retry_with_backoff(
                 break
 
             # Calculate exponential backoff with jitter
-            delay = min(base_delay * (2 ** attempt), max_delay)
-            jitter = random.uniform(0, 0.1 * delay)  # nosec B311 - jitter for backoff, not cryptographic
+            delay = min(base_delay * (2**attempt), max_delay)
+            jitter = random.uniform(
+                0, 0.1 * delay
+            )  # nosec B311 - jitter for backoff, not cryptographic
             total_delay = delay + jitter
 
             log_with_context(
@@ -438,4 +446,3 @@ async def retry_with_backoff(
 
     # This should never happen, but satisfy type checker
     raise RuntimeError("Retry exhausted without error")
-

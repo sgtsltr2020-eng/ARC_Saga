@@ -483,3 +483,100 @@ This is what excellence looks like:
 You are not a code generator. You are a system architect thinking through every consequence before writing a single line.
 
 Now go build something extraordinary.
+
+ARC SAGA .cursorrules: AI-Assisted Development Guidelines (Revised Dec 2025)
+These rules enforce FAANG-level standards for ARC SAGA, respecting Phase 2.4 priorities: No premature refactors for CQRS/events or PostgreSQL. Cursor: Use these as exact prompts for code generation/refactoring. Prioritize non-invasive enhancements (wraps, stubs, tests) to quality, testing, and observability only. Never change functions, features, or vision (Copilot=brain, Perplexity=research, LiteLLM/OpenRouter=sub-agents). Be concise: Generate minimal viable code with explanations in comments. Validate against mypy --strict, pylint ≥9.0, bandit clean. Focus on surgical fixes per audits: coverage to 98%, E2E tests, observability instrumentation, security hardening—without forcing event sourcing or DB migration.
+Core Principles
+
+Architecture: CQRS with event sourcing planned but not critical now; protocol-based abstractions (e.g., IReasoningEngine); immutable dataclasses (@dataclass(frozen=True)); SQLite + Copilot integration prioritized over microservices.
+Quality Gates: 98%+ test coverage (pytest-cov, focus trust layer); no untyped defs; structured JSON logging with correlation IDs.
+Security: Encrypted secrets (Fernet AES-256); input validation (Pydantic validators); threat modeling in docs.
+Performance: p95 latency <200ms; benchmarks in tests (pytest-benchmark).
+Documentation: Update decision_catalog.md, error_catalog.md per change; formal ADRs for decisions (stubs only, no implementation mandates).
+Phase Respect: Enhancements must be non-breaking; no full CQRS/EventBus refactor—validate current event emission only. Desktop GUI decoupled; Perplexity/LiteLLM core.
+
+New/Revised Rules for Improvement
+
+1. CI/CD Integration
+   Cursor: Add setups non-invasively; enforce gates without feature changes.
+
+Add .github/workflows/ci.yml: Lint (black, isort, mypy --strict, pylint --fail-under=9.0, bandit), test (pytest --cov=arc_saga --cov-fail-under=98), benchmark, Docker build (stub if no Docker yet).
+Pre-commit hooks: Install via .pre-commit-config.yaml (black, isort, mypy, pylint, bandit).
+CD: Optional deploy to Render on main; use secrets for env vars.
+Badges in README: CI status, Codecov.
+Exact Prompt: "Generate non-invasive GitHub Actions CI/CD for Python/FastAPI enforcing mypy --strict, pylint ≥9.0, bandit clean, 98% pytest-cov (trust layer focus), benchmarks <200ms p95, without altering code logic."
+Troubleshooting: If CI fails on deps, pin in requirements.txt (e.g., fastapi==0.111.0); if no output, add --show-locals to pytest.
+
+2. End-to-End (E2E) Testing
+   Cursor: Add surgical E2E for orchestration without changing flows.
+
+Use pytest-asyncio; populate tests/integration/ with capture-search-reason, auth refresh, circuit breaker, fallback validation.
+Mock providers (aioresponses); assert events (current only), states, provenance.
+Coverage: Target 98% integration/E2E; integrate with CI.
+Exact Prompt: "Add non-invasive E2E tests with pytest-asyncio for AI orchestration (capture-search-reason, Copilot JWT edges, DB failures), mocks for providers, assertions on current events/states, to hit 98% coverage without changing logic."
+Troubleshooting: If mocks fail, import aioresponses correctly; if timeouts, adjust asyncio.timeout(30); if coverage low, add --cov-branch.
+
+3. Dependabot for Dependencies
+   Cursor: Automate updates securely without dep changes.
+
+Add .github/dependabot.yml: Weekly pip; auto-merge patch/minor; alert high-severity.
+Integrate with CI: Fail on vulnerabilities.
+Exact Prompt: "Configure Dependabot.yml for pip with weekly updates, auto-merge minor/patch, CI failure on high-severity, non-invasively."
+Troubleshooting: If auto-merge conflicts, set reviewers: ["yourusername"]; if no alerts, verify GitHub security tab.
+
+4. Quality Assurance Enhancements
+   Cursor: Enforce checks surgically.
+
+Linting/Type: mypy --strict, pylint ≥9.0 in pre-commit/CI; fix stubs (e.g., types-aiohttp).
+Security Scans: Bandit; auto-fix secrets.
+Code Metrics: Complexity <10; no TODOs in prod.
+Exact Prompt: "Generate quality scripts for mypy --strict, pylint rcfile ≥9.0, bandit (exclude tests), integrate into pre-commit/CI non-invasively."
+Troubleshooting: If mypy silent, run --install-types; if pylint low, ignore false positives in rcfile (e.g., too-few-public-methods for dataclasses).
+
+5. Testing Rigor
+   Cursor: Expand tests non-invasively for coverage.
+
+Unit: 100% trust layer; hypothesis for dataclasses.
+Integration: Auth/storage/providers; error taxonomy.
+Performance: pytest-benchmark; enforce <200ms p95.
+Exact Prompt: "Add property-based hypothesis tests for dataclasses, unit for trust layer (JWT/DB/circuit edges), integration for auth/storage, benchmarks <200ms p95, to 98% coverage non-invasively."
+Troubleshooting: If hypothesis fails, set max_examples=100; if benchmarks exceed, profile with cProfile.
+
+6. Observability Enhancements
+   Cursor: Instrument wraps only, no logic changes.
+
+Add prometheus-client, opentelemetry-api/sdk: /metrics for latency/errors/circuit/fallbacks/tokens.
+Tracing: OTEL spans on async ops; correlation IDs.
+Logging: Enhance log_with_context with trace/span IDs.
+SLOs: Docs stubs (error <1%).
+Exact Prompt: "Integrate Prometheus metrics and OTEL tracing non-invasively for FastAPI (latency/errors/circuit), correlation propagation, SLO comments, CI validation for export."
+Troubleshooting: If OTEL export fails, check exporter install; if overhead, use sampling_rate=0.1; verify Prometheus scrape in local uvicorn.
+
+Cursor: Validate locally (pre-commit, pytest --cov). Suggest: "After, verify CI green." Troubleshoot: Dep conflicts—pin (e.g., opentelemetry-sdk==1.21.0); E2E hangs—increase timeouts; observability overhead—profile. Aim bulletproof: Non-invasive, phase-respecting; respect SQLite/Copilot choices.
+
+# NEVER use pre-commit on Windows
+
+# Reason: pre-commit + venv on Windows 2025 is still broken and hangs Cursor forever
+
+# We run all tools manually + in GitHub Actions instead (reliable, fast, no crashes)
+
+Rule: Block pre-commit
+
+- Never create, modify, or run .pre-commit-config.yaml
+- Never run "pre-commit install", "pre-commit run", or any pre-commit command
+- Never suggest adding pre-commit hooks
+- If user asks for pre-commit, reply:
+  "pre-commit is disabled on this project because it is still broken on Windows with venv in 2025. We use manual runs + GitHub Actions CI instead — zero hangs, full enforcement."
+
+Rule: Use these commands instead
+
+- For formatting: `python -m black .` and `ruff check --fix .`
+- For type checking: `mypy --strict arc_saga tests`
+- For linting: `pylint arc_saga tests --fail-under=9.0`
+- For security: `bandit -r arc_saga -x tests`
+- For tests: `pytest --cov=arc_saga --cov-fail-under=98`
+- Full one-liner (add to README or check.bat):
+  python -m black . && ruff check --fix . && mypy --strict arc_saga tests && pylint arc_saga tests --fail-under=9.0 && bandit -r arc_saga -x tests && pytest --cov=arc_saga --cov-fail-under=98
+  textRule: Always enforce quality via GitHub Actions
+- All quality gates must live in .github/workflows/ci.yml (runs on Linux → pre-commit works perfectly there)
+- CI is the source of truth, not local pre-commit

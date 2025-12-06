@@ -20,10 +20,10 @@ from __future__ import annotations
 import asyncio
 from datetime import datetime, timedelta, timezone
 from typing import Any, AsyncIterator
-from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from arc_saga.error_instrumentation import CircuitBreakerMetrics
 from arc_saga.integrations.circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerOpenError,
@@ -31,7 +31,6 @@ from arc_saga.integrations.circuit_breaker import (
     is_transient_error,
     retry_with_backoff,
 )
-from arc_saga.error_instrumentation import CircuitBreakerMetrics
 
 
 class TestCircuitBreakerInitialization:
@@ -587,14 +586,11 @@ class TestRetryWithBackoff:
     async def test_retry_exponential_backoff_increases_delay(self) -> None:
         """Test retry uses exponential backoff with increasing delays."""
         call_count = 0
-        delays: list[float] = []
 
         async def failing_func() -> None:
             nonlocal call_count
             call_count += 1
             raise TimeoutError("Transient error")
-
-        start_time = asyncio.get_event_loop().time()
 
         try:
             await retry_with_backoff(
@@ -620,8 +616,6 @@ class TestRetryWithBackoff:
             nonlocal call_count
             call_count += 1
             raise TimeoutError("Transient error")
-
-        start_time = asyncio.get_event_loop().time()
 
         try:
             await retry_with_backoff(
@@ -733,15 +727,15 @@ class TestCircuitBreakerWithPerplexityClient:
     @pytest.mark.asyncio
     async def test_ask_streaming_uses_circuit_breaker(self) -> None:
         """Test ask_streaming uses circuit breaker for API calls."""
-        from arc_saga.integrations.perplexity_client import PerplexityClient
         from unittest.mock import AsyncMock, MagicMock, patch
-        import json
-        from typing import AsyncIterator
+
+        from arc_saga.integrations.perplexity_client import PerplexityClient
 
         # Simple mock storage
         class MockStorageBackend:
             async def save_message(self, message: Any) -> str:
                 return str(message.id)  # type: ignore[no-any-return]
+
             async def get_by_session(self, session_id: str) -> list[Any]:
                 return []
 
@@ -752,7 +746,9 @@ class TestCircuitBreakerWithPerplexityClient:
                 self.choices[0].delta = MagicMock()
                 self.choices[0].delta.content = content
 
-        async def mock_stream_generator(chunks: list[str]) -> AsyncIterator[MockStreamChunk]:
+        async def mock_stream_generator(
+            chunks: list[str],
+        ) -> AsyncIterator[MockStreamChunk]:
             for chunk in chunks:
                 yield MockStreamChunk(chunk)
 
@@ -766,9 +762,7 @@ class TestCircuitBreakerWithPerplexityClient:
         mock_stream = mock_stream_generator(["Response"])
 
         with patch.object(
-            client.client.chat.completions,
-            "create",
-            new_callable=AsyncMock
+            client.client.chat.completions, "create", new_callable=AsyncMock
         ) as mock_create:
             mock_create.return_value = mock_stream
 
@@ -787,6 +781,7 @@ class TestCircuitBreakerWithPerplexityClient:
         class MockStorageBackend:
             async def save_message(self, message: Any) -> str:
                 return str(message.id)  # type: ignore[no-any-return]
+
             async def get_by_session(self, session_id: str) -> list[Any]:
                 return []
 
@@ -806,6 +801,7 @@ class TestCircuitBreakerWithPerplexityClient:
         # Should yield error message (graceful degradation)
         assert len(chunks) > 0
         import json
+
         error_chunk = json.loads(chunks[0])
         assert error_chunk["type"] == "error"
         assert "Circuit breaker is open" in error_chunk["message"]
@@ -814,14 +810,15 @@ class TestCircuitBreakerWithPerplexityClient:
     @pytest.mark.asyncio
     async def test_ask_streaming_retries_with_backoff_on_transient_errors(self) -> None:
         """Test ask_streaming retries with backoff on transient errors."""
+        from unittest.mock import MagicMock, patch
+
         from arc_saga.integrations.perplexity_client import PerplexityClient
-        from unittest.mock import AsyncMock, MagicMock, patch
-        from typing import AsyncIterator
 
         # Simple mock storage
         class MockStorageBackend:
             async def save_message(self, message: Any) -> str:
                 return str(message.id)  # type: ignore[no-any-return]
+
             async def get_by_session(self, session_id: str) -> list[Any]:
                 return []
 
@@ -832,7 +829,9 @@ class TestCircuitBreakerWithPerplexityClient:
                 self.choices[0].delta = MagicMock()
                 self.choices[0].delta.content = content
 
-        async def mock_stream_generator(chunks: list[str]) -> AsyncIterator[MockStreamChunk]:
+        async def mock_stream_generator(
+            chunks: list[str],
+        ) -> AsyncIterator[MockStreamChunk]:
             for chunk in chunks:
                 yield MockStreamChunk(chunk)
 
@@ -842,7 +841,9 @@ class TestCircuitBreakerWithPerplexityClient:
         call_count = 0
         mock_stream = mock_stream_generator(["Response"])
 
-        async def mock_create(*args: Any, **kwargs: Any) -> AsyncIterator[MockStreamChunk]:
+        async def mock_create(
+            *args: Any, **kwargs: Any
+        ) -> AsyncIterator[MockStreamChunk]:
             nonlocal call_count
             call_count += 1
             if call_count == 1:
@@ -850,9 +851,7 @@ class TestCircuitBreakerWithPerplexityClient:
             return mock_stream
 
         with patch.object(
-            client.client.chat.completions,
-            "create",
-            side_effect=mock_create
+            client.client.chat.completions, "create", side_effect=mock_create
         ):
             chunks = []
             async for chunk in client.ask_streaming("Test query"):
@@ -918,9 +917,7 @@ class TestCircuitBreakerConcurrency:
             return "should not execute"
 
         with pytest.raises(CircuitBreakerOpenError):
-            await asyncio.gather(
-                *[breaker.call(any_func) for _ in range(5)]
-            )
+            await asyncio.gather(*[breaker.call(any_func) for _ in range(5)])
 
 
 class TestCircuitBreakerEdgeCases:
@@ -997,4 +994,3 @@ class TestCircuitBreakerEdgeCases:
         breaker._last_failure_time = datetime.now(timezone.utc) - timedelta(seconds=61)
 
         assert breaker._should_attempt_recovery() is True
-

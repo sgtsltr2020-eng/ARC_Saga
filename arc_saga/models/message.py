@@ -15,8 +15,10 @@ from pydantic import BaseModel, Field, field_validator
 
 # ENUMS
 
+
 class Provider(str, Enum):
     """Supported AI providers."""
+
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
     GOOGLE = "google"
@@ -27,6 +29,7 @@ class Provider(str, Enum):
 
 class MessageRole(str, Enum):
     """Message sender role."""
+
     USER = "user"
     ASSISTANT = "assistant"
     SYSTEM = "system"
@@ -34,6 +37,7 @@ class MessageRole(str, Enum):
 
 class FileType(str, Enum):
     """Supported file types."""
+
     PDF = "pdf"
     DOCX = "docx"
     CODE = "code"
@@ -45,9 +49,11 @@ class FileType(str, Enum):
 
 # DATACLASSES
 
+
 @dataclass
 class Message:
     """Represents a single message in a conversation."""
+
     provider: Provider
     role: MessageRole
     content: str
@@ -81,6 +87,7 @@ class Message:
 @dataclass
 class File:
     """Represents an uploaded or monitored file."""
+
     filename: str
     filepath: str
     file_type: FileType
@@ -102,6 +109,7 @@ class File:
 @dataclass
 class SearchResult:
     """Result from a search query."""
+
     entity_id: str
     entity_type: str
     content: str
@@ -113,6 +121,7 @@ class SearchResult:
 @dataclass
 class ValidationResult:
     """Result of data validation."""
+
     is_valid: bool
     errors: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
@@ -126,8 +135,10 @@ class ValidationResult:
 
 # PYDANTIC MODELS
 
+
 class MessageCreateRequest(BaseModel):
     """API request to create a message."""
+
     provider: str = Field(..., description="AI provider")
     role: str = Field(..., description="Message role")
     content: str = Field(..., min_length=1, max_length=100_000)
@@ -152,6 +163,7 @@ class MessageCreateRequest(BaseModel):
 
 class SearchRequestModel(BaseModel):
     """API request to search messages."""
+
     query: str = Field(..., min_length=1, max_length=1000)
     tags: Optional[list[str]] = Field(None, description="Optional tag filters")
     limit: int = Field(50, ge=1, le=500)
@@ -159,6 +171,7 @@ class SearchRequestModel(BaseModel):
 
 class MessageResponseModel(BaseModel):
     """API response for a message."""
+
     id: str
     provider: str
     role: str

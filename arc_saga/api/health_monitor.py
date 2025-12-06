@@ -10,18 +10,15 @@ from __future__ import annotations
 import shutil
 import time
 from collections import deque
-from datetime import datetime, timezone
 from typing import Any, Deque, Dict, Optional
 
-from fastapi import Request, Response
+from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from ..error_instrumentation import (
-    CircuitBreakerMetrics,
     ErrorContext,
     LatencyMetrics,
     create_request_context,
-    get_correlation_id,
     log_with_context,
     request_context,
 )
@@ -205,7 +202,9 @@ class LatencyTrackingMiddleware(BaseHTTPMiddleware):
             elapsed_ms = (time.time() - start_time) * 1000
 
             # Record latency (exclude health endpoints to avoid recursion)
-            if not endpoint.startswith("/health") and not endpoint.startswith("/metrics"):
+            if not endpoint.startswith("/health") and not endpoint.startswith(
+                "/metrics"
+            ):
                 health_monitor.record_latency(endpoint, elapsed_ms)
 
             return response
@@ -353,4 +352,3 @@ def determine_health_status(
             return "degraded"
 
     return "healthy"
-

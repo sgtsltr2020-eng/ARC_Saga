@@ -618,3 +618,257 @@ File: {file}
 ## Version History
 
 - v1.0 (2024-12-01): Initial prompt library with 20+ optimized prompts
+
+# APPEND TO prompts_library.md
+
+---
+
+## TOKEN OPTIMIZATION PROMPTS
+
+### PROMPT-TOKEN-001: Estimate Request Cost
+
+**When to Use:** Before sending any request to Cursor/AI provider
+
+**Token Cost:** 50 tokens (estimation query)
+
+**Success Rate:** 95% (accurate within 10%)
+
+**Prompt:**
+
+```
+Estimate token cost for this request:
+
+Task: {task_description}
+Current Memory Tier: {tier_name}
+Files to include: {file_list}
+
+Provide breakdown:
+- Base context (cursorrules, etc): X tokens
+- Task-specific context: Y tokens
+- Expected response: Z tokens
+- Total estimate: X+Y+Z tokens
+- Cost at current provider rates: $X.XX
+
+Recommend optimal memory tier for this task.
+```
+
+---
+
+### PROMPT-TOKEN-002: Reduce Context Size
+
+**When to Use:** When nearing token budget limit
+
+**Token Cost:** 100 tokens
+
+**Success Rate:** 85%
+
+**Prompt:**
+
+```
+I'm at 85% of token budget. Help me reduce context:
+
+Current configuration:
+- Memory Tier: {current_tier}
+- Included files: {file_list}
+- Estimated tokens: {estimate}
+
+Task: {task_description}
+
+Suggest:
+1. Minimum memory tier that still works
+2. Which files can be excluded
+3. Alternative approach using fewer tokens
+4. Expected quality tradeoff
+```
+
+---
+
+### PROMPT-TOKEN-003: Compare Provider Costs
+
+**When to Use:** Deciding which LLM provider to use
+
+**Token Cost:** 75 tokens
+
+**Success Rate:** 90%
+
+**Prompt:**
+
+```
+Compare costs for this task across providers:
+
+Task: {task_description}
+Estimated tokens: {token_count}
+
+Providers:
+- GPT-4: $0.03/1k input, $0.06/1k output
+- Claude Sonnet: $0.015/1k input, $0.075/1k output
+- Gemini Pro: $0.00025/1k input, $0.00075/1k output
+
+Calculate total cost per provider and recommend cheapest option.
+```
+
+---
+
+## MEMORY TIER SELECTION GUIDANCE
+
+### Choosing the Right Tier
+
+Use this decision tree:
+
+```
+Is task simple refactoring or formatting?
+  YES → MINIMAL tier (~2k tokens, $0.06)
+  NO ↓
+
+Is task standard feature implementation?
+  YES → STANDARD tier (~5k tokens, $0.15)
+  NO ↓
+
+Is task debugging complex error?
+  YES → ENHANCED tier (~8k tokens, $0.24)
+  NO ↓
+
+Is task new feature requiring full context?
+  YES → COMPLETE tier (~10k tokens, $0.30)
+  NO ↓
+
+Is task research or learning new pattern?
+  YES → UNLIMITED tier (~15k tokens, $0.45)
+```
+
+### Task-to-Tier Mapping
+
+| Task Type                          | Recommended Tier | Justification                      |
+| ---------------------------------- | ---------------- | ---------------------------------- |
+| Fix typo                           | MINIMAL          | Only needs cursorrules for quality |
+| Rename variable                    | MINIMAL          | Simple refactoring                 |
+| Add type hints                     | MINIMAL          | Straightforward task               |
+| Implement CRUD endpoint            | STANDARD         | Needs decision_catalog patterns    |
+| Add authentication                 | STANDARD         | Standard architectural pattern     |
+| Fix "PoolTimeoutError"             | ENHANCED         | Needs error_catalog context        |
+| Debug intermittent failure         | ENHANCED         | Needs error patterns               |
+| Implement new architecture pattern | COMPLETE         | Needs full documentation           |
+| Add OAuth integration              | COMPLETE         | Complex, needs all context         |
+| Research best caching strategy     | UNLIMITED        | Needs reasoning traces             |
+| Learn new framework                | UNLIMITED        | Exploratory, needs history         |
+
+### Budget-Conscious Tips
+
+**When Budget is Low (<20% remaining):**
+
+1. **Use MINIMAL tier for everything possible**
+
+   - Still enforces quality via cursorrules
+   - Saves 60% tokens vs STANDARD
+
+2. **Batch related tasks**
+
+   - One request for multiple small changes
+   - Amortize context cost
+
+3. **Switch to Perplexity for brainstorming**
+
+   - Free research and planning
+   - Save Cursor for code generation only
+
+4. **Reference catalogs manually**
+
+   - Read decision_catalog yourself
+   - Don't include in context
+
+5. **Use quick reference prompts**
+   - PROMPT-QUICK-\* series
+   - 1-2 tokens each
+
+**When Budget is Healthy (>50% remaining):**
+
+1. **Use STANDARD as default**
+
+   - Good balance of context and cost
+
+2. **Upgrade to ENHANCED for errors**
+
+   - Worth the extra tokens
+
+3. **Use COMPLETE for new features**
+
+   - Ensures high quality
+
+4. **Experiment with UNLIMITED**
+   - Learning improves future efficiency
+
+### Tier Switching Examples
+
+**Example 1: Running Low on Budget**
+
+```
+Before: STANDARD tier (5k tokens/request)
+Task: Fix 5 small bugs
+
+After: MINIMAL tier (2k tokens/request)
+Approach: Fix all 5 bugs in one request
+Savings: (5 × 5k) - (1 × 2k) = 23k tokens saved
+```
+
+**Example 2: Complex Debugging**
+
+```
+Before: STANDARD tier, failing to solve error
+Tokens spent: 15k (3 failed attempts)
+
+After: Switch to ENHANCED tier
+Result: Solved in 1 attempt (8k tokens)
+Net savings: 15k - 8k = 7k tokens
+```
+
+**Example 3: Learning New Pattern**
+
+```
+Task: Implement event sourcing (never done before)
+Wrong approach: STANDARD tier, multiple iterations
+Cost: 30k tokens, still not working
+
+Right approach: UNLIMITED tier upfront
+Cost: 15k tokens, works first try
+Bonus: Reasoning trace captured for future use
+```
+
+---
+
+## Version History
+
+- v2.0 (2024-12-02): Added token optimization prompts and memory tier guidance
+- v1.0 (2024-12-01): Initial prompts library
+
+##Prompt Template for Feature Building##
+@codebase Implement the following feature in this project, following our established patterns and quality bars:
+
+Feature:
+
+- {brief description of the feature}
+- Target module or area: {e.g., storage, API, integrations}
+- Tech context: Python 3.11+, FastAPI-based service, SQLite with FTS5
+
+Requirements:
+
+- Conform to the architectural and quality standards defined in:
+  - docs/decision_catalog.md
+  - docs/error_catalog.md
+  - docs/verification_checklist.md
+- Use our existing Repository / CQRS / circuit breaker patterns where appropriate.
+- Include comprehensive error handling, structured logging with correlation IDs, and tests with ≥ 95% coverage.
+- Ensure mypy --strict, pytest, pylint, and bandit will all pass without changes.
+
+Deliverables:
+
+- Updated/created code files under src/ that integrate cleanly with existing modules.
+- Corresponding tests under tests/ with clear coverage of happy paths, error paths, and edge cases.
+- Any necessary updates to decision_catalog.md or error_catalog.md to document new decisions or error types (describe the exact edits in your response).
+
+Before writing code:
+
+1. Restate your understanding of the feature and constraints.
+2. Identify which existing patterns/decisions from docs/ you will reuse.
+3. Outline the files and functions you plan to add or modify.
+
+Then generate the code and tests accordingly.

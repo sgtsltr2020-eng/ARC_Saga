@@ -62,10 +62,7 @@ class StorageBackend(ABC):
 
     @abstractmethod
     async def search_messages(
-        self,
-        query: str,
-        tags: Optional[list[str]] = None,
-        limit: int = 50
+        self, query: str, tags: Optional[list[str]] = None, limit: int = 50
     ) -> list[SearchResult]:
         """
         Search messages by content and tags using full-text search.

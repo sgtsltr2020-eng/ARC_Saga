@@ -414,6 +414,44 @@ RecursionError: maximum recursion depth exceeded
 
 ---
 
+## ERROR-010: Budget Exceeded
+
+**Error Message:**
+
+```
+BudgetExceededRoutingError: Estimated cost <x> exceeds max $<max_usd>
+```
+
+**Frequency:** Low
+
+**Root Cause:**
+
+1. Cost estimation for a task exceeds configured hard limit.
+2. Token estimate overflow (>1,000,000 tokens) triggers safety cap.
+
+**Context Clues:**
+
+- `cost_optimizer_ranked` log absent; failure raised before routing attempts.
+- Prometheus counter `arc_saga_tier_escalations_total` increments with reason `budget_limit` or `token_overflow` when enabled.
+
+**Proven Fixes:**
+
+1. Increase `SAGA_COST_MAX_USD` to match workload ceiling.
+2. Reduce prompt size or token targets before routing.
+3. Disable hard limits only in trusted environments (`SAGA_COST_ENFORCE_HARD_LIMITS=false`).
+
+**Prevention:**
+
+- Keep provider cost profiles updated.
+- Set environment-specific budgets with alerts.
+- Validate prompt size and expected tokens upstream.
+
+**Similar Errors:**
+
+- Provider rate-limit/quota errors (see ERROR-003 patterns)
+
+---
+
 ## Structure for New Errors (Copy and Fill In)
 
 ```markdown
