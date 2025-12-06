@@ -7,6 +7,18 @@ Status: Ideas only. Not commitments. Reference AGENT_ONBOARDING.md for current i
 ## Orchestrator & Control Plane
 
 - Orchestrator Agent (central coordinator)
+  - A controller inside Saga that classifies intent, enforces policies, packages context, and routes actions to IDEs/providers. Prevents IDEs from acting on brainstorms.
+
+- Policy Engine (user-customizable)
+  - Loads project-wide rules ("cursorrules"), quality gates, and guardrails. Blocks or requires confirmation for actions based on intent and policy.
+
+- CommandEnvelope (standard action payload)
+  - Provider-agnostic command package including intent, constraints, attachments (rules/docs), acceptance criteria, and rollback policy. Ensures consistency and quality.
+
+- Context Packager (automatic attachments)
+  - Automatically attaches .cursorrules, onboarding docs, verification checklist, decision/error catalogs, and relevant code excerpts to every command.
+
+- Agent Registry & Capabilities
 
   - A controller inside Saga that classifies intent, enforces policies, packages context, and routes actions to IDEs/providers. Prevents IDEs from acting on brainstorms.
 
@@ -32,6 +44,15 @@ Status: Ideas only. Not commitments. Reference AGENT_ONBOARDING.md for current i
 ## Replaceability Primitives
 
 - ProviderAdapter ABC + Registry
+  - Formal adapter interface for all providers (Perplexity, OpenAI, Anthropic, Groq, etc.) with a central registry for hot-swapping and capability lookup.
+
+- IdeAdapter ABC
+  - Standard interface for IDE integrations (Cursor, VSCode, Copilot) so orchestrator sends uniform commands regardless of IDE specifics.
+
+- API Versioning (additive)
+  - Add api_version field to requests/responses. Evolve contracts additively to avoid breaking clients.
+
+- Idempotency Envelope
 
   - Formal adapter interface for all providers (Perplexity, OpenAI, Anthropic, Groq, etc.) with a central registry for hot-swapping and capability lookup.
 
@@ -53,6 +74,12 @@ Status: Ideas only. Not commitments. Reference AGENT_ONBOARDING.md for current i
 ## Stability & Resilience
 
 - Circuit Breaker (external calls)
+  - Guard Perplexity and other provider calls with open/half-open/closed states to prevent cascading failures.
+
+- Retry with Exponential Backoff + Jitter
+  - Uniform transient error handling for all network interactions.
+
+- Rate Limiting (per endpoint/client)
 
   - Guard Perplexity and other provider calls with open/half-open/closed states to prevent cascading failures.
 
@@ -70,6 +97,16 @@ Status: Ideas only. Not commitments. Reference AGENT_ONBOARDING.md for current i
 ## Audit & UX
 
 - Audit Dashboard Tab (real-time)
+  - UI showing health, metrics, errors, and rule compliance with live updates (WebSocket). Pulls from error_instrumentation and storage health.
+
+- Agent Activity Tab
+  - Shows each agent's current status, intent, active session, and last action. Ties into agent registry and orchestrator events.
+
+- Command Console Tab
+  - Text box to send follow-ups; routes through Orchestrator with automatic attachments. Includes intent override and confirmation toggles.
+
+- Actionable Audit Notes
+  - Users create "AuditNotes" with severity/category/suggested action and attachments. Orchestrator routes them to the right agent as CommandEnvelopes.
 
   - UI showing health, metrics, errors, and rule compliance with live updates (WebSocket). Pulls from error_instrumentation and storage health.
 
@@ -109,6 +146,12 @@ Status: Ideas only. Not commitments. Reference AGENT_ONBOARDING.md for current i
 ## Advanced Architecture
 
 - Event Sourcing
+  - Immutable event log for audit, replay, and incident forensics (Phase 2 feature).
+
+- CQRS
+  - Separate read/write models; optimize read projections and maintain eventual consistency.
+
+- Vector/Semantic Search
 
   - Immutable event log for audit, replay, and incident forensics (Phase 2 feature).
 
@@ -126,6 +169,9 @@ Status: Ideas only. Not commitments. Reference AGENT_ONBOARDING.md for current i
 ## Enterprise & Ops
 
 - Multi-Tenancy & RBAC
+  - Team/org isolation, roles, and granular permissions for agents and endpoints.
+
+- Analytics Dashboard
 
   - Team/org isolation, roles, and granular permissions for agents and endpoints.
 
@@ -139,6 +185,9 @@ Status: Ideas only. Not commitments. Reference AGENT_ONBOARDING.md for current i
 ## Quality Gates & Standards
 
 - Enforcement of Type Hints & Docstrings
+  - Fail actions that produce code without full type hints and Google-style docstrings.
+
+- Logging & Error Handling Requirements
 
   - Fail actions that produce code without full type hints and Google-style docstrings.
 
@@ -152,6 +201,9 @@ Status: Ideas only. Not commitments. Reference AGENT_ONBOARDING.md for current i
 ## Developer Experience
 
 - Prompts Library Expansion
+  - Curated prompts tied to policies and acceptance criteria for repeatable, high-quality generation across agents.
+
+- Decision & Error Catalog Attachments
 
   - Curated prompts tied to policies and acceptance criteria for repeatable, high-quality generation across agents.
 
