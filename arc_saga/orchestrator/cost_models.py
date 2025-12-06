@@ -7,10 +7,10 @@ precision and avoids network calls to keep low-spec perf (<1ms scoring).
 
 from __future__ import annotations
 
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from typing import Dict, Iterable, Tuple
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, ValidationInfo, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from arc_saga.error_instrumentation import log_with_context
@@ -33,10 +33,13 @@ class CostWeights(BaseModel):
 
     @field_validator("quality")
     @classmethod
-    def _weights_not_all_zero(cls, value: Decimal, values: dict[str, Decimal]) -> Decimal:
-        if "cost" in values and "latency" in values:
-            total = values["cost"] + values["latency"] + value
-            _require(total > Decimal("0"), "At least one weight must be greater than zero")
+    def _weights_not_all_zero(cls, value: Decimal, info: ValidationInfo) -> Decimal:
+        data = info.data
+        if "cost" in data and "latency" in data:
+            total = data["cost"] + data["latency"] + value
+            _require(
+                total > Decimal("0"), "At least one weight must be greater than zero"
+            )
         return value
 
     @classmethod
@@ -74,7 +77,9 @@ class CostSettings(BaseSettings):
     @classmethod
     def _validate_weights(cls, value: str) -> str:
         parts = [p.strip() for p in value.split(",") if p.strip()]
-        _require(len(parts) == 3, "SAGA_COST_WEIGHTS must have three comma-separated values")
+        _require(
+            len(parts) == 3, "SAGA_COST_WEIGHTS must have three comma-separated values"
+        )
         decimals: list[Decimal] = [Decimal(part) for part in parts]
         total = sum(decimals, Decimal("0"))
         _require(total > Decimal("0"), "SAGA_COST_WEIGHTS must sum to a positive value")
@@ -84,7 +89,9 @@ class CostSettings(BaseSettings):
     @classmethod
     def _validate_cache_size(cls, value: int) -> int:
         _require(value > 0, "SAGA_COST_CACHE_SIZE must be positive")
-        _require(value <= 1000, "SAGA_COST_CACHE_SIZE must stay under 1000 to bound RAM")
+        _require(
+            value <= 1000, "SAGA_COST_CACHE_SIZE must stay under 1000 to bound RAM"
+        )
         return value
 
     def parsed_weights(self) -> CostWeights:
@@ -184,13 +191,18 @@ class CostProfileRegistry:
     @classmethod
     def get(cls, provider: AIProvider) -> CostProfile:
         profile = cls._profiles.get(provider)
-        _require(profile is not None, f"Cost profile missing for provider={provider.value}")
+        _require(
+            profile is not None, f"Cost profile missing for provider={provider.value}"
+        )
         assert profile is not None
         return profile
 
     @classmethod
     def update(cls, provider: AIProvider, profile: CostProfile) -> None:
-        _require(profile.provider == provider, "Profile provider mismatch when updating cost registry")
+        _require(
+            profile.provider == provider,
+            "Profile provider mismatch when updating cost registry",
+        )
         cls._profiles[provider] = profile
         log_with_context(
             "info",
@@ -221,7 +233,9 @@ def score_provider(
     weights_model = CostWeights.from_tuple(weights) if weights else CostWeights()
 
     estimated_cost = (profile.cost_per_1k * Decimal(est_tokens)) / Decimal("1000")
-    cost_norm = _clamp_decimal(estimated_cost / Decimal("1.0"), Decimal("0"), Decimal("1"))
+    cost_norm = _clamp_decimal(
+        estimated_cost / Decimal("1.0"), Decimal("0"), Decimal("1")
+    )
     latency_norm = _clamp_decimal(
         Decimal(str(profile.latency_p95_ms / 1000.0)),
         Decimal("0"),

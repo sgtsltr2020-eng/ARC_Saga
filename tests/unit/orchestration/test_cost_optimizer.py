@@ -41,8 +41,8 @@ def test_rank_cheapest_prefers_lower_cost(task, monkeypatch, restore_profiles):
     cheap_profile = CostProfile(
         provider=AIProvider.GROQ,
         cost_per_1k=Decimal("0.0005"),
-        latency_p95_ms=500.0,
-        quality=0.8,
+        latency_p95_ms=120.0,
+        quality=0.9,
     )
     costly_profile = CostProfile(
         provider=AIProvider.OPENAI,

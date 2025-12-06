@@ -3,14 +3,16 @@ arc_saga/tests/unit/test_models.py
 Unit tests for data models.
 """
 
-import pytest
 from datetime import datetime, timezone
+
+import pytest
+
 from arc_saga.models import (
-    Message,
     File,
-    Provider,
-    MessageRole,
     FileType,
+    Message,
+    MessageRole,
+    Provider,
     ValidationResult,
 )
 

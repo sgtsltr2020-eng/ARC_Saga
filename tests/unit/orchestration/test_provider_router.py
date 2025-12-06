@@ -14,16 +14,14 @@ import pytest
 
 from arc_saga.orchestrator.engine_registry import ReasoningEngineRegistry
 from arc_saga.orchestrator.errors import PermanentError, ProviderError, TransientError
-from arc_saga.orchestrator.provider_router import (
-    ProviderRouter,
-    RoutingRule,
-)
+from arc_saga.orchestrator.provider_router import ProviderRouter, RoutingRule
 from arc_saga.orchestrator.types import (
     AIProvider,
     AIResult,
     AIResultOutput,
     AITask,
     AITaskInput,
+    Result,
 )
 
 
@@ -136,7 +134,11 @@ async def test_primary_success_short_circuit(caplog: pytest.LogCaptureFixture) -
     ReasoningEngineRegistry.register(AIProvider.COPILOT_CHAT, engine)
 
     router = ProviderRouter(
-        rules=[RoutingRule(task_types={"reasoning"}, ordered_providers=[AIProvider.COPILOT_CHAT])],
+        rules=[
+            RoutingRule(
+                task_types={"reasoning"}, ordered_providers=[AIProvider.COPILOT_CHAT]
+            )
+        ],
         default_order=[AIProvider.COPILOT_CHAT],
     )
 
@@ -302,7 +304,11 @@ async def test_no_rule_uses_default_order() -> None:
     ReasoningEngineRegistry.register(AIProvider.COPILOT_CHAT, engine)
 
     router = ProviderRouter(
-        rules=[RoutingRule(task_types={"reasoning"}, ordered_providers=[AIProvider.ANTHROPIC])],
+        rules=[
+            RoutingRule(
+                task_types={"reasoning"}, ordered_providers=[AIProvider.ANTHROPIC]
+            )
+        ],
         default_order=[AIProvider.COPILOT_CHAT],
     )
 
@@ -321,14 +327,21 @@ async def test_route_method_returns_result() -> None:
     ReasoningEngineRegistry.register(AIProvider.COPILOT_CHAT, engine)
 
     router = ProviderRouter(
-        rules=[RoutingRule(task_types={"reasoning"}, ordered_providers=[AIProvider.COPILOT_CHAT])],
+        rules=[
+            RoutingRule(
+                task_types={"reasoning"}, ordered_providers=[AIProvider.COPILOT_CHAT]
+            )
+        ],
         default_order=[AIProvider.COPILOT_CHAT],
     )
 
     task = make_task("reasoning", "h8")
     result = await router.route(task, {"correlation_id": "h8"})
 
-    assert isinstance(result, AIResult)
+    # Note: Use Result instead of AIResult for isinstance() check since
+    # AIResult is a subscripted generic (Result[AIResultOutput]) which
+    # cannot be used with isinstance() in Python's typing system
+    assert isinstance(result, Result)
     assert result.success is True
 
 
@@ -340,7 +353,11 @@ async def test_route_raises_on_all_providers_fail() -> None:
     ReasoningEngineRegistry.register(AIProvider.COPILOT_CHAT, perm_engine)
 
     router = ProviderRouter(
-        rules=[RoutingRule(task_types={"reasoning"}, ordered_providers=[AIProvider.COPILOT_CHAT])],
+        rules=[
+            RoutingRule(
+                task_types={"reasoning"}, ordered_providers=[AIProvider.COPILOT_CHAT]
+            )
+        ],
         default_order=[AIProvider.COPILOT_CHAT],
     )
 
@@ -354,7 +371,11 @@ async def test_no_candidates_immediate_failure() -> None:
     """Empty candidate list results in immediate failure."""
 
     router = ProviderRouter(
-        rules=[RoutingRule(task_types={"reasoning"}, ordered_providers=[AIProvider.ANTHROPIC])],
+        rules=[
+            RoutingRule(
+                task_types={"reasoning"}, ordered_providers=[AIProvider.ANTHROPIC]
+            )
+        ],
         default_order=[],  # Empty default
     )
 
@@ -366,7 +387,9 @@ async def test_no_candidates_immediate_failure() -> None:
 
 
 @pytest.mark.asyncio
-async def test_correlation_id_flows_through_logs(caplog: pytest.LogCaptureFixture) -> None:
+async def test_correlation_id_flows_through_logs(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     """Correlation ID is present in all log messages."""
 
     caplog.set_level("INFO")
@@ -374,7 +397,11 @@ async def test_correlation_id_flows_through_logs(caplog: pytest.LogCaptureFixtur
     ReasoningEngineRegistry.register(AIProvider.COPILOT_CHAT, engine)
 
     router = ProviderRouter(
-        rules=[RoutingRule(task_types={"reasoning"}, ordered_providers=[AIProvider.COPILOT_CHAT])],
+        rules=[
+            RoutingRule(
+                task_types={"reasoning"}, ordered_providers=[AIProvider.COPILOT_CHAT]
+            )
+        ],
         default_order=[AIProvider.COPILOT_CHAT],
     )
 

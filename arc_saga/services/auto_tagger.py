@@ -3,9 +3,10 @@ Auto-tagging service using TF-IDF
 Extracts relevant keywords from conversation content
 """
 
-from typing import List
-from sklearn.feature_extraction.text import TfidfVectorizer
 import re
+from typing import List
+
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 
 class AutoTagger:

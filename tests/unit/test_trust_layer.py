@@ -89,4 +89,3 @@ async def test_perplexity_client_raises_storage_error_on_user_save_failure() -> 
     with pytest.raises(PerplexityStorageError, match="store user message"):
         async for _ in client.ask_streaming("hello"):
             pass
-

@@ -65,12 +65,20 @@ class LogLevel(str, Enum):
 def _sanitize_secrets(kwargs: Dict[str, Any]) -> Dict[str, Any]:
     """
     Redact sensitive values from kwargs to prevent secret leakage in logs.
-    
+
     Masks any key containing: token, key, secret, password, api_key, access_token, refresh_token
     """
-    sensitive_patterns = ["token", "key", "secret", "password", "api_key", "access_token", "refresh_token"]
+    sensitive_patterns = [
+        "token",
+        "key",
+        "secret",
+        "password",
+        "api_key",
+        "access_token",
+        "refresh_token",
+    ]
     sanitized = {}
-    
+
     for key, value in kwargs.items():
         key_lower = key.lower()
         if any(pattern in key_lower for pattern in sensitive_patterns):
@@ -80,7 +88,7 @@ def _sanitize_secrets(kwargs: Dict[str, Any]) -> Dict[str, Any]:
                 sanitized[key] = "***REDACTED***"
         else:
             sanitized[key] = value
-    
+
     return sanitized
 
 

@@ -23,62 +23,62 @@ Example:
 
 from __future__ import annotations
 
-# Types
-from .types import (
-    Task,
-    Result,
-    AITaskInput,
-    AIResultOutput,
-    AITask,
-    AIResult,
-    AIProvider,
-    TaskStatus,
-)
-
-# Events
-from .events import (
-    IEventStore,
-    SQLiteEventStore,
-    InMemoryEventStore,
-    OrchestratorEvent,
-    WorkflowStartedEvent,
-    WorkflowCompletedEvent,
-    TaskExecutedEvent,
-    PolicyEnforcedEvent,
-    OperationLoggedEvent,
-    EventStoreError,
-)
-
-# Core
-from .core import (
-    Orchestrator,
-    WorkflowPattern,
-    Policy,
-    Command,
-    PolicyResult,
-    OperationContext,
-    OrchestratorError,
-    WorkflowError,
-    PolicyViolationError,
-)
-
 # Admin
 from .admin import (
-    QualityGateManager,
     IQualityGateExecutor,
-    SubprocessExecutor,
-    QualityGateResult,
     QualityGateFailure,
+    QualityGateManager,
+    QualityGateResult,
     QualityGateType,
+    SubprocessExecutor,
 )
 
 # Config Generation
 from .config_gen import (
-    ProjectType,
-    OrchestrationConfig,
-    IProjectDetector,
-    FileSystemDetector,
     ConfigGenerator,
+    FileSystemDetector,
+    IProjectDetector,
+    OrchestrationConfig,
+    ProjectType,
+)
+
+# Core
+from .core import (
+    Command,
+    OperationContext,
+    Orchestrator,
+    OrchestratorError,
+    Policy,
+    PolicyResult,
+    PolicyViolationError,
+    WorkflowError,
+    WorkflowPattern,
+)
+
+# Events
+from .events import (
+    EventStoreError,
+    IEventStore,
+    InMemoryEventStore,
+    OperationLoggedEvent,
+    OrchestratorEvent,
+    PolicyEnforcedEvent,
+    SQLiteEventStore,
+    TaskExecutedEvent,
+    WorkflowCompletedEvent,
+    WorkflowStartedEvent,
+)
+
+# Types
+from .types import (
+    AIProvider,
+    AIResult,
+    AIResultOutput,
+    AITask,
+    AITaskInput,
+    Result,
+    Task,
+    TaskStatus,
 )
 
 __all__ = [

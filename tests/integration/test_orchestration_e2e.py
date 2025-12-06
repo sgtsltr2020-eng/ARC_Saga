@@ -18,6 +18,20 @@ from arc_saga.api.health_monitor import health_monitor
 from arc_saga.integrations.circuit_breaker import CircuitBreaker, CircuitState
 
 
+@pytest.fixture(autouse=True)
+def reset_health_monitor():
+    """Reset health monitor state before and after each test."""
+    health_monitor._circuit_breakers.clear()
+    health_monitor._endpoint_latencies.clear()
+    health_monitor._recent_errors.clear()
+    health_monitor.clear_cache()
+    yield
+    health_monitor._circuit_breakers.clear()
+    health_monitor._endpoint_latencies.clear()
+    health_monitor._recent_errors.clear()
+    health_monitor.clear_cache()
+
+
 @pytest_asyncio.fixture
 async def test_client(tmp_path) -> AsyncIterator[AsyncClient]:
     """Spin up ASGI test client with isolated SQLite DB path."""
@@ -98,4 +112,3 @@ async def test_metrics_reflect_circuit_breaker_state(test_client: AsyncClient) -
     metrics_json = metrics_resp.json()
     assert "dummy" in metrics_json["circuit_breakers"]
     assert metrics_json["circuit_breakers"]["dummy"]["total_calls"] >= 0
-

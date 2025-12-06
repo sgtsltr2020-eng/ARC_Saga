@@ -8,10 +8,10 @@ Follows: Single Responsibility Principle (data only, no logic)
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Optional, Any
+from typing import Any, Optional
 from uuid import uuid4
-from pydantic import BaseModel, Field, field_validator
 
+from pydantic import BaseModel, Field, field_validator
 
 # ENUMS
 

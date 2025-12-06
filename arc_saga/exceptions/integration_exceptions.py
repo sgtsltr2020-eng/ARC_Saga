@@ -164,4 +164,3 @@ class TransientError(ArcSagaException):
         self.cause = cause
         if cause:
             self.__cause__ = cause
-

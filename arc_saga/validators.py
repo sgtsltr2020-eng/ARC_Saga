@@ -45,4 +45,3 @@ def validate_search_request(query: str, limit: int) -> None:
 def validate_perplexity_request(query: str) -> None:
     """Validate perplexity request payload."""
     _require(bool(query.strip()), "query cannot be empty")
-

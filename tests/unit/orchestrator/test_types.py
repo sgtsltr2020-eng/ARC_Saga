@@ -23,10 +23,10 @@ import pytest
 
 from arc_saga.orchestrator.types import (
     AIProvider,
+    AIResult,
     AIResultOutput,
     AITask,
     AITaskInput,
-    AIResult,
     Result,
     Task,
     TaskStatus,

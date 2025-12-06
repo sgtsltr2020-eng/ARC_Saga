@@ -25,11 +25,7 @@ from ..error_instrumentation import (
     request_context,
 )
 from ..models import Message, MessageRole, Provider
-from .circuit_breaker import (
-    CircuitBreaker,
-    CircuitBreakerOpenError,
-    retry_with_backoff,
-)
+from .circuit_breaker import CircuitBreaker, CircuitBreakerOpenError, retry_with_backoff
 
 if TYPE_CHECKING:
     from ..storage.base import StorageBackend
