@@ -22,8 +22,9 @@ pip-delete-this-directory.txt
 *.code-workspace
 .history/
 
-# === CACHES & LOGS ===
+# === TOOL CACHES & LOGS (COMPREHENSIVE) ===
 .mypy_cache/
+.mypy_cache/**/*.json
 .pytest_cache/
 .ruff_cache/
 .coverage
@@ -31,11 +32,9 @@ coverage.xml
 htmlcov/
 .tox/
 .nox/
-.coverage
 .coverage.*
 .cache
 nosetests.xml
-coverage.xml
 *.cover
 *.log
 *.sqlite3
@@ -77,11 +76,13 @@ desktop.ini
 !*.yml
 !*.yaml
 
-# === DOCUMENT CONFIGURATION (selectively) ===
+# === DOCUMENT CONFIGURATION (selectively include) ===
 !docs/
 !.github/
 !.github/workflows/
 !.github/dependabot.yml
+!config/
+!config/*.json
 
 # === OPENAI CONFIG & RULES ===
 .github/instructions/openmemory.instructions.md
