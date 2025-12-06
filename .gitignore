@@ -1,14 +1,89 @@
+# === VIRTUAL ENVIRONMENTS (MUST BE FIRST) ===
+.venv/
+venv/
+env/
+ENV/
+
+# === PYTHON CACHE ===
 __pycache__/
 *.py[cod]
 *$py.class
-.pytest_cache/
-.env
-.venv
-env/
-venv/
-*.log
-.DS_Store
+*.pyc
+*.pyo
+*.pyd
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
 
-# OpenMemory - IDE/Assistant specific rules
-.github\instructions\openmemory.instructions.md
-.cursor\rules\openmemory.mdc
+# === IDE / CURSOR / VSCODE ===
+.vscode/
+.cursor/
+.idea/
+*.code-workspace
+.history/
+
+# === TOOL CACHES & LOGS (COMPREHENSIVE) ===
+.mypy_cache/
+.mypy_cache/**/*.json
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+.tox/
+.nox/
+.coverage.*
+.cache
+nosetests.xml
+*.cover
+*.log
+*.sqlite3
+
+# === BUILD / DIST ===
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# === OS GARBAGE ===
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# === NEVER COMMIT THESE (EVEN IF CURSOR TRIES) ===
+.env
+.env.local
+.env.*.local
+*.env
+
+# === ALWAYS TRACK PROJECT FILES ===
+!arc_saga/
+!tests/
+!shared/
+!*.py
+!*.md
+!*.yml
+!*.yaml
+
+# === DOCUMENT CONFIGURATION (selectively include) ===
+!docs/
+!.github/
+!.github/workflows/
+!.github/dependabot.yml
+!config/
+!config/*.json
+
+# === OPENAI CONFIG & RULES ===
+.github/instructions/openmemory.instructions.md
+.cursor/rules/openmemory.mdc

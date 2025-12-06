@@ -16,10 +16,8 @@ from __future__ import annotations
 
 import asyncio
 import time
-from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -276,9 +274,7 @@ class TestHealthStatusDetermination:
         """Test degraded status when circuit breaker is open."""
         db_health = {"reachable": True, "latency_ms": 10.0}
         storage_space = {"available_mb": 1000.0}
-        circuit_breakers = {
-            "perplexity": {"state": "open", "metrics": {}}
-        }
+        circuit_breakers = {"perplexity": {"state": "open", "metrics": {}}}
         endpoint_latencies = {}
 
         status = determine_health_status(
@@ -305,9 +301,7 @@ class TestHealthStatusDetermination:
         db_health = {"reachable": True, "latency_ms": 10.0}
         storage_space = {"available_mb": 1000.0}
         circuit_breakers = {}
-        endpoint_latencies = {
-            "/test": {"p95": 600.0}  # > 500ms
-        }
+        endpoint_latencies = {"/test": {"p95": 600.0}}  # > 500ms
 
         status = determine_health_status(
             db_health, storage_space, circuit_breakers, endpoint_latencies
@@ -329,7 +323,7 @@ class TestHealthEndpoints:
     @pytest.fixture
     def client(self, mock_storage: AsyncMock) -> TestClient:
         """Create test client with mocked storage."""
-        from arc_saga.api.server import app, storage
+        from arc_saga.api.server import app
 
         # Patch storage
         with patch("arc_saga.api.server.storage", mock_storage):
@@ -360,7 +354,9 @@ class TestHealthEndpoints:
         # Should be healthy if database is reachable and storage is sufficient
         assert data["status"] in ["healthy", "degraded", "unhealthy"]
 
-    def test_health_detailed_endpoint_returns_full_info(self, client: TestClient) -> None:
+    def test_health_detailed_endpoint_returns_full_info(
+        self, client: TestClient
+    ) -> None:
         """Test GET /health/detailed returns full diagnostics."""
         response = client.get("/health/detailed")
 
@@ -564,4 +560,3 @@ class TestLatencyTrackingMiddleware:
         # Check error was recorded
         errors = health_monitor.get_recent_errors()
         assert len(errors) > 0
-

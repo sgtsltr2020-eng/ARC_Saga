@@ -4,24 +4,21 @@ Comprehensive logging and error tracking for ARC SAGA.
 Makes debugging trivial by capturing complete context.
 """
 
-from datetime import datetime
-from typing import Any, Dict, Optional
-import uuid
-import traceback
 import json
 import logging
+import traceback
+import uuid
 from contextvars import ContextVar
+from datetime import datetime
 from enum import Enum
+from typing import Any, Dict, Optional
 
 # Context storage (thread-safe)
-request_context: ContextVar[Dict[str, Any]] = ContextVar(
-    'request_context',
-    default={}
-)
+request_context: ContextVar[Dict[str, Any]] = ContextVar("request_context", default={})
+
 
 def create_request_context(
-    user_id: Optional[str] = None,
-    service_name: str = "arc_saga"
+    user_id: Optional[str] = None, service_name: str = "arc_saga"
 ) -> Dict[str, Any]:
     """
     Create context with unique IDs for entire request lifecycle.
@@ -38,6 +35,7 @@ def create_request_context(
         "user_id": user_id,
     }
 
+
 def get_request_context() -> Dict[str, Any]:
     """
     Get current request context (use in all logging).
@@ -50,9 +48,11 @@ def get_request_context() -> Dict[str, Any]:
         request_context.set(ctx)
     return ctx
 
+
 def get_correlation_id() -> str:
     """Get correlation ID for this request."""
     return get_request_context().get("request_id", "unknown")
+
 
 class LogLevel(str, Enum):
     DEBUG = "DEBUG"
@@ -61,22 +61,43 @@ class LogLevel(str, Enum):
     ERROR = "ERROR"
     CRITICAL = "CRITICAL"
 
-def log_with_context(
-    level: str,
-    message: str,
-    **kwargs: Any
-) -> None:
+
+def _sanitize_secrets(kwargs: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Redact sensitive values from kwargs to prevent secret leakage in logs.
+    
+    Masks any key containing: token, key, secret, password, api_key, access_token, refresh_token
+    """
+    sensitive_patterns = ["token", "key", "secret", "password", "api_key", "access_token", "refresh_token"]
+    sanitized = {}
+    
+    for key, value in kwargs.items():
+        key_lower = key.lower()
+        if any(pattern in key_lower for pattern in sensitive_patterns):
+            if isinstance(value, str) and len(value) > 0:
+                sanitized[key] = "***REDACTED***"
+            else:
+                sanitized[key] = "***REDACTED***"
+        else:
+            sanitized[key] = value
+    
+    return sanitized
+
+
+def log_with_context(level: str, message: str, **kwargs: Any) -> None:
     """
     Log with full context and structured data.
     Every log includes correlation IDs, timestamp, context, and any extra kwargs.
+    Automatically redacts sensitive fields (tokens, keys, secrets, passwords).
     """
     ctx = get_request_context()
+    sanitized_kwargs = _sanitize_secrets(kwargs)
     log_entry = {
         **ctx,  # Include correlation IDs
         "message": message,
         "level": level.upper(),
         "timestamp": datetime.utcnow().isoformat(),
-        **kwargs  # Additional context
+        **sanitized_kwargs,  # Additional context (sanitized)
     }
     logger = logging.getLogger(__name__)
     if level.upper() == "ERROR":
@@ -87,6 +108,7 @@ def log_with_context(
         logger.critical(json.dumps(log_entry, default=str))
     else:
         logger.info(json.dumps(log_entry, default=str))
+
 
 class LatencyMetrics:
     """Track and analyze operation latency."""
@@ -127,7 +149,7 @@ class LatencyMetrics:
                 f"{self.operation} slow",
                 latency_ms=latency_ms,
                 p95=self.p95,
-                p99=self.p99
+                p99=self.p99,
             )
 
     def to_dict(self) -> Dict[str, float]:
@@ -138,6 +160,7 @@ class LatencyMetrics:
             "p99": self.p99,
             "count": len(self.latencies),
         }
+
 
 class ErrorContext:
     """
@@ -178,6 +201,7 @@ class ErrorContext:
             "correlation_id": get_correlation_id(),
         }
 
+
 class CircuitBreakerMetrics:
     """Track circuit breaker state and effectiveness."""
 
@@ -204,7 +228,7 @@ class CircuitBreakerMetrics:
             f"{self.service}_circuit_open",
             service=self.service,
             circuit_opens=self.circuit_opens,
-            success_rate=self.success_rate
+            success_rate=self.success_rate,
         )
 
     def record_recovery_attempt(self, success: bool) -> None:
@@ -215,7 +239,7 @@ class CircuitBreakerMetrics:
                 "info",
                 f"{self.service}_recovered",
                 service=self.service,
-                recovery_success_rate=self.recovery_rate
+                recovery_success_rate=self.recovery_rate,
             )
 
     @property

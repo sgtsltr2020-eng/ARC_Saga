@@ -1,0 +1,93 @@
+name: ARC SAGA CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+      fail-fast: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov pytest-asyncio httpx
+
+      - name: Run Black formatting check
+        run: black --check arc_saga tests
+
+      - name: Run isort import check
+        run: isort --check-only --profile black arc_saga tests
+
+      - name: Run Ruff linting
+        run: ruff check arc_saga tests
+
+      - name: Run mypy type checking
+        run: mypy --strict arc_saga tests
+        continue-on-error: false
+
+      - name: Run pylint
+        run: pylint arc_saga tests --fail-under=9.0
+        continue-on-error: false
+
+      - name: Run Bandit security scan
+        run: bandit -r arc_saga -x tests -f json -o bandit-report.json
+        continue-on-error: false
+
+      - name: Run tests with coverage
+        run: |
+          pytest --cov=arc_saga --cov-report=xml --cov-report=term-missing --cov-fail-under=98 tests/
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: false
+
+      - name: Check for TODO/FIXME in production code
+        run: |
+          if grep -r "TODO\|FIXME" arc_saga/ --exclude-dir=__pycache__; then
+            echo "ERROR: Found TODO/FIXME in production code"
+            exit 1
+          fi
+
+  benchmark:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-benchmark
+
+      - name: Run performance benchmarks
+        run: pytest tests/ -m benchmark --benchmark-only || echo "No benchmarks configured yet"
+        continue-on-error: true

@@ -11,9 +11,7 @@ import re
 class AutoTagger:
     def __init__(self):
         self.vectorizer = TfidfVectorizer(
-            max_features=10,
-            stop_words='english',
-            ngram_range=(1, 2)
+            max_features=10, stop_words="english", ngram_range=(1, 2)
         )
 
     def extract_tags(self, content: str, max_tags: int = 5) -> List[str]:
@@ -24,7 +22,7 @@ class AutoTagger:
             return []
 
         # Clean content
-        content = re.sub(r'[^\\w\\s]', ' ', content.lower())
+        content = re.sub(r"[^\\w\\s]", " ", content.lower())
 
         try:
             # Fit and transform

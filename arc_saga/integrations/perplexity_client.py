@@ -44,7 +44,9 @@ class PerplexityClientError(Exception):
 class PerplexityAPIError(PerplexityClientError):
     """Error during Perplexity API call."""
 
-    def __init__(self, message: str, original_error: Optional[Exception] = None) -> None:
+    def __init__(
+        self, message: str, original_error: Optional[Exception] = None
+    ) -> None:
         super().__init__(message)
         self.original_error = original_error
 
@@ -52,7 +54,9 @@ class PerplexityAPIError(PerplexityClientError):
 class PerplexityStorageError(PerplexityClientError):
     """Error during message storage."""
 
-    def __init__(self, message: str, original_error: Optional[Exception] = None) -> None:
+    def __init__(
+        self, message: str, original_error: Optional[Exception] = None
+    ) -> None:
         super().__init__(message)
         self.original_error = original_error
 
@@ -100,10 +104,7 @@ class PerplexityClient:
         if not api_key or not api_key.strip():
             raise ValueError("API key cannot be empty")
 
-        self.client = AsyncOpenAI(
-            api_key=api_key,
-            base_url="https://api.perplexity.ai"
-        )
+        self.client = AsyncOpenAI(api_key=api_key, base_url="https://api.perplexity.ai")
         self.storage: StorageBackend = storage
 
         # Initialize circuit breaker for Perplexity API
@@ -126,7 +127,7 @@ class PerplexityClient:
         query: str,
         context: Optional[list[dict[str, Any]]] = None,
         session_id: Optional[str] = None,
-        model: str = "sonar-pro"
+        model: str = "sonar-pro",
     ) -> AsyncIterator[str]:
         """
         Ask Perplexity with streaming response.
@@ -169,7 +170,7 @@ class PerplexityClient:
             query_length=len(query),
             has_context=context is not None,
             context_count=len(context) if context else 0,
-            model=model
+            model=model,
         )
 
         # Build messages for API call
@@ -191,7 +192,7 @@ class PerplexityClient:
             content=query,
             provider=Provider.PERPLEXITY,
             timestamp=datetime.now(timezone.utc),
-            metadata={"correlation_id": correlation_id, "model": model}
+            metadata={"correlation_id": correlation_id, "model": model},
         )
 
         try:
@@ -200,18 +201,17 @@ class PerplexityClient:
                 "info",
                 "user_message_stored",
                 message_id=user_msg.id,
-                session_id=session_id
+                session_id=session_id,
             )
         except Exception as e:
             error_ctx = ErrorContext(
                 operation="store_user_message",
                 error=e,
-                context={"session_id": session_id, "message_id": user_msg.id}
+                context={"session_id": session_id, "message_id": user_msg.id},
             )
             error_ctx.log()
             raise PerplexityStorageError(
-                f"Failed to store user message: {e}",
-                original_error=e
+                f"Failed to store user message: {e}", original_error=e
             ) from e
 
         # Call Perplexity API with circuit breaker and retry
@@ -225,9 +225,7 @@ class PerplexityClient:
             This function is wrapped by circuit breaker and retry logic.
             """
             stream = await self.client.chat.completions.create(
-                model=model,
-                messages=api_messages,
-                stream=True
+                model=model, messages=api_messages, stream=True
             )
 
             chunks: list[str] = []
@@ -249,16 +247,13 @@ class PerplexityClient:
                 _api_with_circuit_breaker,
                 max_attempts=3,
                 base_delay=1.0,
-                max_delay=60.0
+                max_delay=60.0,
             )
 
             # Yield chunks to client
             for content in chunks:
                 full_response += content
-                yield json.dumps({
-                    "type": "chunk",
-                    "content": content
-                })
+                yield json.dumps({"type": "chunk", "content": content})
 
             # Calculate duration
             end_time = datetime.now(timezone.utc)
@@ -270,7 +265,7 @@ class PerplexityClient:
                 session_id=session_id,
                 response_length=len(full_response),
                 duration_ms=duration_ms,
-                model=model
+                model=model,
             )
 
             # Store complete assistant response
@@ -284,8 +279,8 @@ class PerplexityClient:
                 metadata={
                     "correlation_id": correlation_id,
                     "model": model,
-                    "duration_ms": duration_ms
-                }
+                    "duration_ms": duration_ms,
+                },
             )
 
             try:
@@ -295,16 +290,13 @@ class PerplexityClient:
                     "assistant_message_stored",
                     message_id=assistant_msg.id,
                     session_id=session_id,
-                    response_length=len(full_response)
+                    response_length=len(full_response),
                 )
             except Exception as e:
                 error_ctx = ErrorContext(
                     operation="store_assistant_message",
                     error=e,
-                    context={
-                        "session_id": session_id,
-                        "message_id": assistant_msg.id
-                    }
+                    context={"session_id": session_id, "message_id": assistant_msg.id},
                 )
                 error_ctx.log()
                 # Don't raise here - response was already streamed
@@ -313,15 +305,17 @@ class PerplexityClient:
                     "warning",
                     "assistant_message_storage_failed",
                     error=str(e),
-                    session_id=session_id
+                    session_id=session_id,
                 )
 
             # Send completion signal
-            yield json.dumps({
-                "type": "complete",
-                "session_id": session_id,
-                "correlation_id": correlation_id
-            })
+            yield json.dumps(
+                {
+                    "type": "complete",
+                    "session_id": session_id,
+                    "correlation_id": correlation_id,
+                }
+            )
 
         except CircuitBreakerOpenError:
             # Circuit breaker is open - graceful degradation
@@ -335,13 +329,15 @@ class PerplexityClient:
 
             # Return cached/fallback response if available
             # For now, yield error message
-            yield json.dumps({
-                "type": "error",
-                "message": "Perplexity service is temporarily unavailable. Circuit breaker is open.",
-                "error_type": "CircuitBreakerOpenError",
-                "correlation_id": correlation_id,
-                "circuit_state": self.circuit_breaker.state.value,
-            })
+            yield json.dumps(
+                {
+                    "type": "error",
+                    "message": "Perplexity service is temporarily unavailable. Circuit breaker is open.",
+                    "error_type": "CircuitBreakerOpenError",
+                    "correlation_id": correlation_id,
+                    "circuit_state": self.circuit_breaker.state.value,
+                }
+            )
 
             # Still store user message (it was already stored)
             # Don't store assistant message since we didn't get a response
@@ -358,27 +354,25 @@ class PerplexityClient:
                 context={
                     "session_id": session_id,
                     "query_length": len(query),
-                    "model": model
-                }
+                    "model": model,
+                },
             )
             error_ctx.log()
 
-            yield json.dumps({
-                "type": "error",
-                "message": str(e),
-                "error_type": type(e).__name__,
-                "correlation_id": correlation_id
-            })
+            yield json.dumps(
+                {
+                    "type": "error",
+                    "message": str(e),
+                    "error_type": type(e).__name__,
+                    "correlation_id": correlation_id,
+                }
+            )
 
             raise PerplexityAPIError(
-                f"Perplexity API call failed: {e}",
-                original_error=e
+                f"Perplexity API call failed: {e}", original_error=e
             ) from e
 
-    async def get_session_history(
-        self,
-        session_id: str
-    ) -> list[Message]:
+    async def get_session_history(self, session_id: str) -> list[Message]:
         """
         Get all messages in a session.
 
@@ -391,11 +385,7 @@ class PerplexityClient:
         Raises:
             PerplexityStorageError: If retrieval fails
         """
-        log_with_context(
-            "info",
-            "get_session_history_start",
-            session_id=session_id
-        )
+        log_with_context("info", "get_session_history_start", session_id=session_id)
 
         try:
             messages = await self.storage.get_by_session(session_id)
@@ -403,17 +393,16 @@ class PerplexityClient:
                 "info",
                 "get_session_history_complete",
                 session_id=session_id,
-                message_count=len(messages)
+                message_count=len(messages),
             )
             return messages
         except Exception as e:
             error_ctx = ErrorContext(
                 operation="get_session_history",
                 error=e,
-                context={"session_id": session_id}
+                context={"session_id": session_id},
             )
             error_ctx.log()
             raise PerplexityStorageError(
-                f"Failed to get session history: {e}",
-                original_error=e
+                f"Failed to get session history: {e}", original_error=e
             ) from e

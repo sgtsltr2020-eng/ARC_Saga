@@ -1,623 +1,277 @@
 # ARC SAGA - System Configuration Master Index
 
-# The Complete Blueprint for World-Class Development with Cursor
-
-# Everything You Need to Know About Your Optimized Setup
+Version 2.0 - Desktop Application Edition
 
 ---
 
-## 📚 DOCUMENT INDEX & PURPOSE
+## PRODUCT OVERVIEW
 
-### 1. **`.cursorrules`** (MASTER RULES)
+ARC SAGA is a native desktop application that enforces production-grade code quality standards for AI-assisted development while providing intelligent memory management with configurable token optimization.
 
-**Purpose:** The foundational thinking framework that makes Cursor behave like a senior architect
+### What Makes ARC SAGA Different
 
-**Key Sections:**
-
-- `CURSOR THINKING FRAMEWORK` - The mental model Cursor executes before generating anything
-- `ARCHITECTURE PATTERNS` - 4 proven patterns (CQRS, Repository, Circuit Breaker, Retry)
-- `ERROR HANDLING MANDATE` - Complete error handling template (not optional)
-- `COMPREHENSIVE LOGGING REQUIREMENT` - What gets logged and why
-- `SECURITY CHECKLIST` - Non-negotiable security rules
-- `TESTING MANDATE` - 95%+ coverage requirements
-- `MODEL SELECTION FRAMEWORK` - How to choose models + how Cursor adapts
-- `HALLUCINATION PREVENTION` - 40-item checklist before any code generation
-
-**When to Use:** Reference this constantly. Every Cursor prompt should implicitly include this.
-
-**Token Cost:** Loaded once at session start, then referenced (cheap)
+- Desktop-native application (not web/CLI)
+- Quality enforcement engine for production-ready code
+- Token budget management with live estimation
+- Tiered memory system (5 configurable levels)
+- Cross-IDE compatible via MCP (future)
+- Intelligent orchestrator coordinates multiple AI agents
 
 ---
 
-### 2. **`decision_catalog.md`** (DECISION LIBRARY)
+## DESKTOP APPLICATION ARCHITECTURE
 
-**Purpose:** Proven solutions to every decision type you'll encounter
+### Why Desktop-First
 
-**Key Sections:**
+- Local-first: All data on your machine, works offline
+- Performance: No network latency
+- Professional: Feels like real software (VS Code, Sublime)
+- Privacy: Code never leaves your machine
 
-- Database decisions (connection failures, query optimization, etc.)
-- Error handling decisions (retry vs fail, when to retry)
-- Logging decisions (how much to log)
-- Testing decisions (coverage targets)
-- Architecture decisions (monolith vs microservices)
-- Caching decisions (what to cache, when)
-- Security decisions (authentication)
-- Performance decisions (query optimization)
-- Deployment decisions (when to deploy)
+### Technology Stack
 
-**Format:** Each decision shows:
+- GUI: PyQt6/PySide6 (native Windows/Mac/Linux)
+- Backend: Python 3.11+
+- Packaging: PyInstaller/Nuitka for executables
+- Database: SQLite local, PostgreSQL for teams
 
-- Options (A, B, C with tradeoffs)
-- Success rates
-- Implementation code
-- Related decisions
-- Failure modes
+### Key UI Components
 
-**When to Use:** Reference in prompts: "@codebase This decision matches DECISION-XYZ in decision_catalog.md"
+1. Token Budget Dashboard
 
-**Example Prompt:**
+   - Real-time usage visualization
+   - Memory tier toggles with cost estimates
+   - Budget gauge and historical charts
 
-```
-Create database connection handling. Reference decision_catalog.md "Database Connection Failures"
-Use Option 4 (Circuit Breaker approach).
-```
+2. Orchestrator Control Panel
 
-**Token Cost:** Referenced (cheap), not copied
+   - Workflow builder
+   - Quality gates configuration
+   - Real-time execution status
 
----
+3. Memory Management View
 
-### 3. **`error_catalog.md`** (ERROR DATABASE)
+   - Knowledge graph visualization
+   - Decision/error catalog browser
+   - Reasoning trace explorer
 
-**Purpose:** Every error you encounter becomes knowledge for next time
-
-**Key Sections:**
-
-- ERROR-001 through ERROR-XXX (grows as you encounter issues)
-- Each error has: message, frequency, root cause, fixes with success rates, prevention
-- Debugging decision tree
-- Similar errors cross-referenced
-
-**How It Works:**
-
-1. You encounter error → Search error_catalog.md
-2. If found → Use proven fix + prevention strategy
-3. If not found → Debug systematically, then document it
-
-**When to Use:** After an error occurs
-
-```
-Got "PoolAcquireTimeoutError"? See ERROR-001 for 5 proven fixes with success rates.
-```
-
-**Growing Over Time:** Every new error type adds value for next time
-
-**Token Cost:** Referenced when needed (cheap)
+4. Settings
+   - IDE connector setup
+   - LLM provider selection
+   - Quality standards config
 
 ---
 
-### 4. **`prompts_library.md`** (OPTIMIZED PROMPTS)
+## TOKEN BUDGET MANAGEMENT SYSTEM
 
-**Purpose:** Pre-vetted, surgical prompts designed for minimal token usage
+### The Problem
 
-**Key Categories:**
+Most AI tools are black boxes for token usage. You don't know costs until after spending.
 
-- Architecture Prompts (PROMPT-ARCH-001 through ARCH-00X)
-- Error Handling Prompts (PROMPT-ERROR-001 through ERROR-00X)
-- Feature Implementation (PROMPT-FEAT-001 through FEAT-00X)
-- Testing Prompts (PROMPT-TEST-001 through TEST-00X)
-- Debugging Prompts (PROMPT-DEBUG-001 through DEBUG-00X)
-- Refactoring Prompts (PROMPT-REFACTOR-001 through REFACTOR-00X)
-- Optimization Prompts (PROMPT-OPT-001 through OPT-00X)
-- Quick Reference Prompts (1-token wonders)
-- Meta-Prompts (strategic)
+### The Solution
 
-**Each Prompt Includes:**
+Live token estimation BEFORE sending requests.
 
-- When to use it
-- Complete prompt text (copy-paste ready)
-- Token cost estimate
-- Success rate percentage
-- What Cursor will generate
+Memory tiers show exact token costs:
 
-**Example Use:**
+- Minimal: ~2k tokens per request
+- Standard: ~5k tokens
+- Enhanced: ~8k tokens
+- Complete: ~10k tokens
+- Unlimited: ~15k tokens
 
-```
-Need new API endpoint?
-1. Find PROMPT-FEAT-001 in prompts_library.md
-2. Copy entire prompt
-3. Replace {placeholders}
-4. Paste into Cursor
-5. Get production-grade endpoint in 2-3 tokens
-```
+Features:
 
-**Token Cost:** ~2-5 tokens per feature (vs 10-20 without optimization)
-
-**Real-World Workflow:**
-
-- Brainstorm in Perplexity
-- Plan in Perplexity
-- Create in Cursor using PROMPT-FEAT-\*
-- Test using PROMPT-TEST-\*
-- Review using PROMPT-META-\*
-- Deploy using PROMPT-META-\*
+- Live cost calculation
+- Budget tracking
+- Smart recommendations
+- Cross-provider cost comparison
 
 ---
 
-### 5. **`verification_checklist.md`** (QUALITY GATES)
+## TIERED MEMORY CONFIGURATION
 
-**Purpose:** Ensure code quality never drops below standards
+Choose memory level based on task complexity and budget.
 
-**Sections:**
+| Tier      | Includes           | Tokens | Use Case      | Cost  |
+| --------- | ------------------ | ------ | ------------- | ----- |
+| Minimal   | .cursorrules only  | ~2k    | Simple tasks  | $0.06 |
+| Standard  | + decision_catalog | ~5k    | Most features | $0.15 |
+| Enhanced  | + error_catalog    | ~8k    | Debugging     | $0.24 |
+| Complete  | + prompts_library  | ~10k   | Full context  | $0.30 |
+| Unlimited | + reasoning traces | ~15k   | Learning      | $0.45 |
 
-- Pre-generation checklist (before asking Cursor)
-- Post-generation checklist (after Cursor generates)
-- Deployment blockers (never deploy if any fail)
-- Deployment ready (all must pass)
-- Code review checklist (for human review)
-
-**Quality Standards:**
-
-- Type checking: `mypy --strict` (0 errors)
-- Test coverage: 95%+ (mandatory)
-- Code quality: `pylint` >= 8.0
-- Security: `bandit` scan 0 issues
-- Performance: benchmarks met
-- Linting: `black` + `isort` compliant
-
-**When to Use:**
-
-1. Before asking Cursor to generate → Use pre-generation checklist
-2. After Cursor generates → Use post-generation checklist
-3. Before deploying → Use deployment checklist
-
-**Example:**
-
-```
-Pre-generation:
-- [ ] Problem statement clear
-- [ ] Constraints documented
-- [ ] Edge cases identified
-- [ ] Testing strategy planned
-
-Post-generation:
-- [ ] mypy --strict passes
-- [ ] Coverage >= 95%
-- [ ] Linting >= 8.0
-- [ ] Security scan 0 issues
-```
+System auto-recommends tier based on task type.
 
 ---
 
-### 6. **`error_instrumentation.py`** (LOGGING SYSTEM)
+## DUAL MEMORY ARCHITECTURE
 
-**Purpose:** Make debugging trivial with comprehensive, structured logging
+Inspired by human cognition.
 
-**Key Features:**
+### System 1 Memory (Intuitive)
 
-- Request context with correlation IDs
-- Structured JSON logging (searchable)
-- Performance metrics (p50, p95, p99)
-- Error context capture
-- Circuit breaker telemetry
-- Usage examples
+- Programming patterns
+- Business rules
+- Common fixes
+- Fast retrieval
 
-**How to Use:**
+### System 2 Memory (Reasoning)
 
-```python
-from error_instrumentation import create_request_context, log_with_context
+- Problem-solving traces
+- Decision processes
+- Why approaches were chosen
+- Learns from reasoning patterns
 
-# Start of operation
-ctx = create_request_context(user_id="user123")
-request_context.set(ctx)
+### Workspace Memory (Team)
 
-# Log important events
-log_with_context(
-    "info",
-    "operation_start",
-    operation="capture_conversation",
-    provider="perplexity"
-)
-
-# Log errors with context
-try:
-    # do work
-except Exception as e:
-    log_with_context(
-        "error",
-        "operation_failed",
-        error=str(e),
-        exc_info=True
-    )
-```
-
-**Benefits:**
-
-- All logs include correlation IDs (tie related logs together)
-- Structured JSON (parse/search easily)
-- Context captured (helps debugging)
-- Performance metrics tracked
-- Error telemetry
+- Shared team patterns
+- Project conventions
+- Team decision history
+- Real-time collaboration
 
 ---
 
-## 🎯 HOW TO USE THIS SYSTEM
+## MCP INTEGRATION ROADMAP
 
-### Scenario 1: Building a New Feature
+Phase 4 feature: Make ARC SAGA IDE-agnostic.
 
-**Step 1: Brainstorm (Perplexity)**
+Will support via Model Context Protocol:
 
-- Use Perplexity to explore approaches
-- Get conceptual understanding
-- Learn from their knowledge
+- Cursor (primary)
+- VS Code
+- Claude Desktop
+- Windsurf, Cline, Gemini CLI, etc.
 
-**Step 2: Plan (Perplexity)**
+Exposes tools:
 
-- "Walk me through implementing this step-by-step"
-- Get detailed understanding
+- arc_saga_enforce_quality
+- arc_saga_search_memory
+- arc_saga_verify_code
+- arc_saga_estimate_tokens
+- arc_saga_configure_memory
 
-**Step 3: Create (Cursor + Prompts Library)**
-
-- Find relevant prompt in prompts_library.md
-- Copy-paste the prompt
-- Replace {placeholders} with your details
-- Paste into Cursor
-- Get production-ready code
-
-**Step 4: Test (Cursor + PROMPT-TEST-\*)**
-
-- Use PROMPT-TEST-001 for unit tests
-- Use PROMPT-TEST-002 for integration tests
-- Achieve 95%+ coverage
-
-**Step 5: Verify (Verification Checklist)**
-
-- Run pre-generation checklist
-- Run post-generation checklist
-- If any fails: fix before proceeding
-
-**Step 6: Deploy (Cursor + PROMPT-META-\*)**
-
-- Use PROMPT-META-002 to prepare for production
-- Run all quality gates
-- Deploy with confidence
-
-**Token Cost:** ~5-8 tokens (vs 15-20 without system)
+Timeline: Phase 4 (after orchestrator + memory)
 
 ---
 
-### Scenario 2: Debugging an Error
+## DEVELOPMENT PHASES
 
-**Step 1: Check Error Catalog**
+### Phase 1: Foundation (COMPLETE)
 
-- Search error_catalog.md for similar error
-- If found: Use proven fix + prevention strategy
-- Success rate usually 70-90%
+- Storage layer, Perplexity integration
+- Circuit breaker, health checks
+- 104 tests passing
 
-**Step 2: If Not in Catalog: Debug Systematically**
+### Phase 2: Orchestrator + Your Stack MVP (CURRENT)
 
-- Add logging with error_instrumentation
-- Trace the error using correlation IDs
-- Document root cause
+- Agent coordination
+- Workflow patterns
+- Quality enforcement
+- Auto-configuration
 
-**Step 3: Implement Fix**
+### Phase 3: Memory Improvements
 
-- Use PROMPT-ERROR-001 or PROMPT-DEBUG-001
-- Provide full error + stack trace
-- Let Cursor diagnose
+- Knowledge graph
+- Reasoning trace capture
+- Pattern recognition
 
-**Step 4: Update Catalogs**
+### Phase 4: MCP Integration
 
-- Add new error to error_catalog.md
-- Add prevention measures
-- Extract lessons to decision_catalog.md
+- IDE-agnostic deployment
+- Cross-IDE memory sync
 
-**Step 5: Test Fix**
+### Phase 5: Desktop UI
 
-- Create test reproducing error
-- Verify fix works
-- Add to test suite
+- PyQt6 GUI
+- Token dashboard
+- Orchestrator panel
+- Packaging for distribution
 
-**Token Cost:** ~3-5 tokens (diagnostic), then depends on fix complexity
+### Phase 6: Team Features
 
----
-
-### Scenario 3: Hitting Rate Limit (Token Management)
-
-**When You're Running Low on Tokens:**
-
-1. **Switch to Perplexity:**
-
-   - Brainstorm strategies
-   - Research solutions
-   - Learn approaches
-   - NO code generation
-
-2. **Use Decision Catalog:**
-
-   - Reference proven patterns
-   - Decide on approach manually
-   - Skip the "deciding" phase in Cursor
-
-3. **Surgical Cursor Prompts:**
-
-   - Use PROMPT-QUICK-\* (1-token wonders)
-   - Use PROMPT-META-\* (strategic)
-   - Skip explanations, just generate code
-
-4. **Manual Code Review:**
-
-   - Use verification_checklist manually
-   - Don't ask Cursor to review
-   - You do the review
-
-5. **Switch to VSCode + Copilot:**
-   - Maintenance tasks
-   - Simple refactoring
-   - Non-critical code
-   - Leave Cursor for hard problems
+- Workspace memory
+- Team sync
+- Audit logs
 
 ---
 
-## 📊 SYSTEM STATUS DASHBOARD (Create This)
+## DOCUMENT INDEX
 
-Create a file called `SYSTEM_STATUS.md` that auto-updates:
-
-```markdown
-# System Status Dashboard
-
-## Token Usage
-
-- Monthly Budget: 500 requests
-- Used This Month: 347 requests
-- Remaining: 153 requests
-- Runway: 4 days
-
-## Quality Metrics
-
-- Test Coverage: 96%
-- Type Checking: PASS (mypy --strict)
-- Linting: 8.2 (pylint)
-- Security: PASS (bandit)
-
-## Error Trends
-
-- Total Errors: 24
-- New Errors This Week: 3
-- Errors Fixed This Week: 5
-- Trending: Database timeouts (5 occurrences)
-
-## Performance
-
-- p50 Latency: 42ms
-- p95 Latency: 156ms
-- p99 Latency: 487ms
-- Slowest Operation: conversation_search (avg 234ms)
-
-## Hot Spots
-
-- Most Changed: conversation_service.py (12 edits)
-- Most Tested: error_handling.py (18 tests)
-- Most Buggy: api_integration.py (4 errors)
-
-## Action Items
-
-- [ ] Optimize conversation_search (p95 too high)
-- [ ] Add circuit breaker to OpenAI API
-- [ ] Reduce database connection timeout (currently 10s)
-- [ ] Review ERROR-005 pattern (appeared 3 times)
-
-## Last Updated
-
-2024-12-01 21:45 UTC
-```
-
-This gives you one place to see everything.
+1. .cursorrules - Master thinking framework
+2. decision_catalog.md - Proven solutions library
+3. error_catalog.md - Error knowledge base
+4. prompts_library.md - Token-optimized prompts
+5. verification_checklist.md - Quality gates
+6. error_instrumentation.py - Logging system
+7. ROADMAP.md - Development plan
+8. deployment_guide.md - Deployment instructions
 
 ---
 
-## 🔄 CONTINUOUS IMPROVEMENT LOOP
+## HOW TO USE
 
-As you use ARC SAGA:
+### Building a Feature
 
-1. **Every Error Becomes Knowledge**
+1. Brainstorm in Perplexity (free)
+2. Configure memory tier (check budget)
+3. Use prompt from prompts_library.md
+4. Generate in Cursor
+5. Verify with checklist
+6. Deploy
 
-   - Document in error_catalog.md
-   - Extract prevention to decision_catalog.md
-   - Create test to prevent regression
+Token cost: 3-8 tokens depending on tier
 
-2. **Every Decision Creates Precedent**
+### Debugging
 
-   - Add successful patterns to decision_catalog.md
-   - Reference in future prompts
-   - Reduce decision-making overhead
+1. Check error_catalog
+2. Use Enhanced tier (8k tokens)
+3. Implement fix
+4. Update catalogs
+5. Test
 
-3. **Every Prompt Gets Optimized**
+Token cost: 5-10 tokens
 
-   - Track token cost of each prompt
-   - Refine for efficiency
-   - Update prompts_library.md
+### Managing Budget
 
-4. **Every Metric Gets Tracked**
-
-   - Update SYSTEM_STATUS.md weekly
-   - Identify bottlenecks
-   - Focus optimization efforts
-
-5. **Quality Standards Evolve**
-   - Start at 95% coverage
-   - Push to 97%+ as you mature
-   - Reduce defect rate over time
+1. Switch to Minimal tier
+2. Use Perplexity for brainstorming
+3. Reference catalogs manually
+4. Surgical prompts only
 
 ---
 
-## 🚀 QUICK START (First 24 Hours)
+## SUCCESS METRICS
 
-### Hour 1: Set Up Framework
+Code Quality:
 
-- [ ] Copy `.cursorrules` to project root
-- [ ] Create `decision_catalog.md` in docs/
-- [ ] Create `error_catalog.md` in docs/
-- [ ] Create `prompts_library.md` in docs/
-- [ ] Create `verification_checklist.md` in docs/
+- Type checking: PASS
+- Coverage: 95%+
+- Linting: 8.0+
+- Security: 0 issues
 
-### Hour 2-3: Create First Feature
+Token Economics:
 
-- [ ] Pick a simple feature
-- [ ] Find matching prompt in prompts_library.md
-- [ ] Generate with Cursor
-- [ ] Verify with checklist
-- [ ] Deploy with confidence
-
-### Hour 4+: Iterate and Learn
-
-- [ ] Fix bugs using error_catalog
-- [ ] Document new errors
-- [ ] Refine prompts
-- [ ] Update decision_catalog
-- [ ] Continue building
+- Cost per feature tracked
+- Budget utilization optimized
+- Tier distribution balanced
 
 ---
 
-## 🎯 SUCCESS METRICS
+## QUICK START
 
-Track These Over Time:
-
-### Code Quality
-
-- [ ] Type checking: PASS (maintain)
-- [ ] Test coverage: 95%+ (maintain, push to 97%)
-- [ ] Linting: 8.0+ (maintain, push to 8.5+)
-- [ ] Security: 0 issues (maintain)
-- [ ] Defects: < 0.1% (trending down)
-
-### Development Velocity
-
-- [ ] Features per month: Track + improve
-- [ ] Bug fix time: Reduce using error_catalog
-- [ ] Token efficiency: Trending down
-
-### System Health
-
-- [ ] Uptime: 99.9%+
-- [ ] Latency: p95 < 200ms (or your target)
-- [ ] Errors: Trending down
-- [ ] Recovery time: < 5 minutes
+Hour 1: Copy files to project
+Hour 2-3: Configure desktop app (future)
+Hour 4: Create first feature
+Hour 5+: Iterate and learn
 
 ---
 
-## ⚠️ COMMON MISTAKES TO AVOID
+Version 2.0 (2024-12-02)
 
-1. **Don't ignore the checklists**
-
-   - They're not optional
-   - They catch issues before they matter
-
-2. **Don't skip error_catalog updates**
-
-   - It compounds value over time
-   - Future-you will thank present-you
-
-3. **Don't let technical debt accumulate**
-
-   - Address issues immediately
-   - Compounds exponentially
-
-4. **Don't generate without thinking**
-
-   - Follow UNDERSTAND→DECIDE→IMPLEMENT→VERIFY always
-   - The checklist is not negotiable
-
-5. **Don't trust hallucinations**
-   - Verify external APIs with docs
-   - Run tests before deploying
-   - Use error_catalog for common issues
-
----
-
-## 📞 SUPPORT & ESCALATION
-
-### When Cursor Generates Bad Code
-
-1. Check error_catalog for similar issues
-2. Use PROMPT-DEBUG-001 if not found
-3. Document the failure
-4. Add to error_catalog for next time
-
-### When You're Out of Tokens
-
-1. Switch to Perplexity (free brainstorming)
-2. Use decision_catalog (free reference)
-3. Manual code review (free verification)
-4. Switch to VSCode + Copilot (different quota)
-
-### When Quality Drops
-
-1. Review verification_checklist
-2. Add stricter quality gates
-3. Run code review more carefully
-4. Increase test coverage requirement
-
----
-
-## 📈 ROADMAP: Evolution Over Time
-
-### Week 1: Foundation
-
-- Get prompts_library working
-- Establish error_catalog patterns
-- Document first 10 decisions
-
-### Week 2-4: Optimization
-
-- Reduce token usage per feature
-- Automate quality checks
-- Extract common patterns
-
-### Month 2+: Scaling
-
-- Handle 10x more complexity
-- Automated deployment pipeline
-- Predictive error prevention
-- ML-based performance optimization
-
----
-
-## Version History
-
-**v1.0 (2024-12-01)**
-
-- Initial comprehensive framework for ARC SAGA
-- 6 core documents
-- Prompts library with 20+ pre-optimized prompts
-- Complete system for production-grade code generation
-- Verified to work with Cursor, Claude, GPT-5, and other models
-
----
-
-## 🎓 Final Thoughts
-
-This system is designed to make you **unstoppable**:
-
-- **Never lose knowledge** → error_catalog grows with every fix
-- **Never repeat work** → decision_catalog has proven solutions
-- **Never generate bad code** → verification_checklist catches it
-- **Never waste tokens** → prompts_library optimizes every request
-- **Never be stuck** → debug efficiently with error_instrumentation
-
-**The more you use it, the more valuable it becomes.**
-
-Every error becomes wisdom. Every decision becomes a pattern. Every prompt becomes more refined.
-
-You're not just building a product. You're building a system that gets smarter every day.
-
-Now go build something extraordinary.
-
----
-
-**Questions?** Reference the document that applies:
-
-- Architecture questions → decision_catalog.md
-- Error questions → error_catalog.md
-- Implementation questions → prompts_library.md
-- Quality questions → verification_checklist.md
-- Debugging questions → error_instrumentation.py
+- Desktop architecture
+- Token budget system
+- Tiered memory
+- Dual memory (System 1/2)
+- MCP roadmap
+- Development phases

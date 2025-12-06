@@ -1,0 +1,598 @@
+**Component 3 Cursor Integration Guide**
+
+**ProviderRouter Orchestrator Wiring for Production**
+
+**Document Version:** 3.0 (Cursor-Ready)  
+**Date:** December 5, 2025, 11:42 AM EST  
+**Status:** ✅ Ready to paste into [Cursor.ai](http://Cursor.ai) with .cursorrules integration  
+**Target:** Fold ProviderRouter into orchestrator entrypoints with zero breaking changes
+
+**📋 Pre-Integration Verification Checklist**
+
+Before wiring Component 3 into orchestrator entrypoints, verify:
+
+- \[ \] All three Component 3 files deployed:
+  - arc_saga/orchestrator/errors.py
+  - arc_saga/orchestrator/provider_router.py
+  - tests/unit/orchestration/test_provider_router.py
+- \[ \] Quality gates passing: isort, black, mypy --strict, pytest (108+ tests)
+- \[ \] Coverage ≥ 95% on arc_saga/orchestrator/provider_router.py
+- \[ \] No regressions: All Phase 2.3 tests (88 tests) still passing
+- \[ \] Registry discipline verified: No direct ReasoningEngineRegistry() instantiation
+- \[ \] AIProvider enum locked to 8 values: {OPENAI, ANTHROPIC, GOOGLE, PERPLEXITY, GROQ, LOCAL, CUSTOM, COPILOT_CHAT}
+
+**🔌 INTEGRATION PATTERN 1: Replace Direct Registry Access**
+
+**Current State (Before Integration)**
+
+**In arc_saga/orchestrator/multi_llm_orchestrator.py or similar entrypoint**
+
+from arc_saga.orchestrator.engine_registry import ReasoningEngineRegistry  
+from arc_saga.orchestrator.types import AIProvider, AITask
+
+async def orchestrate_request(task: AITask, request_id: str) -> AIResult:  
+"""Current: Direct registry access, no fallback."""  
+provider = task.input_data.provider # Hardcoded to task  
+engine = ReasoningEngineRegistry.get(provider)  
+if engine is None:  
+raise ValueError(f"Engine not found for {provider.value}")  
+return await engine.reason(task)
+
+**Problems:**
+
+- ❌ No fallback if provider unavailable
+- ❌ No retry on transient errors
+- ❌ No correlation ID tracking
+- ❌ No provenance for observability
+- ❌ User sees raw engine exceptions
+
+**Target State (After Integration)**
+
+**In arc_saga/orchestrator/multi_llm_orchestrator.py or similar entrypoint**
+
+from arc_saga.orchestrator.provider_router import ProviderRouter, RoutingRule  
+from arc_saga.orchestrator.errors import ProviderError  
+from arc_saga.orchestrator.types import AIProvider, AITask  
+from uuid import uuid4
+
+**Initialize router once at application startup (in init or factory)**
+
+\_router = ProviderRouter(  
+rules=\[  
+RoutingRule(  
+task_types={"chat_completion", "reasoning", "analysis"},  
+ordered_providers=\[AIProvider.COPILOT_CHAT, AIProvider.ANTHROPIC, AIProvider.PERPLEXITY\],  
+max_retries=3,  
+base_backoff_seconds=0.1,  
+max_backoff_seconds=2.0,  
+),  
+RoutingRule(  
+task_types={"search", "research"},  
+ordered_providers=\[AIProvider.PERPLEXITY, AIProvider.GOOGLE\],  
+max_retries=2,  
+base_backoff_seconds=0.2,  
+max_backoff_seconds=1.0,  
+),  
+RoutingRule(  
+task_types={"coding"},  
+ordered_providers=\[AIProvider.COPILOT_CHAT, AIProvider.OPENAI\],  
+max_retries=2,  
+),  
+\],  
+default_order=\[AIProvider.COPILOT_CHAT, AIProvider.ANTHROPIC\],  
+classify_unknown_exceptions_as_transient=True,  
+)
+
+async def orchestrate_request(task: AITask, request_id: str = None) -> AIResult:  
+"""New: Deterministic fallback with observability."""  
+\# Generate or use provided correlation ID  
+correlation_id = request_id or str(uuid4())  
+context = {"correlation_id": correlation_id}
+
+try:  
+result = await \_router.route(task, context)  
+logger.info("Task completed via orchestrator", extra={  
+"correlation_id": correlation_id,  
+"task_type": task.operation,  
+})  
+return result  
+except ProviderError as e:  
+logger.error("All providers failed for task", extra={  
+"correlation_id": correlation_id,  
+"task_type": task.operation,  
+"error": str(e),  
+})  
+return error_response(status=503, detail="All AI providers unavailable")  
+
+**Benefits:**
+
+- ✅ Automatic fallback chain (3 providers → 2 providers → default)
+- ✅ Exponential backoff on transient errors (0.1s → 0.2s → 0.4s → 0.8s up to 2.0s)
+- ✅ Correlation ID flows through all logs
+- ✅ Full provenance for analytics
+- ✅ User-friendly error messages
+
+**🔌 INTEGRATION PATTERN 2: Provenance-Driven Advanced Usage (Optional)**
+
+For advanced scenarios where you need full routing history (SLA tracking, cost analysis, provider health scoring):
+
+from arc_saga.orchestrator.provider_router import ProviderRouter
+
+async def orchestrate_with_provenance(task: AITask, request_id: str) -> dict:  
+"""Advanced: Get full routing history before committing result."""  
+context = {"correlation_id": request_id}
+
+\# Step 1: Get routing provenance (which providers were tried, timings, outcomes)  
+prov = await \_router.route_with_provenance(task, context)  
+<br/>\# Step 2: Log routing metrics for observability  
+logger.info("Routing completed", extra={  
+"correlation_id": request_id,  
+"task_type": prov.task_type,  
+"outcome": prov.outcome,  
+"chosen_provider": prov.chosen_provider.value if prov.chosen_provider else None,  
+"attempt_count": len(prov.attempts),  
+"total_latency_ms": prov.total_duration_seconds \* 1000,  
+"attempted_providers": \[a.provider.value for a in prov.attempts\],  
+})  
+<br/>\# Step 3: Handle success vs failure  
+if prov.outcome == "success":  
+\# Get actual result from chosen engine  
+result = await \_router.route(task, context)  
+<br/>\# Enrich with provenance for downstream tracking  
+return {  
+"result": result,  
+"routing_provenance": {  
+"chosen_provider": prov.chosen_provider.value,  
+"attempts": len(prov.attempts),  
+"latency_ms": prov.total_duration_seconds \* 1000,  
+},  
+}  
+else:  
+\# All providers exhausted  
+logger.error("Routing failed after exhausting all providers", extra={  
+"correlation_id": request_id,  
+"task_type": prov.task_type,  
+"final_error": prov.final_error_message,  
+"tried": \[a.provider.value for a in prov.attempts\],  
+})  
+return {  
+"error": "unavailable",  
+"detail": prov.final_error_message,  
+"routing_history": {  
+"attempted_providers": \[a.provider.value for a in prov.attempts\],  
+"attempts": len(prov.attempts),  
+},  
+}  
+
+**🔌 INTEGRATION PATTERN 3: Error Propagation to API Layer**
+
+Map ProviderRouter errors to user-facing HTTP responses:
+
+from arc_saga.orchestrator.errors import ProviderError, TransientError, PermanentError  
+from fastapi import HTTPException
+
+async def orchestrate_with_error_mapping(task: AITask, request_id: str):  
+"""Map ProviderRouter errors to user-friendly HTTP responses."""  
+context = {"correlation_id": request_id}
+
+try:  
+result = await \_router.route(task, context)  
+return {"success": True, "data": result}  
+<br/>except TransientError as te:  
+\# Transient errors: User should retry (with backoff)  
+logger.warning("Transient error during routing", extra={  
+"correlation_id": request_id,  
+"error": str(te),  
+}, exc_info=te)  
+raise HTTPException(  
+status_code=503, # Service Unavailable  
+detail="Temporarily unavailable; please retry",  
+headers={"Retry-After": "30"},  
+)  
+<br/>except PermanentError as pe:  
+\# Permanent errors: User should NOT retry (invalid input, unsupported operation)  
+logger.error("Permanent error during routing", extra={  
+"correlation_id": request_id,  
+"error": str(pe),  
+}, exc_info=pe)  
+raise HTTPException(  
+status_code=400, # Bad Request  
+detail="Invalid request or unsupported operation",  
+)  
+<br/>except ProviderError as prov_err:  
+\# Catch-all: All providers exhausted  
+logger.error("All providers failed", extra={  
+"correlation_id": request_id,  
+"error": str(prov_err),  
+}, exc_info=prov_err)  
+raise HTTPException(  
+status_code=503, # Service Unavailable  
+detail="All AI providers unavailable; please try again later",  
+headers={"Retry-After": "60"},  
+)  
+
+**🛡️ CI/CD Integration: Guard Rails & Contract Tests**
+
+**1\. Add Pre-Commit Hook to Enforce Registry Discipline**
+
+Create .pre-commit-config.yaml or add to existing hooks:
+
+- repo: local  
+    hooks:
+  - id: no-registry-instantiation  
+        name: "Reject ReasoningEngineRegistry() instantiation"  
+        entry: bash -c 'grep -r "ReasoningEngineRegistry()" arc_saga --include="\*.py" && exit 1 || exit 0'  
+        language: system  
+        pass_filenames: false  
+        stages: \[commit\]
+  - id: provider-enum-contract  
+        name: "Verify AIProvider enum contract"  
+        entry: pytest tests/unit/orchestration/test_ai_provider_contract.py -v  
+        language: system  
+        pass_filenames: false  
+        stages: \[commit\]
+  - id: router-type-safety  
+        name: "MyPy strict on ProviderRouter"  
+        entry: mypy --strict arc_saga/orchestrator/errors.py arc_saga/orchestrator/provider_router.py  
+        language: system  
+        pass_filenames: false  
+        stages: \[commit\]
+  - id: router-coverage-floor  
+        name: "Router coverage ≥ 95%"  
+        entry: pytest --cov=arc_saga/orchestrator/provider_router --cov-fail-under=95 tests/unit/orchestration/test_provider_router.py -q  
+        language: system  
+        pass_filenames: false  
+        stages: \[commit\]
+
+**2\. Add Contract Test (If Not Already Present)**
+
+Create tests/unit/orchestration/test_ai_provider_contract.py:
+
+"""Contract test: AIProvider enum remains locked to exactly 8 values.
+
+This test prevents drift in AIProvider enum. If you add a new provider:
+
+- Update AIProvider enum in arc_saga/orchestrator/types.py
+- Update this test to reflect new count
+- Add new provider to RoutingRules in orchestrator entrypoints
+- Add engine implementation in orchestrator bootstrap  
+    """
+
+from arc_saga.orchestrator.types import AIProvider
+
+def test_ai_provider_enum_locked_to_8_values():  
+"""Ensure AIProvider enum has exactly 8 values (no silent additions)."""  
+expected_values = {  
+"OPENAI",  
+"ANTHROPIC",  
+"GOOGLE",  
+"PERPLEXITY",  
+"GROQ",  
+"LOCAL",  
+"CUSTOM",  
+"COPILOT_CHAT",  
+}  
+actual_values = {[member.name](http://member.name) for member in AIProvider}
+
+assert actual_values == expected_values, (  
+f"AIProvider enum mismatch.\\n"  
+f"Expected: {sorted(expected_values)}\\n"  
+f"Actual: {sorted(actual_values)}\\n"  
+f"If adding a provider:\\n"  
+f" 1. Add to AIProvider enum\\n"  
+f" 2. Update this test (increment count)\\n"  
+f" 3. Add RoutingRule in orchestrator entrypoints\\n"  
+f" 4. Register engine in bootstrap"  
+)  
+
+def test_ai_provider_values_stable():  
+"""Ensure provider values match names (enum stability)."""  
+for provider in AIProvider:  
+assert provider.value == [provider.name](http://provider.name), (  
+f"Provider {[provider.name](http://provider.name)} has unstable value {provider.value}"  
+)
+
+**3\. CI Pipeline Quality Gates**
+
+Add to .github/workflows/ci.yml or equivalent:
+
+- name: "Component 3 Quality Gates"  
+    run: |  
+    echo "=== Formatting ==="  
+    isort arc_saga/orchestrator/errors.py arc_saga/orchestrator/provider_router.py  
+    black arc_saga/orchestrator/errors.py arc_saga/orchestrator/provider_router.py
+
+echo "=== Type Safety ==="  
+mypy --strict arc_saga/orchestrator/errors.py  
+mypy --strict arc_saga/orchestrator/provider_router.py  
+mypy --strict arc_saga
+
+echo "=== Router Unit Tests ==="  
+pytest tests/unit/orchestration/test_provider_router.py -v
+
+echo "=== Router Coverage (min 95%) ==="  
+pytest --cov=arc_saga/orchestrator/provider_router --cov-fail-under=95 tests/unit/orchestration/test_provider_router.py -q
+
+echo "=== Orchestration Regression ==="  
+pytest tests/unit/orchestration/ -v
+
+echo "=== Full Unit Regression ==="  
+pytest tests/unit/ -v
+
+echo "=== Contract Test ==="  
+pytest tests/unit/orchestration/test_ai_provider_contract.py -v
+
+**📊 Observability: Structured Logging Integration**
+
+Component 3 emits structured logs suitable for DataDog, New Relic, Splunk, etc.
+
+**Event Types Emitted by ProviderRouter**
+
+| Event | Log Level | Fields | Use Case |
+| --- | --- | --- | --- |
+| routing_start | INFO | task_type, correlation_id, providers | Track routing initiation |
+| routing_success | INFO | task_type, correlation_id, provider, attempts, latency_ms | Track successful routes |
+| engine_permanent_error | ERROR | task_type, correlation_id, provider, attempt, msg | Alert on permanent failures |
+| engine_transient_error | WARNING | task_type, correlation_id, provider, attempt, msg | Track retry scenarios |
+| engine_unknown_exception | WARNING/ERROR | task_type, correlation_id, provider, attempt, transient, msg | Debug unknown exceptions |
+| routing_failed | ERROR | task_type, correlation_id, tried, attempts, latency_ms, final_error_type | Alert when all providers exhausted |
+
+**DataDog Integration Example**
+
+from datadog import statsd  
+import logging
+
+**Configure structured logging**
+
+logging.basicConfig(format="%(message)s")  
+logger = logging.getLogger("arc_saga.orchestrator")
+
+**Add DataDog handler**
+
+from pythonjsonlogger import jsonlogger  
+logHandler = logging.StreamHandler()  
+formatter = jsonlogger.JsonFormatter()  
+logHandler.setFormatter(formatter)  
+logger.addHandler(logHandler)
+
+**In your orchestrator code:**
+
+async def orchestrate_with_metrics(task: AITask, request_id: str):  
+context = {"correlation_id": request_id}
+
+try:  
+result = await \_router.route(task, context)  
+<br/>\# Emit success metric  
+statsd.increment("orchestrator.routing.success", tags=\[  
+f"task_type:{task.operation}",  
+\])  
+return result  
+except ProviderError as e:  
+\# Emit failure metric  
+statsd.increment("orchestrator.routing.failed", tags=\[  
+f"task_type:{task.operation}",  
+f"error_type:{type(e).\__name_\_}",  
+\])  
+raise  
+
+**🎯** [**Cursor.ai**](http://Cursor.ai) **Integration: .cursorrules Configuration**
+
+Add this to your .cursorrules file so Cursor maintains Component 3 integration discipline:
+
+**\=== COMPONENT 3: PROVIDERROUTER ===**
+
+**When modifying orchestrator entrypoints or routing logic:**
+
+**Rules for ProviderRouter Integration**
+
+- NEVER access ReasoningEngineRegistry directly in orchestrator entrypoints
+- ALWAYS use ProviderRouter.route() or .route_with_provenance() for fallback chains
+- ALWAYS include correlation_id in context dict: {"correlation_id": request_id}
+- DO NOT hardcode provider selection based on task.input_data.provider
+- DO use RoutingRules to define fallback chains per task_type
+
+**Rules for Error Handling**
+
+- Map ProviderError → HTTP 503 (Service Unavailable)
+- Map TransientError → HTTP 503 (include Retry-After header)
+- Map PermanentError → HTTP 400 (Bad Request)
+- DO log correlation_id in all error messages
+- DO NOT expose raw engine exceptions to users
+
+**Rules for Observable Logging**
+
+- Router emits structured events: routing_start, routing_success, routing_failed, etc.
+- All events include correlation_id for distributed tracing
+- Events include provider name and attempt count for troubleshooting
+- Integrate with DataDog/New Relic for metrics and alerting
+
+**Rules for Contract Testing**
+
+- AIProvider enum locked to exactly 8 values
+- If adding provider: update enum, test contract, add RoutingRule, register engine
+- Run full test suite before merging: pytest tests/unit/ -v
+
+**Example: Orchestrator Entrypoint (Use as Template)**
+
+from arc_saga.orchestrator.provider_router import ProviderRouter, RoutingRule  
+from arc_saga.orchestrator.errors import ProviderError  
+from arc_saga.orchestrator.types import AIProvider, AITask
+
+**Initialize at startup (singleton)**
+
+\_router = ProviderRouter(  
+rules=\[  
+RoutingRule(  
+task_types={"chat_completion"},  
+ordered_providers=\[AIProvider.COPILOT_CHAT, AIProvider.ANTHROPIC\],  
+max_retries=3,  
+),  
+\],  
+default_order=\[AIProvider.COPILOT_CHAT\],  
+)
+
+**Per-request routing**
+
+async def orchestrate(task: AITask, correlation_id: str) -> AIResult:  
+try:  
+return await \_router.route(task, {"correlation_id": correlation_id})  
+except ProviderError as e:  
+logger.error("Routing failed", extra={"correlation_id": correlation_id})  
+raise HTTPException(status_code=503, detail=str(e))
+
+**✅ Integration Verification Checklist**
+
+Before considering Component 3 integration complete:
+
+- \[ \] **All three files deployed:**
+  - arc_saga/orchestrator/errors.py (33 lines)
+  - arc_saga/orchestrator/provider_router.py (380 lines)
+  - tests/unit/orchestration/test_provider_router.py (350+ lines)
+- \[ \] **Quality gates passing:**
+  - isort and black formatting passed
+  - mypy --strict arc_saga/orchestrator → 0 errors
+  - pytest tests/unit/orchestration/test_provider_router.py → 12/12 passing
+  - pytest tests/unit/ → 108+/108+ passing (no regressions)
+  - Coverage ≥ 95% on router code
+- \[ \] **Orchestrator entrypoints updated:**
+  - Replaced direct ReasoningEngineRegistry.get() calls with ProviderRouter.route()
+  - Added correlation ID extraction from request headers
+  - Added RoutingRules per task_type
+  - Added error mapping (ProviderError → HTTP 503, etc.)
+- \[ \] **Observability integrated:**
+  - Structured logs wired to DataDog/New Relic/Splunk
+  - Correlation ID flowing through call stack
+  - Metrics dashboard tracking: success_rate, fallback_rate, p95_latency
+- \[ \] **CI/CD guards in place:**
+  - Pre-commit hook enforces registry discipline
+  - Contract test locks AIProvider enum
+  - Quality gates in CI pipeline
+- \[ \] **No breaking changes:**
+  - All existing API contracts preserved
+  - Phase 2.3 tests (88 tests) still passing
+  - Components 1-2 tests still passing
+
+**🚀 Next Steps After Integration**
+
+Once Component 3 is integrated into orchestrator entrypoints:
+
+**Immediate (Next 1-2 sprints)**
+
+- Load-test router under production traffic (target: <100ms overhead per route)
+- Monitor fallback rate and transient error recovery success
+- Validate correlation ID propagation in observability platform
+- Document RoutingRules in runbooks for on-call team
+
+**Component 4 Readiness (2-4 sprints)**
+
+- \[ \] Prepare for cost tracking integration (Component 4: CostOptimizer)
+- \[ \] Ensure AIResultOutput.cost_usd populated by all engines
+- \[ \] Design cost-based selection strategies (cheapest, fastest, balanced, quality)
+- \[ \] Plan budget enforcement per request/session
+
+**Component 5+ Roadmap**
+
+- Component 4: CostOptimizer (cost-aware provider selection)
+- Component 5: Streaming orchestrator (full async generator support)
+- Component 6: SLA enforcement (latency, success rate, cost guarantees)
+
+**📞 Troubleshooting Integration Issues**
+
+**Issue: "No routing rule or default order for task_type='xyz'"**
+
+**Cause:** Task operation type not covered by RoutingRules or default_order.
+
+**Fix:**
+
+**Add rule for task type**
+
+RoutingRule(  
+task_types={"xyz"},  
+ordered_providers=\[AIProvider.ANTHROPIC, AIProvider.COPILOT_CHAT\],  
+)
+
+**OR add to default_order for unclassified tasks**
+
+default_order=\[AIProvider.COPILOT_CHAT, AIProvider.ANTHROPIC\],
+
+**Issue: Correlation ID not flowing through logs**
+
+**Cause:** Context dict not passed to route() or route_with_provenance().
+
+**Fix:**
+
+**Always include correlation_id in context**
+
+context = {"correlation_id": request.headers.get("X-Correlation-ID") or str(uuid4())}  
+result = await \_router.route(task, context) # ✅ Correct
+
+**Issue: All providers exhausted, routing fails immediately**
+
+**Cause:** Transient errors treated as permanent, or max_retries too low.
+
+**Fix:**
+
+**Increase max_retries for flaky providers**
+
+RoutingRule(  
+task_types={"reasoning"},  
+ordered_providers=\[AIProvider.ANTHROPIC, AIProvider.COPILOT_CHAT\],  
+max_retries=5, # Up from default 2  
+base_backoff_seconds=0.1,  
+)
+
+**Or ensure unknown exceptions classified as transient**
+
+router = ProviderRouter(  
+rules=\[...\],  
+classify_unknown_exceptions_as_transient=True, # ✅ Default behavior  
+)
+
+**Issue: MyPy errors after integrating ProviderRouter**
+
+**Cause:** Type mismatches or missing imports.
+
+**Fix:**
+
+**Run mypy in strict mode to identify issues**
+
+mypy --strict arc_saga/orchestrator/
+
+**Common fixes:**
+
+**\- Ensure AITask imported from types**
+
+**\- Ensure AIResult imported from types**
+
+**\- Ensure all Optional types annotated**
+
+**\- Ensure all return types explicit**
+
+**📚 Reference Documentation**
+
+| Resource | Location | Purpose |
+| --- | --- | --- |
+| Component 3 Implementation | arc_saga/orchestrator/provider_router.py | Full router logic with exponential backoff |
+| Error Taxonomy | arc_saga/orchestrator/errors.py | TransientError/PermanentError definitions |
+| Tests (20+ scenarios) | tests/unit/orchestration/test_provider_router.py | Comprehensive test matrix |
+| Contract Test | tests/unit/orchestration/test_ai_provider_contract.py | AIProvider enum lock |
+| Type Definitions | arc_saga/orchestrator/types.py | AITask, AIResult, AIProvider |
+| Protocol Definition | arc_saga/orchestrator/protocols.py | IReasoningEngine interface |
+
+**🎯 Success Metrics (Post-Integration)**
+
+Track these KPIs to validate successful integration:
+
+| Metric | Target | Measurement |
+| --- | --- | --- |
+| **Routing Success Rate** | ≥ 99.5% | % of tasks routed successfully on first attempt |
+| **Fallback Rate** | 0.5% | % of tasks requiring fallback to secondary provider |
+| **Transient Error Recovery** | ≥ 95% | % of transient errors recovered by retry |
+| **Provider Availability** | ≥ 98% per provider | % successful routing per provider |
+| **Routing Latency P95** | < 500ms | 95th percentile routing overhead |
+| **Correlation ID Coverage** | 100% | % of requests with correlation IDs in logs |
+| **Test Coverage** | ≥ 95% | Router code coverage percentage |
+
+**Document Ready for** [**Cursor.ai**](http://Cursor.ai) **Deployment**  
+**Last Updated:** December 5, 2025, 11:42 AM EST  
+**Status:** ✅ Production-Ready Integration Guide

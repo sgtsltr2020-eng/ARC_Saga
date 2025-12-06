@@ -16,9 +16,7 @@ class FileProcessor:
         self.storage_dir.mkdir(parents=True, exist_ok=True)
 
     async def process_file(
-        self,
-        file_id: str,
-        file: UploadFile
+        self, file_id: str, file: UploadFile
     ) -> Tuple[str, Optional[str]]:
         """
         Save file and extract text content
@@ -71,7 +69,7 @@ class FileProcessor:
     def _extract_plain_text(self, filepath: Path) -> str:
         """Extract plain text files"""
         try:
-            with open(filepath, 'r', encoding='utf-8') as f:
+            with open(filepath, "r", encoding="utf-8") as f:
                 return f.read()
         except Exception as e:
             print(f"Text extraction error: {e}")

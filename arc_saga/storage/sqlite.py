@@ -15,15 +15,16 @@ Follows: Single Responsibility Principle, Dependency Injection
 
 import json
 import sqlite3
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
-from datetime import datetime
 
-from ..models import Message, File, SearchResult, Provider, MessageRole, FileType
-from ..exceptions import StorageError
-from .base import StorageBackend
-from ..logging_config import get_logger
 from shared.config import SharedConfig
+
+from ..exceptions import StorageError
+from ..logging_config import get_logger
+from ..models import File, FileType, Message, MessageRole, Provider, SearchResult
+from .base import StorageBackend
 
 logger = get_logger(__name__)
 
@@ -289,9 +290,9 @@ class SQLiteStorage(StorageBackend):
 
             conn.commit()
             logger.debug(
-                f"Saved file {
-                    file.filename}", extra={
-                    "file_id": file.id})
+                f"Saved file {file.filename} (ID: {file.id})",
+                extra={"file_id": file.id},
+            )
 
             return file.id
 
@@ -336,7 +337,7 @@ class SQLiteStorage(StorageBackend):
             # Add tag filters
             if tags:
                 tag_conditions = " AND ".join([
-                    f"m.tags LIKE ?"
+                    "m.tags LIKE ?"
                     for _ in tags
                 ])
                 sql += f" AND ({tag_conditions})"
@@ -357,7 +358,7 @@ class SQLiteStorage(StorageBackend):
                     timestamp=datetime.fromisoformat(row['timestamp'])
                 ))
 
-            logger.debug(f"Search completed", extra={
+            logger.debug("Search completed", extra={
                 "query": query,
                 "result_count": len(results),
                 "tag_count": len(tags) if tags else 0

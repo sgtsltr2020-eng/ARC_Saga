@@ -10,26 +10,49 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, List, Optional
 
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, File, HTTPException, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
+from ..observability import ObservabilityMiddleware, init_observability
+from ..validators import (
+    validate_capture_request,
+    validate_perplexity_request,
+    validate_search_request,
+)
+
+try:
+    from prometheus_client import CONTENT_TYPE_LATEST, generate_latest  # type: ignore
+except Exception:  # pragma: no cover - optional dep guard
+    CONTENT_TYPE_LATEST = "text/plain; version=0.0.4"
+    generate_latest = None  # type: ignore[assignment]
+try:
+    from slowapi import Limiter  # type: ignore
+    from slowapi.errors import RateLimitExceeded  # type: ignore
+    from slowapi.middleware import SlowAPIMiddleware  # type: ignore
+    from slowapi.util import get_remote_address  # type: ignore
+except Exception:  # pragma: no cover - optional dep guard
+    Limiter = None  # type: ignore
+    RateLimitExceeded = None  # type: ignore
+    SlowAPIMiddleware = None  # type: ignore
+    get_remote_address = None  # type: ignore
+
 # Import from Phase 1a (verified working)
-from ..storage.sqlite import SQLiteStorage
 from ..models import Message, MessageRole, Provider
 
 # Import new services
 from ..services.auto_tagger import AutoTagger
 from ..services.file_processor import FileProcessor
+from ..storage.sqlite import SQLiteStorage
 
 # Import health monitoring
 from .health_monitor import (
+    LatencyTrackingMiddleware,
     check_database_health,
     check_storage_space,
     determine_health_status,
     health_monitor,
-    LatencyTrackingMiddleware,
 )
 
 # Initialize services
@@ -109,6 +132,11 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# Rate limiter (gracefully disabled if slowapi not installed)
+limiter = Limiter(key_func=get_remote_address) if Limiter and get_remote_address else None
+if limiter and SlowAPIMiddleware:
+    app.state.limiter = limiter
+    app.add_middleware(SlowAPIMiddleware)
 # CORS for VSCode extension
 app.add_middleware(
     CORSMiddleware,
@@ -120,6 +148,17 @@ app.add_middleware(
 
 # Add latency tracking middleware
 app.add_middleware(LatencyTrackingMiddleware)
+# Add observability middleware (metrics + OTEL spans, no-op if deps missing)
+app.add_middleware(ObservabilityMiddleware)
+init_observability(app)
+
+if RateLimitExceeded:
+    @app.exception_handler(RateLimitExceeded)  # type: ignore[arg-type]
+    async def rate_limit_handler(request, exc):  # type: ignore[no-untyped-def]
+        return JSONResponse(
+            status_code=429,
+            content={"detail": "Rate limit exceeded. Please retry shortly."},
+        )
 
 # ═══════════════════════════════════════════════════════════
 # CONVERSATION CAPTURE
@@ -129,6 +168,13 @@ app.add_middleware(LatencyTrackingMiddleware)
 @app.post("/capture")
 async def capture_message(request: CaptureRequest):
     """Store a conversation message from any source"""
+
+    validate_capture_request(
+        source=request.source,
+        role=request.role,
+        content=request.content,
+        metadata_keys=(request.metadata or {}).keys(),
+    )
 
     # Map source string to Provider enum (verified from diagnostic)
     provider_map = {
@@ -267,8 +313,8 @@ async def get_thread(thread_id: str):
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=f"Retrieval error: {
-                str(e)}")
+            detail=f"Retrieval error: {str(e)}"
+        )
 
 # ═══════════════════════════════════════════════════════════
 # SEARCH
@@ -278,6 +324,8 @@ async def get_thread(thread_id: str):
 @app.post("/search")
 async def search_memory(request: SearchRequest):
     """Search across all conversations"""
+
+    validate_search_request(query=request.query or "", limit=request.limit)
 
     try:
         # Handle empty query for "recent" search
@@ -334,12 +382,13 @@ async def attach_file(
             "file_id": file_id,
             "filename": file.filename,
             "thread_id": thread_id,
-            "extracted_text_length": len(extracted_text) if extracted_text else 0}
+            "extracted_text_length": len(extracted_text) if extracted_text else 0
+        }
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=f"File processing error: {
-                str(e)}")
+            detail=f"File processing error: {str(e)}"
+        )
 
 # ═══════════════════════════════════════════════════════════
 # PERPLEXITY INTEGRATION
@@ -349,6 +398,8 @@ async def attach_file(
 @app.post("/perplexity/ask")
 async def ask_perplexity(request: PerplexityRequest):
     """Ask Perplexity with automatic context injection"""
+
+    validate_perplexity_request(query=request.query)
 
     if not perplexity_client:
         raise HTTPException(
@@ -622,6 +673,26 @@ async def get_metrics() -> MetricsResponse:
         )
 
 
+@app.get("/metrics/prometheus")
+async def prometheus_metrics() -> Response:
+    """
+    Expose Prometheus-compatible metrics stream.
+
+    Falls back gracefully if prometheus_client is not installed.
+    """
+    if generate_latest is None:
+        return Response(
+            content="prometheus_client not installed",
+            media_type="text/plain",
+            status_code=503,
+        )
+
+    return Response(
+        content=generate_latest(),
+        media_type=CONTENT_TYPE_LATEST,
+    )
+
+
 @app.get("/threads")
 async def list_threads(limit: int = 50):
     """List all conversation threads"""
@@ -668,8 +739,15 @@ async def list_threads(limit: int = 50):
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=f"Thread listing error: {
-                str(e)}")
+            detail=f"Thread listing error: {str(e)}"
+        )
+
+if limiter:
+    capture_message = limiter.limit("30/minute")(capture_message)  # type: ignore[assignment]
+    search_memory = limiter.limit("60/minute")(search_memory)  # type: ignore[assignment]
+    get_recent_context = limiter.limit("60/minute")(get_recent_context)  # type: ignore[assignment]
+    get_thread = limiter.limit("60/minute")(get_thread)  # type: ignore[assignment]
+    ask_perplexity = limiter.limit("20/minute")(ask_perplexity)  # type: ignore[assignment]
 
 # Server startup
 if __name__ == "__main__":

@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import json
 import uuid
-from datetime import datetime, timezone
 from typing import Any, AsyncIterator, Optional
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -55,10 +54,7 @@ class MockStorageBackend:
         return str(uuid.uuid4())
 
     async def search_messages(
-        self,
-        query: str,
-        tags: Optional[list[str]] = None,
-        limit: int = 50
+        self, query: str, tags: Optional[list[str]] = None, limit: int = 50
     ) -> list[Any]:
         """Search messages placeholder."""
         return []
@@ -144,9 +140,7 @@ class TestAskStreaming:
         mock_stream = mock_stream_generator(["Hello", " world", "!"])
 
         with patch.object(
-            client.client.chat.completions,
-            "create",
-            new_callable=AsyncMock
+            client.client.chat.completions, "create", new_callable=AsyncMock
         ) as mock_create:
             mock_create.return_value = mock_stream
 
@@ -174,15 +168,12 @@ class TestAskStreaming:
         test_session_id = "test-session-123"
 
         with patch.object(
-            client.client.chat.completions,
-            "create",
-            new_callable=AsyncMock
+            client.client.chat.completions, "create", new_callable=AsyncMock
         ) as mock_create:
             mock_create.return_value = mock_stream
 
             async for _ in client.ask_streaming(
-                "Test query",
-                session_id=test_session_id
+                "Test query", session_id=test_session_id
             ):
                 pass
 
@@ -201,9 +192,7 @@ class TestAskStreaming:
         mock_stream = mock_stream_generator(["Response"])
 
         with patch.object(
-            client.client.chat.completions,
-            "create",
-            new_callable=AsyncMock
+            client.client.chat.completions, "create", new_callable=AsyncMock
         ) as mock_create:
             mock_create.return_value = mock_stream
 
@@ -229,9 +218,7 @@ class TestAskStreaming:
         query = "What is Python?"
 
         with patch.object(
-            client.client.chat.completions,
-            "create",
-            new_callable=AsyncMock
+            client.client.chat.completions, "create", new_callable=AsyncMock
         ) as mock_create:
             mock_create.return_value = mock_stream
 
@@ -245,7 +232,7 @@ class TestAskStreaming:
 
     @pytest.mark.asyncio
     async def test_ask_streaming_stores_assistant_message_with_correct_fields(
-        self
+        self,
     ) -> None:
         """Test assistant message is stored with correct provider and role."""
         storage = MockStorageBackend()
@@ -254,9 +241,7 @@ class TestAskStreaming:
         mock_stream = mock_stream_generator(["Hello", " ", "world!"])
 
         with patch.object(
-            client.client.chat.completions,
-            "create",
-            new_callable=AsyncMock
+            client.client.chat.completions, "create", new_callable=AsyncMock
         ) as mock_create:
             mock_create.return_value = mock_stream
 
@@ -278,9 +263,7 @@ class TestAskStreaming:
         mock_stream = mock_stream_generator(expected_chunks)
 
         with patch.object(
-            client.client.chat.completions,
-            "create",
-            new_callable=AsyncMock
+            client.client.chat.completions, "create", new_callable=AsyncMock
         ) as mock_create:
             mock_create.return_value = mock_stream
 
@@ -302,9 +285,7 @@ class TestAskStreaming:
         session_id = "test-session"
 
         with patch.object(
-            client.client.chat.completions,
-            "create",
-            new_callable=AsyncMock
+            client.client.chat.completions, "create", new_callable=AsyncMock
         ) as mock_create:
             mock_create.return_value = mock_stream
 
@@ -327,13 +308,11 @@ class TestAskStreaming:
         mock_stream = mock_stream_generator(["Response"])
         context = [
             {"role": "user", "content": "Previous question"},
-            {"role": "assistant", "content": "Previous answer"}
+            {"role": "assistant", "content": "Previous answer"},
         ]
 
         with patch.object(
-            client.client.chat.completions,
-            "create",
-            new_callable=AsyncMock
+            client.client.chat.completions, "create", new_callable=AsyncMock
         ) as mock_create:
             mock_create.return_value = mock_stream
 
@@ -359,7 +338,9 @@ class TestErrorHandling:
         storage.should_fail_save = True
         client = PerplexityClient(api_key="test-key", storage=storage)
 
-        with pytest.raises(PerplexityStorageError, match="Failed to store user message"):
+        with pytest.raises(
+            PerplexityStorageError, match="Failed to store user message"
+        ):
             async for _ in client.ask_streaming("Test"):
                 pass
 
@@ -370,9 +351,7 @@ class TestErrorHandling:
         client = PerplexityClient(api_key="test-key", storage=storage)
 
         with patch.object(
-            client.client.chat.completions,
-            "create",
-            new_callable=AsyncMock
+            client.client.chat.completions, "create", new_callable=AsyncMock
         ) as mock_create:
             mock_create.side_effect = Exception("API Error")
 
@@ -408,9 +387,7 @@ class TestErrorHandling:
                 raise Exception("Storage error")
 
         with patch.object(
-            client.client.chat.completions,
-            "create",
-            new_callable=AsyncMock
+            client.client.chat.completions, "create", new_callable=AsyncMock
         ) as mock_create:
             mock_create.return_value = mock_stream
 
@@ -438,13 +415,13 @@ class TestGetSessionHistory:
             provider=Provider.PERPLEXITY,
             role=MessageRole.USER,
             content="Question",
-            session_id=session_id
+            session_id=session_id,
         )
         msg2 = Message(
             provider=Provider.PERPLEXITY,
             role=MessageRole.ASSISTANT,
             content="Answer",
-            session_id=session_id
+            session_id=session_id,
         )
         storage.saved_messages = [msg1, msg2]
 
@@ -462,8 +439,7 @@ class TestGetSessionHistory:
         client = PerplexityClient(api_key="test-key", storage=storage)
 
         with pytest.raises(
-            PerplexityStorageError,
-            match="Failed to get session history"
+            PerplexityStorageError, match="Failed to get session history"
         ):
             await client.get_session_history("test-session")
 

@@ -19,7 +19,7 @@ class StorageError(ArcSagaException):
     def __init__(self, message: str, operation: str = "") -> None:
         super().__init__(
             f"Storage operation '{operation}' failed: {message}",
-            error_code="STORAGE_ERROR"
+            error_code="STORAGE_ERROR",
         )
         self.operation = operation
 
@@ -30,7 +30,7 @@ class ValidationError(ArcSagaException):
     def __init__(self, message: str, field_name: str = "") -> None:
         super().__init__(
             f"Validation failed on field '{field_name}': {message}",
-            error_code="VALIDATION_ERROR"
+            error_code="VALIDATION_ERROR",
         )
         self.field_name = field_name
 
@@ -41,7 +41,7 @@ class FileProcessingError(ArcSagaException):
     def __init__(self, filename: str, reason: str) -> None:
         super().__init__(
             f"Failed to process file '{filename}': {reason}",
-            error_code="FILE_PROCESSING_ERROR"
+            error_code="FILE_PROCESSING_ERROR",
         )
         self.filename = filename
 
@@ -52,6 +52,6 @@ class MonitoringError(ArcSagaException):
     def __init__(self, provider: str, message: str) -> None:
         super().__init__(
             f"Monitoring error for provider '{provider}': {message}",
-            error_code="MONITORING_ERROR"
+            error_code="MONITORING_ERROR",
         )
         self.provider = provider
