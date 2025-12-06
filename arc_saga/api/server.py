@@ -382,12 +382,13 @@ async def attach_file(
             "file_id": file_id,
             "filename": file.filename,
             "thread_id": thread_id,
-            "extracted_text_length": len(extracted_text) if extracted_text else 0}
+            "extracted_text_length": len(extracted_text) if extracted_text else 0
+        }
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=f"File processing error: {
-                str(e)}")
+            detail=f"File processing error: {str(e)}"
+        )
 
 # ═══════════════════════════════════════════════════════════
 # PERPLEXITY INTEGRATION
@@ -738,8 +739,8 @@ async def list_threads(limit: int = 50):
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=f"Thread listing error: {
-                str(e)}")
+            detail=f"Thread listing error: {str(e)}"
+        )
 
 if limiter:
     capture_message = limiter.limit("30/minute")(capture_message)  # type: ignore[assignment]
