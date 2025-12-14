@@ -129,3 +129,55 @@ class IEncryptedStore(Protocol):
             ValueError: If user_id is empty or token_dict is empty
         """
         ...
+
+
+@runtime_checkable
+class IWorkflowStrategy(Protocol):
+    """
+    Protocol for workflow execution strategies.
+
+    Defines the contract for how a list of tasks should be executed
+    (e.g., sequentially, in parallel, or dynamically).
+    """
+
+    async def execute(
+        self,
+        workflow_id: str,
+        tasks: list[AITask],
+        executor: Any,  # TaskExecutor callable
+        correlation_id: str,
+    ) -> list[Any]:  # list[Result]
+        """
+        Execute tasks according to the strategy.
+
+        Args:
+            workflow_id: ID of the workflow
+            tasks: List of tasks to execute
+            executor: Callable that executes a single task
+            correlation_id: ID for tracing
+
+        Returns:
+            List of results corresponding to the tasks
+        """
+        ...
+
+
+@runtime_checkable
+class IEngineRegistry(Protocol):
+    """
+    Protocol for reasoning engine registry.
+    
+    Manages the lifecycle and retrieval of AI reasoning engines.
+    """
+    
+    def register(self, provider: Any, engine: IReasoningEngine) -> None:
+        """Register an engine for a provider."""
+        ...
+        
+    def get(self, provider: Any) -> Optional[IReasoningEngine]:
+        """Get an engine for a provider."""
+        ...
+        
+    def list_providers(self) -> list[Any]:
+        """List all available providers."""
+        ...

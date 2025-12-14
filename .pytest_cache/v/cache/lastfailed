@@ -1,7 +1,0 @@
-{
-  "tests/unit/orchestrator/test_config_gen.py::TestFileSystemDetector::test_detect_handles_permission_error_pyproject": true,
-  "test_server.py::test_health": true,
-  "test_server.py::test_capture": true,
-  "test_server.py::test_search": true,
-  "test_server.py::test_threads": true
-}

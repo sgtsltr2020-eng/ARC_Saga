@@ -50,13 +50,13 @@ from arc_saga.exceptions.integration_exceptions import (
 from arc_saga.exceptions.integration_exceptions import (
     TransientError as EngineTransientError,
 )
-from arc_saga.orchestrator.engine_registry import ReasoningEngineRegistry
 from arc_saga.orchestrator.cost_optimizer import (
     CostOptimizer,
     reorder_candidates_with_optimizer,
 )
+from arc_saga.orchestrator.engine_registry import ReasoningEngineRegistry
 from arc_saga.orchestrator.errors import PermanentError, ProviderError, TransientError
-from arc_saga.orchestrator.protocols import IReasoningEngine
+from arc_saga.orchestrator.protocols import IEngineRegistry, IReasoningEngine
 from arc_saga.orchestrator.types import AIProvider, AIResult, AITask
 
 logger = logging.getLogger(__name__)
@@ -181,6 +181,7 @@ class ProviderRouter:
         default_order: Optional[Sequence[AIProvider]] = None,
         classify_unknown_exceptions_as_transient: bool = True,
         optimizer: CostOptimizer | None = None,
+        registry: IEngineRegistry | None = None,
     ) -> None:
         """Initialize the router.
 
@@ -189,12 +190,16 @@ class ProviderRouter:
             default_order: Fallback providers when no rule matches task type.
             classify_unknown_exceptions_as_transient: If True, unknown exceptions
                 are retried; if False, treated as permanent and provider skipped.
+            optimizer: Optional CostOptimizer for token optimization.
+            registry: Optional registry instance. Falls back to global ReasoningEngineRegistry if None.
         """
 
         self._rules = tuple(rules)
         self._default_order = tuple(default_order) if default_order else tuple()
         self._classify_unknown_as_transient = classify_unknown_exceptions_as_transient
         self._optimizer = optimizer
+        # Use provided registry or fall back to static global registry wrapper
+        self._registry = registry or ReasoningEngineRegistry
 
     def get_candidate_providers(self, task_type: str) -> list[AIProvider]:
         """Return ordered providers for the given task type.
@@ -459,14 +464,14 @@ class ProviderRouter:
         return min(delay, max_backoff)
 
     def _get_engine(self, provider: AIProvider) -> IReasoningEngine:
-        """Get engine from ReasoningEngineRegistry.
+        """Get engine from registry.
 
         Raises:
             PermanentError: If provider not found in registry.
         """
 
         try:
-            engine = ReasoningEngineRegistry.get(provider)
+            engine = self._registry.get(provider)
         except Exception as ex:
             logger.error("event='registry_error' provider='%s' msg='%s'", provider.value, ex)
             raise PermanentError(f"Registry access failed for {provider.value}: {ex}")

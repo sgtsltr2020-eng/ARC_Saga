@@ -9,7 +9,7 @@ import logging
 import traceback
 import uuid
 from contextvars import ContextVar
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, Optional
 
@@ -30,7 +30,7 @@ def create_request_context(
         "request_id": str(uuid.uuid4()),
         "trace_id": str(uuid.uuid4()),
         "span_id": str(uuid.uuid4()),
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "service_name": service_name,
         "user_id": user_id,
     }
@@ -96,7 +96,7 @@ def log_with_context(level: str, message: str, **kwargs: Any) -> None:
         **ctx,  # Include correlation IDs
         "message": message,
         "level": level.upper(),
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         **sanitized_kwargs,  # Additional context (sanitized)
     }
     logger = logging.getLogger(__name__)
@@ -177,7 +177,7 @@ class ErrorContext:
         self.error = error
         self.context = context
         self.stack_trace = traceback.format_exc()
-        self.timestamp = datetime.utcnow().isoformat()
+        self.timestamp = datetime.now(timezone.utc).isoformat()
 
     def log(self) -> None:
         log_with_context(

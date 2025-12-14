@@ -86,4 +86,16 @@ desktop.ini
 
 # === OPENAI CONFIG & RULES ===
 .github/instructions/openmemory.instructions.md
-.cursor/rules/openmemory.mdc
+.cursor/rules/openmemory.mdc# Python caches
+__pycache__/
+*.py[cod]
+
+# Type checker / test caches
+.mypy_cache/
+.pytest_cache/
+
+# Packaging metadata
+*.egg-info/
+
+# VS Code local settings (optional)
+.vscode/

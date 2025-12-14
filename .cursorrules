@@ -580,3 +580,28 @@ Rule: Use these commands instead
   textRule: Always enforce quality via GitHub Actions
 - All quality gates must live in .github/workflows/ci.yml (runs on Linux → pre-commit works perfectly there)
 - CI is the source of truth, not local pre-commit
+
+
+# 3. DOCUMENTATION & PHASE COMPLIANCE
+
+## Phase Document Map (Primary Reference)
+
+You must reference these files to understand the current system state, but NEVER modify `AGENT_ONBOARDING.md` directly.
+
+*   **Phase 1:** `docs/PHASE_1_Foundation.md` (References `AGENT_ONBOARDING.md`)
+*   **Phase 2:** `docs/PHASE_2_Orchestrator.md` (References `AGENT_ONBOARDING.md` & `ROADMAP.md`)
+*   **Phase 2.1:** `docs/PHASE_2_1_Orchestrator_Logs.md`
+*   **Phase 3:** `docs/PHASE_3_Memory_systems.md`
+*   **Phase 4:** `docs/PHASE_4_MCP_Integration.md`
+*   **Phase 5:** `docs/PHASE_5_Desktop_UI.md`
+*   **Phase 6:** `docs/PHASE_6_Team_Collaboration.md`
+
+## Strict Compliance Rules
+1.  **Required Reading:** You must read `docs/AGENT_ONBOARDING.md` and this `.cursorrules` file at the start of every session and re-reference them **every 30 minutes**.
+2.  **No-Touch Policy:** You are strictly forbidden from moving, renaming, or editing:
+    *   `docs/AGENT_ONBOARDING.md`
+    *   `docs/decision_catalog.md`
+    *   `docs/error_catalog.md`
+    *   `docs/prompts_library.md`
+    *   `docs/verification_checklist.md`
+3.  **Additive Only:** Updates to this `.cursorrules` file must be additive only. Never remove existing rules.

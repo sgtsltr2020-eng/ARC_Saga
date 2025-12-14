@@ -1,39 +1,25 @@
 """Reasoning engine registry for centralized engine management."""
 
+from __future__ import annotations
+
 from typing import Dict, List, Optional
 
 from arc_saga.error_instrumentation import log_with_context
-from arc_saga.orchestrator.protocols import IReasoningEngine
+from arc_saga.orchestrator.protocols import IEngineRegistry, IReasoningEngine
 from arc_saga.orchestrator.types import AIProvider
 
 
-class ReasoningEngineRegistry:
+class EngineRegistry(IEngineRegistry):
     """
-    Centralized registry for reasoning engines by provider.
-
-    Singleton pattern: Registry state is class-level and shared across all uses.
-    Always call clear() in test fixtures to avoid cross-test contamination.
-
-    Design Notes:
-    - Registry only manages engines by provider.
-    - Fallback logic belongs in ProviderRouter, not here.
-    - Keep design lean: simple mapping with logging.
-
-    Example:
-        >>> copilot_engine = CopilotReasoningEngine(...)
-        >>> ReasoningEngineRegistry.register(AIProvider.COPILOT_CHAT, copilot_engine)
-        >>>
-        >>> engine = ReasoningEngineRegistry.get(AIProvider.COPILOT_CHAT)
-        >>> providers = ReasoningEngineRegistry.list_providers()
-        >>> ReasoningEngineRegistry.unregister(AIProvider.COPILOT_CHAT)
+    Instance-based reasoning engine registry.
+    Implements IEngineRegistry for dependency injection.
     """
 
-    # Class-level dictionary (shared across all instances)
-    _engines: Dict[AIProvider, IReasoningEngine] = {}
+    def __init__(self) -> None:
+        self._engines: Dict[AIProvider, IReasoningEngine] = {}
 
-    @classmethod
     def register(
-        cls,
+        self,
         provider: AIProvider,
         engine: IReasoningEngine,
     ) -> None:
@@ -47,10 +33,10 @@ class ReasoningEngineRegistry:
         Raises:
             ValueError: If provider already has a registered engine
         """
-        if provider in cls._engines:
+        if provider in self._engines:
             raise ValueError(f"Engine already registered for {provider.value}.")
 
-        cls._engines[provider] = engine
+        self._engines[provider] = engine
         log_with_context(
             "info",
             "engine_registered",
@@ -58,8 +44,7 @@ class ReasoningEngineRegistry:
             engine_type=type(engine).__name__,
         )
 
-    @classmethod
-    def get(cls, provider: AIProvider) -> Optional[IReasoningEngine]:
+    def get(self, provider: AIProvider) -> Optional[IReasoningEngine]:
         """
         Retrieve a registered engine for a provider.
 
@@ -69,7 +54,7 @@ class ReasoningEngineRegistry:
         Returns:
             IReasoningEngine instance if registered, None otherwise
         """
-        engine = cls._engines.get(provider)
+        engine = self._engines.get(provider)
 
         log_with_context(
             "info",
@@ -80,8 +65,7 @@ class ReasoningEngineRegistry:
 
         return engine
 
-    @classmethod
-    def unregister(cls, provider: AIProvider) -> bool:
+    def unregister(self, provider: AIProvider) -> bool:
         """
         Unregister an engine for a provider.
 
@@ -91,9 +75,9 @@ class ReasoningEngineRegistry:
         Returns:
             True if engine was unregistered, False if wasn't registered
         """
-        if provider in cls._engines:
-            engine_type = type(cls._engines[provider]).__name__
-            del cls._engines[provider]
+        if provider in self._engines:
+            engine_type = type(self._engines[provider]).__name__
+            del self._engines[provider]
 
             log_with_context(
                 "info",
@@ -110,15 +94,14 @@ class ReasoningEngineRegistry:
         )
         return False
 
-    @classmethod
-    def list_providers(cls) -> List[AIProvider]:
+    def list_providers(self) -> List[AIProvider]:
         """
         List all registered providers.
 
         Returns:
             List of AIProvider enum values that have registered engines
         """
-        providers = list(cls._engines.keys())
+        providers = list(self._engines.keys())
 
         log_with_context(
             "info",
@@ -129,16 +112,10 @@ class ReasoningEngineRegistry:
 
         return providers
 
-    @classmethod
-    def clear(cls) -> None:
-        """
-        Clear all registered engines.
-
-        WARNING: Use only for testing! Clears entire registry.
-        Call in test fixtures to avoid singleton contamination.
-        """
-        count = len(cls._engines)
-        cls._engines.clear()
+    def clear(self) -> None:
+        """Clear all registered engines."""
+        count = len(self._engines)
+        self._engines.clear()
 
         log_with_context(
             "info",
@@ -146,26 +123,38 @@ class ReasoningEngineRegistry:
             engines_removed=count,
         )
 
-    @classmethod
-    def has_provider(cls, provider: AIProvider) -> bool:
-        """
-        Check if a provider has a registered engine.
 
-        Args:
-            provider: AIProvider to check
+# Global singleton instance (for backward compatibility and simple usage)
+# In production, prefer injecting EngineRegistry instance into Orchestrator.
+_global_registry = EngineRegistry()
 
-        Returns:
-            True if engine is registered, False otherwise
-        """
-        return provider in cls._engines
 
-    @classmethod
-    def get_all(cls) -> Dict[AIProvider, IReasoningEngine]:
-        """
-        Get all registered engines (for advanced use).
-
-        Returns:
-            Dictionary mapping providers to engines (copy, not reference)
-        """
-        return dict(cls._engines)  # Return copy to prevent accidental modification
-
+class ReasoningEngineRegistry:
+    """
+    Static proxy for the global singleton registry.
+    Kept for backward compatibility.
+    """
+    
+    @staticmethod
+    def register(provider: AIProvider, engine: IReasoningEngine) -> None:
+        return _global_registry.register(provider, engine)
+        
+    @staticmethod
+    def get(provider: AIProvider) -> Optional[IReasoningEngine]:
+        return _global_registry.get(provider)
+        
+    @staticmethod
+    def unregister(provider: AIProvider) -> bool:
+        return _global_registry.unregister(provider)
+        
+    @staticmethod
+    def list_providers() -> List[AIProvider]:
+        return _global_registry.list_providers()
+        
+    @staticmethod
+    def clear() -> None:
+        return _global_registry.clear()
+        
+    @staticmethod
+    def has_provider(provider: AIProvider) -> bool:
+        return _global_registry.get(provider) is not None

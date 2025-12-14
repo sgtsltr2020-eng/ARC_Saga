@@ -24,7 +24,6 @@ Example:
 
 from __future__ import annotations
 
-import asyncio
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -39,7 +38,10 @@ from ..integrations.circuit_breaker import (
 )
 from .cost_models import CostSettings
 from .cost_optimizer import CostOptimizer
-from .provider_router import ProviderRouter, RoutingRule
+from .errors import (
+    BudgetExceededError,
+    WorkflowError,
+)
 from .events import (
     IEventStore,
     OperationLoggedEvent,
@@ -49,6 +51,14 @@ from .events import (
     WorkflowCompletedEvent,
     WorkflowStartedEvent,
 )
+from .patterns import (
+    ArbitrationStrategy,
+    DynamicStrategy,
+    ParallelStrategy,
+    SequentialStrategy,
+)
+from .protocols import IWorkflowStrategy
+from .provider_router import ProviderRouter, RoutingRule
 from .token_manager import TokenBudgetManager, TokenUsage
 from .types import (
     AIProvider,
@@ -96,6 +106,7 @@ class WorkflowPattern(str, Enum):
     SEQUENTIAL = "sequential"
     PARALLEL = "parallel"
     DYNAMIC = "dynamic"
+    ARBITRATION = "arbitration"
 
 
 @dataclass(frozen=True)
@@ -184,91 +195,6 @@ class OperationContext:
     additional_data: dict[str, Any] = field(default_factory=dict)
 
 
-class OrchestratorError(Exception):
-    """Base exception for orchestrator errors."""
-
-    def __init__(self, message: str, operation: str = "") -> None:
-        """
-        Initialize OrchestratorError.
-
-        Args:
-            message: Error description
-            operation: Operation that failed
-        """
-        self.operation = operation
-        super().__init__(f"Orchestrator {operation} failed: {message}")
-
-
-class WorkflowError(OrchestratorError):
-    """Exception raised when workflow execution fails."""
-
-    def __init__(
-        self,
-        message: str,
-        workflow_id: str,
-        failed_tasks: list[str] | None = None,
-    ) -> None:
-        """
-        Initialize WorkflowError.
-
-        Args:
-            message: Error description
-            workflow_id: ID of the failed workflow
-            failed_tasks: List of failed task IDs
-        """
-        self.workflow_id = workflow_id
-        self.failed_tasks = failed_tasks or []
-        super().__init__(message, "execute_workflow")
-
-
-class BudgetExceededError(OrchestratorError):
-    """Exception raised when workflow exceeds token budget."""
-
-    def __init__(
-        self,
-        workflow_id: str,
-        requested_tokens: int,
-        remaining_tokens: int,
-        total_budget: int,
-    ) -> None:
-        """
-        Initialize BudgetExceededError.
-
-        Args:
-            workflow_id: ID of the workflow that exceeded budget
-            requested_tokens: Tokens requested for the workflow
-            remaining_tokens: Tokens remaining in budget
-            total_budget: Total token budget
-        """
-        self.workflow_id = workflow_id
-        self.requested_tokens = requested_tokens
-        self.remaining_tokens = remaining_tokens
-        self.total_budget = total_budget
-        message = (
-            f"Workflow {workflow_id} requires {requested_tokens} tokens, "
-            f"but only {remaining_tokens}/{total_budget} tokens remaining"
-        )
-        super().__init__(message, "execute_workflow")
-
-
-class PolicyViolationError(OrchestratorError):
-    """Exception raised when policy enforcement fails."""
-
-    def __init__(self, policy_name: str, reason: str) -> None:
-        """
-        Initialize PolicyViolationError.
-
-        Args:
-            policy_name: Name of the violated policy
-            reason: Reason for violation
-        """
-        self.policy_name = policy_name
-        self.reason = reason
-        super().__init__(
-            f"Policy '{policy_name}' violated: {reason}",
-            "enforce_policy",
-        )
-
 
 # Task executor type: async function that takes Task and returns Result
 TaskExecutor = Callable[[Task[Any]], Awaitable[Result[Any]]]
@@ -316,7 +242,16 @@ class Orchestrator:
         self._circuit_breaker = circuit_breaker
         self._task_executor = task_executor or self._default_task_executor
         self._token_budget_manager = token_budget_manager
+        self._token_budget_manager = token_budget_manager
         self._policy_registry: dict[str, Callable[[Command], bool]] = {}
+        
+        # Register default workflow strategies
+        self._strategies: dict[WorkflowPattern, IWorkflowStrategy] = {
+            WorkflowPattern.SEQUENTIAL: SequentialStrategy(),
+            WorkflowPattern.PARALLEL: ParallelStrategy(),
+            WorkflowPattern.DYNAMIC: DynamicStrategy(),
+            WorkflowPattern.ARBITRATION: ArbitrationStrategy(token_budget_manager),
+        }
 
         log_with_context(
             "info",
@@ -429,19 +364,21 @@ class Orchestrator:
         )
 
         try:
-            # Execute based on pattern
-            if pattern == WorkflowPattern.SEQUENTIAL:
-                results = await self._execute_sequential(
-                    workflow_id, tasks, correlation_id
-                )
-            elif pattern == WorkflowPattern.PARALLEL:
-                results = await self._execute_parallel(
-                    workflow_id, tasks, correlation_id
-                )
-            else:  # DYNAMIC
-                results = await self._execute_dynamic(
-                    workflow_id, tasks, correlation_id
-                )
+            # Execute based on pattern strategy
+            strategy = self._strategies.get(pattern)
+            if not strategy:
+                raise ValueError(f"No strategy registered for pattern {pattern.value}")
+
+            # Bind context to create a simple executor callable
+            async def bound_executor(task: Task[Any]) -> Result[Any]:
+                return await self._execute_single_task(workflow_id, task, correlation_id)
+
+            results = await strategy.execute(
+                workflow_id=workflow_id,
+                tasks=tasks,
+                executor=bound_executor,
+                correlation_id=correlation_id,
+            )
 
             duration_ms = int((time.perf_counter() - start_time) * 1000)
             success_count = sum(1 for r in results if r.success)
@@ -566,97 +503,6 @@ class Orchestrator:
                 failed_tasks=[t.id for t in tasks],
             ) from e
 
-    async def _execute_sequential(
-        self,
-        workflow_id: str,
-        tasks: list[Task[Any]],
-        correlation_id: str,
-    ) -> list[Result[Any]]:
-        """
-        Execute tasks sequentially.
-
-        Args:
-            workflow_id: Workflow identifier
-            tasks: Tasks to execute
-            correlation_id: Correlation ID for tracing
-
-        Returns:
-            List of results in task order
-        """
-        results: list[Result[Any]] = []
-
-        for task in tasks:
-            result = await self._execute_single_task(workflow_id, task, correlation_id)
-            results.append(result)
-
-        return results
-
-    async def _execute_parallel(
-        self,
-        workflow_id: str,
-        tasks: list[Task[Any]],
-        correlation_id: str,
-    ) -> list[Result[Any]]:
-        """
-        Execute tasks in parallel.
-
-        Args:
-            workflow_id: Workflow identifier
-            tasks: Tasks to execute
-            correlation_id: Correlation ID for tracing
-
-        Returns:
-            List of results in task order
-        """
-        # Create coroutines for all tasks
-        coroutines = [
-            self._execute_single_task(workflow_id, task, correlation_id)
-            for task in tasks
-        ]
-
-        # Execute all in parallel
-        results = await asyncio.gather(*coroutines, return_exceptions=False)
-
-        return list(results)
-
-    async def _execute_dynamic(
-        self,
-        workflow_id: str,
-        tasks: list[Task[Any]],
-        correlation_id: str,
-    ) -> list[Result[Any]]:
-        """
-        Execute tasks dynamically based on results.
-
-        Executes tasks sequentially but stops early if a task fails.
-
-        Args:
-            workflow_id: Workflow identifier
-            tasks: Tasks to execute
-            correlation_id: Correlation ID for tracing
-
-        Returns:
-            List of results (may be shorter than tasks if early termination)
-        """
-        results: list[Result[Any]] = []
-
-        for task in tasks:
-            result = await self._execute_single_task(workflow_id, task, correlation_id)
-            results.append(result)
-
-            # Stop on failure in dynamic mode
-            if not result.success:
-                log_with_context(
-                    "warning",
-                    "dynamic_workflow_early_termination",
-                    workflow_id=workflow_id,
-                    failed_task_id=task.id,
-                    completed_count=len(results),
-                    remaining_count=len(tasks) - len(results),
-                )
-                break
-
-        return results
 
     async def _execute_single_task(
         self,
