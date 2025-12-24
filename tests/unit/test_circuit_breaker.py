@@ -23,8 +23,8 @@ from typing import Any, AsyncIterator
 
 import pytest
 
-from arc_saga.error_instrumentation import CircuitBreakerMetrics
-from arc_saga.integrations.circuit_breaker import (
+from saga.error_instrumentation import CircuitBreakerMetrics
+from saga.integrations.circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerOpenError,
     CircuitState,
@@ -729,7 +729,7 @@ class TestCircuitBreakerWithPerplexityClient:
         """Test ask_streaming uses circuit breaker for API calls."""
         from unittest.mock import AsyncMock, MagicMock, patch
 
-        from arc_saga.integrations.perplexity_client import PerplexityClient
+        from saga.integrations.perplexity_client import PerplexityClient
 
         # Simple mock storage
         class MockStorageBackend:
@@ -775,7 +775,7 @@ class TestCircuitBreakerWithPerplexityClient:
     @pytest.mark.asyncio
     async def test_ask_streaming_graceful_degradation_on_open_circuit(self) -> None:
         """Test ask_streaming handles open circuit with graceful degradation."""
-        from arc_saga.integrations.perplexity_client import PerplexityClient
+        from saga.integrations.perplexity_client import PerplexityClient
 
         # Simple mock storage
         class MockStorageBackend:
@@ -812,7 +812,7 @@ class TestCircuitBreakerWithPerplexityClient:
         """Test ask_streaming retries with backoff on transient errors."""
         from unittest.mock import MagicMock, patch
 
-        from arc_saga.integrations.perplexity_client import PerplexityClient
+        from saga.integrations.perplexity_client import PerplexityClient
 
         # Simple mock storage
         class MockStorageBackend:

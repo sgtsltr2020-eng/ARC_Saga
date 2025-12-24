@@ -500,7 +500,7 @@ New/Revised Rules for Improvement
 1. CI/CD Integration
    Cursor: Add setups non-invasively; enforce gates without feature changes.
 
-Add .github/workflows/ci.yml: Lint (black, isort, mypy --strict, pylint --fail-under=9.0, bandit), test (pytest --cov=arc_saga --cov-fail-under=98), benchmark, Docker build (stub if no Docker yet).
+Add .github/workflows/ci.yml: Lint (black, isort, mypy --strict, pylint --fail-under=9.0, bandit), test (pytest --cov=saga --cov-fail-under=98), benchmark, Docker build (stub if no Docker yet).
 Pre-commit hooks: Install via .pre-commit-config.yaml (black, isort, mypy, pylint, bandit).
 CD: Optional deploy to Render on main; use secrets for env vars.
 Badges in README: CI status, Codecov.
@@ -571,12 +571,12 @@ Rule: Block pre-commit
 Rule: Use these commands instead
 
 - For formatting: `python -m black .` and `ruff check --fix .`
-- For type checking: `mypy --strict arc_saga tests`
-- For linting: `pylint arc_saga tests --fail-under=9.0`
-- For security: `bandit -r arc_saga -x tests`
-- For tests: `pytest --cov=arc_saga --cov-fail-under=98`
+- For type checking: `mypy --strict saga tests`
+- For linting: `pylint saga tests --fail-under=9.0`
+- For security: `bandit -r saga -x tests`
+- For tests: `pytest --cov=saga --cov-fail-under=98`
 - Full one-liner (add to README or check.bat):
-  python -m black . && ruff check --fix . && mypy --strict arc_saga tests && pylint arc_saga tests --fail-under=9.0 && bandit -r arc_saga -x tests && pytest --cov=arc_saga --cov-fail-under=98
+  python -m black . && ruff check --fix . && mypy --strict saga tests && pylint saga tests --fail-under=9.0 && bandit -r saga -x tests && pytest --cov=saga --cov-fail-under=98
   textRule: Always enforce quality via GitHub Actions
 - All quality gates must live in .github/workflows/ci.yml (runs on Linux → pre-commit works perfectly there)
 - CI is the source of truth, not local pre-commit

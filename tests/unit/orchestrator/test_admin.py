@@ -20,7 +20,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from arc_saga.orchestrator.admin import (
+from saga.orchestrator.admin import (
     IQualityGateExecutor,
     QualityGateFailure,
     QualityGateManager,

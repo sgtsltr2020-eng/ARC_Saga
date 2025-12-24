@@ -2,14 +2,14 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from arc_saga.orchestrator.judgement import (
+from saga.orchestrator.judgement import (
     VerdictParser,
     VerdictStatus,
     validate_artifacts,
 )
-from arc_saga.orchestrator.patterns import ArbitrationStrategy
-from arc_saga.orchestrator.roles import AgentRole
-from arc_saga.orchestrator.types import AIProvider, AITaskInput, Result, Task
+from saga.orchestrator.patterns import ArbitrationStrategy
+from saga.orchestrator.roles import AgentRole
+from saga.orchestrator.types import AIProvider, AITaskInput, Result, Task
 
 
 # --- Fixtures ---

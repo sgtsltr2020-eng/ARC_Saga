@@ -14,14 +14,14 @@ import aiohttp
 import pytest
 import pytest_asyncio
 
-from arc_saga.exceptions.integration_exceptions import (
+from saga.exceptions.integration_exceptions import (
     AuthenticationError,
     InputValidationError,
     RateLimitError,
     TransientError,
 )
-from arc_saga.integrations.copilot_reasoning_engine import CopilotReasoningEngine
-from arc_saga.orchestrator.types import (
+from saga.integrations.copilot_reasoning_engine import CopilotReasoningEngine
+from saga.orchestrator.types import (
     AIProvider,
     AITask,
     AITaskInput,
@@ -779,7 +779,7 @@ async def test_reason_logging_context(
     copilot_engine.http_client = mock_session
 
     with patch(
-        "arc_saga.integrations.copilot_reasoning_engine.log_with_context"
+        "saga.integrations.copilot_reasoning_engine.log_with_context"
     ) as mock_log:
         await copilot_engine.reason(sample_task)
 

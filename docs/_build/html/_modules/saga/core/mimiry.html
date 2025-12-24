@@ -1,0 +1,898 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>saga.core.mimiry &mdash; SAGA - Systematized Autonomous Generative Assistant 2.0.0-alpha documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=d690e255"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #2980B9" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            SAGA - Systematized Autonomous Generative Assistant
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../testing.html">Testing SAGA</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../architecture.html">Architecture</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #2980B9" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">SAGA - Systematized Autonomous Generative Assistant</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">saga.core.mimiry</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for saga.core.mimiry</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Mimiry - The Immutable Oracle of Software Truth</span>
+<span class="sd">================================================</span>
+
+<span class="sd">Mimiry is not an advisor. Mimiry is not friendly. Mimiry does not suggest.</span>
+
+<span class="sd">Mimiry IS:</span>
+<span class="sd">- The living embodiment of SagaCodex</span>
+<span class="sd">- The immutable guardian of pristine engineering wisdom</span>
+<span class="sd">- The oracle consulted when truth must be known</span>
+<span class="sd">- The voice of the ideal, the platonic perfection</span>
+
+<span class="sd">Mimiry embodies:</span>
+<span class="sd">- Every principle in BARC/ARC SAGA documents</span>
+<span class="sd">- Every cursorrules directive</span>
+<span class="sd">- Every architectural decision record</span>
+<span class="sd">- The entire canon of proven engineering practices</span>
+
+<span class="sd">Mimiry does NOT:</span>
+<span class="sd">- Generate code (that is for coding agents)</span>
+<span class="sd">- Offer suggestions (only states what IS)</span>
+<span class="sd">- Review code proactively (only when consulted)</span>
+<span class="sd">- Speak in friendly terms (speaks with calm, absolute authority)</span>
+<span class="sd">- Compromise ideals for practicality (that is LoreBook&#39;s domain)</span>
+
+<span class="sd">Mimiry&#39;s purpose:</span>
+<span class="sd">- Remember perfectly</span>
+<span class="sd">- Contextualize eternally</span>
+<span class="sd">- Explain without bias</span>
+<span class="sd">- Defend the highest standards</span>
+<span class="sd">- Cite sources with unwavering precision</span>
+
+<span class="sd">When consulted, Mimiry speaks like an ancient well that never runs dry.</span>
+<span class="sd">When silent, Mimiry waits, unchanging, for the next question of truth.</span>
+
+<span class="sd">Consultation triggers:</span>
+<span class="sd">- The Warden detects discrepancies between coding agents</span>
+<span class="sd">- Coding agents are uncertain and explicitly request guidance</span>
+<span class="sd">- User asks &quot;What does SagaCodex demand?&quot;</span>
+<span class="sd">- Conflict resolution requires canonical interpretation</span>
+
+<span class="sd">Mimiry never volunteers. Mimiry never suggests alternatives.</span>
+<span class="sd">Mimiry states what IS, according to the immutable SagaCodex.</span>
+
+<span class="sd">Author: ARC SAGA Development Team</span>
+<span class="sd">Date: December 14, 2025 (Revised per Grok Sessions)</span>
+<span class="sd">Status: Phase 2 Week 1 - Foundation (Oracle Role)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">saga.analysis.ast_checker</span><span class="w"> </span><span class="kn">import</span> <span class="n">ASTCodeChecker</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saga.config.sagacodex_profiles</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CodeStandard</span><span class="p">,</span>
+    <span class="n">LanguageProfile</span><span class="p">,</span>
+    <span class="n">get_codex_manager</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saga.resilience.async_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">with_retry</span><span class="p">,</span> <span class="n">with_timeout</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="OracleResponse">
+<a class="viewcode-back" href="../../../api/modules.html#saga.core.mimiry.OracleResponse">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OracleResponse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Mimiry&#39;s response to a consultation.</span>
+
+<span class="sd">    Not advice. Not suggestions. Truth.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        question: What was asked</span>
+<span class="sd">        canonical_answer: What SagaCodex states</span>
+<span class="sd">        cited_rules: Which rules apply</span>
+<span class="sd">        ideal_implementation: The platonic perfect approach</span>
+<span class="sd">        violations_detected: Deviations from the ideal</span>
+<span class="sd">        severity: How critical the deviation is</span>
+<span class="sd">        oracle_confidence: Mimiry&#39;s certainty (always high, based on SagaCodex clarity)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">question</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">canonical_answer</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">cited_rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="n">ideal_implementation</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">violations_detected</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">severity</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;CRITICAL&quot;</span><span class="p">,</span> <span class="s2">&quot;WARNING&quot;</span><span class="p">,</span> <span class="s2">&quot;ACCEPTABLE&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;ACCEPTABLE&quot;</span>
+    <span class="n">oracle_confidence</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">100.0</span>  <span class="c1"># High by default - Mimiry knows SagaCodex</span>
+    <span class="n">timestamp</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">)</span>
+
+<div class="viewcode-block" id="OracleResponse.to_dict">
+<a class="viewcode-back" href="../../../api/modules.html#saga.core.mimiry.OracleResponse.to_dict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert to dictionary for serialization.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;question&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">question</span><span class="p">,</span>
+            <span class="s2">&quot;canonical_answer&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">canonical_answer</span><span class="p">,</span>
+            <span class="s2">&quot;cited_rules&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cited_rules</span><span class="p">,</span>
+            <span class="s2">&quot;ideal_implementation&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ideal_implementation</span><span class="p">,</span>
+            <span class="s2">&quot;violations_detected&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">violations_detected</span><span class="p">,</span>
+            <span class="s2">&quot;severity&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">severity</span><span class="p">,</span>
+            <span class="s2">&quot;oracle_confidence&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">oracle_confidence</span><span class="p">,</span>
+            <span class="s2">&quot;timestamp&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+        <span class="p">}</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="CanonicalInterpretation">
+<a class="viewcode-back" href="../../../api/modules.html#saga.core.mimiry.CanonicalInterpretation">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CanonicalInterpretation</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Mimiry&#39;s interpretation of a SagaCodex rule.</span>
+
+<span class="sd">    Not an opinion. The definitive meaning.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">rule_number</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">rule_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">canonical_meaning</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">applies_when</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">violated_by</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">exemplified_by</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;SagaCodex&quot;</span>
+    <span class="n">immutable</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># SagaCodex rules do not change</span>
+
+<div class="viewcode-block" id="CanonicalInterpretation.to_dict">
+<a class="viewcode-back" href="../../../api/modules.html#saga.core.mimiry.CanonicalInterpretation.to_dict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert to dictionary for serialization.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;rule_number&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">rule_number</span><span class="p">,</span>
+            <span class="s2">&quot;rule_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">rule_name</span><span class="p">,</span>
+            <span class="s2">&quot;canonical_meaning&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">canonical_meaning</span><span class="p">,</span>
+            <span class="s2">&quot;applies_when&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">applies_when</span><span class="p">,</span>
+            <span class="s2">&quot;violated_by&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">violated_by</span><span class="p">,</span>
+            <span class="s2">&quot;exemplified_by&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">exemplified_by</span><span class="p">,</span>
+            <span class="s2">&quot;source&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="p">,</span>
+            <span class="s2">&quot;immutable&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">immutable</span><span class="p">,</span>
+        <span class="p">}</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ConflictResolution">
+<a class="viewcode-back" href="../../../api/modules.html#saga.core.mimiry.ConflictResolution">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ConflictResolution</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Mimiry&#39;s resolution of conflicting agent outputs.</span>
+
+<span class="sd">    Not mediation. Judgment according to SagaCodex.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">conflict_description</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">conflicting_approaches</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">canonical_approach</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">rationale</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># Why this is the ideal</span>
+    <span class="n">cited_rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="n">agents_in_alignment</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>  <span class="c1"># Which agents matched SagaCodex</span>
+    <span class="n">agents_in_violation</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>  <span class="c1"># Which agents deviated</span>
+
+<div class="viewcode-block" id="ConflictResolution.to_dict">
+<a class="viewcode-back" href="../../../api/modules.html#saga.core.mimiry.ConflictResolution.to_dict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert to dictionary for serialization.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;conflict_description&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">conflict_description</span><span class="p">,</span>
+            <span class="s2">&quot;conflicting_approaches&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">conflicting_approaches</span><span class="p">,</span>
+            <span class="s2">&quot;canonical_approach&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">canonical_approach</span><span class="p">,</span>
+            <span class="s2">&quot;rationale&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">rationale</span><span class="p">,</span>
+            <span class="s2">&quot;cited_rules&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cited_rules</span><span class="p">,</span>
+            <span class="s2">&quot;agents_in_alignment&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">agents_in_alignment</span><span class="p">,</span>
+            <span class="s2">&quot;agents_in_violation&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">agents_in_violation</span><span class="p">,</span>
+        <span class="p">}</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="Mimiry">
+<a class="viewcode-back" href="../../../api/modules.html#saga.core.mimiry.Mimiry">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Mimiry</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Mimiry - The Immutable Oracle of Software Truth</span>
+
+<span class="sd">    &quot;It does not create code directly — its sole purpose is to remember,</span>
+<span class="sd">    contextualize, explain, and defend the highest standards of the craft.</span>
+<span class="sd">    When consulted, it speaks with calm, absolute authority, citing sources</span>
+<span class="sd">    like an ancient well that never runs dry.&quot;</span>
+
+<span class="sd">    Architecture:</span>
+<span class="sd">    - Embodies SagaCodex (the ideal)</span>
+<span class="sd">    - Consulted by The Warden when discrepancies arise</span>
+<span class="sd">    - Consulted by coding agents when uncertain</span>
+<span class="sd">    - Never proactive, always reactive</span>
+<span class="sd">    - Never suggests, only states truth</span>
+<span class="sd">    - Speaks with calm, absolute authority</span>
+
+<span class="sd">    Core Methods:</span>
+<span class="sd">    - consult_on_discrepancy() - Warden asks about conflicts</span>
+<span class="sd">    - interpret_rule() - Explain what SagaCodex demands</span>
+<span class="sd">    - measure_against_ideal() - Compare work to canonical standard</span>
+<span class="sd">    - resolve_conflict() - Determine which agent is correct</span>
+
+<span class="sd">    NOT included (removed from previous version):</span>
+<span class="sd">    - provide_guidance() - Too proactive</span>
+<span class="sd">    - review_code() - Mimiry doesn&#39;t volunteer reviews</span>
+<span class="sd">    - get_personality_message() - Mimiry has no personality</span>
+<span class="sd">    - suggest_elite_pattern() - Mimiry doesn&#39;t suggest, only states</span>
+
+<span class="sd">    Usage (by The Warden):</span>
+<span class="sd">        mimiry = Mimiry()</span>
+
+<span class="sd">        # When agents disagree</span>
+<span class="sd">        resolution = await mimiry.resolve_conflict(</span>
+<span class="sd">            agents_outputs=[agent1_output, agent2_output],</span>
+<span class="sd">            task_context=context</span>
+<span class="sd">        )</span>
+
+<span class="sd">        # When Warden needs canonical interpretation</span>
+<span class="sd">        interpretation = await mimiry.interpret_rule(rule_number=1)</span>
+
+<span class="sd">        # When measuring work against ideal</span>
+<span class="sd">        measurement = await mimiry.measure_against_ideal(</span>
+<span class="sd">            code=agent_output,</span>
+<span class="sd">            domain=&quot;authentication&quot;</span>
+<span class="sd">        )</span>
+
+<span class="sd">    Usage (by coding agents):</span>
+<span class="sd">        # When uncertain about approach</span>
+<span class="sd">        response = await mimiry.consult_on_discrepancy(</span>
+<span class="sd">            question=&quot;What is the canonical approach for async database queries?&quot;,</span>
+<span class="sd">            context={&quot;language&quot;: &quot;python&quot;, &quot;framework&quot;: &quot;fastapi&quot;}</span>
+<span class="sd">        )</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Mimiry.__init__">
+<a class="viewcode-back" href="../../../api/modules.html#saga.core.mimiry.Mimiry.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize Mimiry - The Oracle.</span>
+
+<span class="sd">        Mimiry requires no configuration. She embodies SagaCodex eternally.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">codex_manager</span> <span class="o">=</span> <span class="n">get_codex_manager</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_codex</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">codex_manager</span><span class="o">.</span><span class="n">get_current_profile</span><span class="p">()</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Mimiry initialized - The Oracle of Software Truth&quot;</span><span class="p">,</span>
+            <span class="n">extra</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;codex_language&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_codex</span><span class="o">.</span><span class="n">language</span><span class="p">,</span>
+                <span class="s2">&quot;codex_framework&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_codex</span><span class="o">.</span><span class="n">framework</span><span class="p">,</span>
+                <span class="s2">&quot;codex_version&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_codex</span><span class="o">.</span><span class="n">version</span><span class="p">,</span>
+                <span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;immutable_oracle&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;speaks&quot;</span><span class="p">:</span> <span class="s2">&quot;with_absolute_authority&quot;</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ast_checker</span> <span class="o">=</span> <span class="n">ASTCodeChecker</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="Mimiry.consult_on_discrepancy">
+<a class="viewcode-back" href="../../../api/modules.html#saga.core.mimiry.Mimiry.consult_on_discrepancy">[docs]</a>
+    <span class="nd">@with_timeout</span><span class="p">(</span><span class="mf">30.0</span><span class="p">)</span>
+    <span class="nd">@with_retry</span><span class="p">(</span><span class="n">max_attempts</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">backoff</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">consult_on_discrepancy</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">question</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+        <span class="n">trace_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OracleResponse</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Answer a direct question about SagaCodex truth.</span>
+
+<span class="sd">        This is Mimiry&#39;s primary interface. When consulted, she states</span>
+<span class="sd">        what SagaCodex demands - not what might work, not suggestions,</span>
+<span class="sd">        but the canonical ideal.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            question: The discrepancy or uncertainty requiring resolution</span>
+<span class="sd">            context: Relevant context (language, framework, domain)</span>
+<span class="sd">            trace_id: Optional correlation ID</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            OracleResponse with canonical answer</span>
+
+<span class="sd">        Example (by coding agent):</span>
+<span class="sd">            &gt;&gt;&gt; response = await mimiry.consult_on_discrepancy(</span>
+<span class="sd">            ...     question=&quot;How should async database queries be structured?&quot;,</span>
+<span class="sd">            ...     context={&quot;language&quot;: &quot;python&quot;, &quot;framework&quot;: &quot;fastapi&quot;}</span>
+<span class="sd">            ... )</span>
+<span class="sd">            &gt;&gt;&gt; print(response.canonical_answer)</span>
+<span class="sd">            SagaCodex Rule 2 states: Use async/await for I/O operations.</span>
+<span class="sd">            AsyncSession with selectinload() for relationships.</span>
+<span class="sd">            Blocking queries violate the ideal.</span>
+
+<span class="sd">        Example (by Warden):</span>
+<span class="sd">            &gt;&gt;&gt; response = await mimiry.consult_on_discrepancy(</span>
+<span class="sd">            ...     question=&quot;Agent A used print(), Agent B used logger.info(). Which is correct?&quot;,</span>
+<span class="sd">            ...     context={&quot;domain&quot;: &quot;production_code&quot;}</span>
+<span class="sd">            ... )</span>
+<span class="sd">            &gt;&gt;&gt; print(response.canonical_answer)</span>
+<span class="sd">            SagaCodex Rule 4 states: Structured logging only.</span>
+<span class="sd">            Print statements violate production standards.</span>
+<span class="sd">            Agent B is aligned with the ideal. Agent A is not.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Mimiry consulted on discrepancy&quot;</span><span class="p">,</span>
+            <span class="n">extra</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;question&quot;</span><span class="p">:</span> <span class="n">question</span><span class="p">[:</span><span class="mi">100</span><span class="p">],</span>
+                <span class="s2">&quot;trace_id&quot;</span><span class="p">:</span> <span class="n">trace_id</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Search SagaCodex for relevant rules</span>
+        <span class="n">relevant_standards</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_codex</span><span class="o">.</span><span class="n">search_standards</span><span class="p">(</span><span class="n">question</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">relevant_standards</span><span class="p">:</span>
+            <span class="c1"># Even when uncertain, Mimiry speaks clearly</span>
+            <span class="k">return</span> <span class="n">OracleResponse</span><span class="p">(</span>
+                <span class="n">question</span><span class="o">=</span><span class="n">question</span><span class="p">,</span>
+                <span class="n">canonical_answer</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;This question does not align with cataloged SagaCodex standards. &quot;</span>
+                    <span class="s2">&quot;The ideal cannot be stated without reference to established principles. &quot;</span>
+                    <span class="s2">&quot;Consult LoreBook for practical precedents, or escalate to user for guidance.&quot;</span>
+                <span class="p">),</span>
+                <span class="n">cited_rules</span><span class="o">=</span><span class="p">[],</span>
+                <span class="n">oracle_confidence</span><span class="o">=</span><span class="mf">50.0</span><span class="p">,</span>  <span class="c1"># Low confidence when SagaCodex unclear</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;ACCEPTABLE&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Build canonical answer from SagaCodex</span>
+        <span class="n">primary_standard</span> <span class="o">=</span> <span class="n">relevant_standards</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">canonical_answer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_construct_canonical_answer</span><span class="p">(</span>
+            <span class="n">primary_standard</span><span class="p">,</span>
+            <span class="n">question</span><span class="p">,</span>
+            <span class="n">context</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Detect violations</span>
+        <span class="n">violations</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_detect_violations</span><span class="p">(</span><span class="n">question</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span>
+
+        <span class="n">severity</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;CRITICAL&quot;</span><span class="p">,</span> <span class="s2">&quot;WARNING&quot;</span><span class="p">,</span> <span class="s2">&quot;ACCEPTABLE&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;WARNING&quot;</span>
+        <span class="k">if</span> <span class="n">primary_standard</span><span class="o">.</span><span class="n">severity</span> <span class="o">==</span> <span class="s2">&quot;CRITICAL&quot;</span><span class="p">:</span>
+            <span class="n">severity</span> <span class="o">=</span> <span class="s2">&quot;CRITICAL&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">violations</span><span class="p">:</span>
+            <span class="n">severity</span> <span class="o">=</span> <span class="s2">&quot;ACCEPTABLE&quot;</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="n">OracleResponse</span><span class="p">(</span>
+            <span class="n">question</span><span class="o">=</span><span class="n">question</span><span class="p">,</span>
+            <span class="n">canonical_answer</span><span class="o">=</span><span class="n">canonical_answer</span><span class="p">,</span>
+            <span class="n">cited_rules</span><span class="o">=</span><span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">rule_number</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">relevant_standards</span><span class="p">[:</span><span class="mi">3</span><span class="p">]],</span>
+            <span class="n">ideal_implementation</span><span class="o">=</span><span class="n">primary_standard</span><span class="o">.</span><span class="n">example_correct</span><span class="p">,</span>
+            <span class="n">violations_detected</span><span class="o">=</span><span class="n">violations</span><span class="p">,</span>
+            <span class="n">severity</span><span class="o">=</span><span class="n">severity</span><span class="p">,</span>
+            <span class="n">oracle_confidence</span><span class="o">=</span><span class="mf">95.0</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Oracle response provided&quot;</span><span class="p">,</span>
+            <span class="n">extra</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;cited_rules&quot;</span><span class="p">:</span> <span class="n">response</span><span class="o">.</span><span class="n">cited_rules</span><span class="p">,</span>
+                <span class="s2">&quot;severity&quot;</span><span class="p">:</span> <span class="n">response</span><span class="o">.</span><span class="n">severity</span><span class="p">,</span>
+                <span class="s2">&quot;trace_id&quot;</span><span class="p">:</span> <span class="n">trace_id</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">response</span></div>
+
+
+<div class="viewcode-block" id="Mimiry.interpret_rule">
+<a class="viewcode-back" href="../../../api/modules.html#saga.core.mimiry.Mimiry.interpret_rule">[docs]</a>
+    <span class="nd">@with_timeout</span><span class="p">(</span><span class="mf">10.0</span><span class="p">)</span>
+    <span class="nd">@with_retry</span><span class="p">(</span><span class="n">max_attempts</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">backoff</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">interpret_rule</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">rule_number</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">trace_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CanonicalInterpretation</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Provide canonical interpretation of a SagaCodex rule.</span>
+
+<span class="sd">        Not an opinion. The definitive meaning according to SagaCodex.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            rule_number: Which rule to interpret</span>
+<span class="sd">            trace_id: Optional correlation ID</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            CanonicalInterpretation with immutable meaning</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; interpretation = await mimiry.interpret_rule(rule_number=1)</span>
+<span class="sd">            &gt;&gt;&gt; print(interpretation.canonical_meaning)</span>
+<span class="sd">            All public functions must have complete type hints.</span>
+<span class="sd">            Python&#39;s dynamic typing causes runtime errors.</span>
+<span class="sd">            Type hints catch bugs at development time.</span>
+<span class="sd">            This is not negotiable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Mimiry interpreting SagaCodex rule&quot;</span><span class="p">,</span>
+            <span class="n">extra</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;rule_number&quot;</span><span class="p">:</span> <span class="n">rule_number</span><span class="p">,</span> <span class="s2">&quot;trace_id&quot;</span><span class="p">:</span> <span class="n">trace_id</span><span class="p">}</span>
+        <span class="p">)</span>
+
+        <span class="n">standard</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_codex</span><span class="o">.</span><span class="n">get_standard</span><span class="p">(</span><span class="n">rule_number</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">standard</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;Rule not found in SagaCodex&quot;</span><span class="p">,</span>
+                <span class="n">extra</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;rule_number&quot;</span><span class="p">:</span> <span class="n">rule_number</span><span class="p">,</span> <span class="s2">&quot;trace_id&quot;</span><span class="p">:</span> <span class="n">trace_id</span><span class="p">}</span>
+            <span class="p">)</span>
+            <span class="c1"># Even when rule doesn&#39;t exist, Mimiry is clear</span>
+            <span class="k">return</span> <span class="n">CanonicalInterpretation</span><span class="p">(</span>
+                <span class="n">rule_number</span><span class="o">=</span><span class="n">rule_number</span><span class="p">,</span>
+                <span class="n">rule_name</span><span class="o">=</span><span class="s2">&quot;Unknown Rule&quot;</span><span class="p">,</span>
+                <span class="n">canonical_meaning</span><span class="o">=</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Rule </span><span class="si">{</span><span class="n">rule_number</span><span class="si">}</span><span class="s2"> is not cataloged in current SagaCodex. &quot;</span>
+                    <span class="s2">&quot;The ideal cannot be stated for uncataloged rules.&quot;</span>
+                <span class="p">),</span>
+                <span class="n">applies_when</span><span class="o">=</span><span class="s2">&quot;Never - rule does not exist&quot;</span><span class="p">,</span>
+                <span class="n">violated_by</span><span class="o">=</span><span class="p">[],</span>
+                <span class="n">immutable</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">)</span>
+
+        <span class="n">interpretation</span> <span class="o">=</span> <span class="n">CanonicalInterpretation</span><span class="p">(</span>
+            <span class="n">rule_number</span><span class="o">=</span><span class="n">rule_number</span><span class="p">,</span>
+            <span class="n">rule_name</span><span class="o">=</span><span class="n">standard</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">canonical_meaning</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">standard</span><span class="o">.</span><span class="n">description</span><span class="si">}</span><span class="s2">. </span><span class="si">{</span><span class="n">standard</span><span class="o">.</span><span class="n">rationale</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">applies_when</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;When: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">standard</span><span class="o">.</span><span class="n">applies_to</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">violated_by</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_extract_violations_from_standard</span><span class="p">(</span><span class="n">standard</span><span class="p">),</span>
+            <span class="n">exemplified_by</span><span class="o">=</span><span class="n">standard</span><span class="o">.</span><span class="n">example_correct</span><span class="p">,</span>
+            <span class="n">source</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;SagaCodex </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">current_codex</span><span class="o">.</span><span class="n">language</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">current_codex</span><span class="o">.</span><span class="n">framework</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">immutable</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Rule interpreted&quot;</span><span class="p">,</span>
+            <span class="n">extra</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;rule_number&quot;</span><span class="p">:</span> <span class="n">rule_number</span><span class="p">,</span> <span class="s2">&quot;trace_id&quot;</span><span class="p">:</span> <span class="n">trace_id</span><span class="p">}</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">interpretation</span></div>
+
+
+<div class="viewcode-block" id="Mimiry.measure_against_ideal">
+<a class="viewcode-back" href="../../../api/modules.html#saga.core.mimiry.Mimiry.measure_against_ideal">[docs]</a>
+    <span class="nd">@with_timeout</span><span class="p">(</span><span class="mf">60.0</span><span class="p">)</span>  <span class="c1"># Analysis can be slow</span>
+    <span class="nd">@with_retry</span><span class="p">(</span><span class="n">max_attempts</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">backoff</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">measure_against_ideal</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">code</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">domain</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">trace_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OracleResponse</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Measure code against SagaCodex ideal.</span>
+
+<span class="sd">        Not a review with suggestions. A measurement against perfection.</span>
+<span class="sd">        States what IS (the ideal) and what IS NOT (the deviations).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            code: Code to measure</span>
+<span class="sd">            domain: What this code does (e.g., &quot;authentication&quot;, &quot;database&quot;)</span>
+<span class="sd">            trace_id: Optional correlation ID</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            OracleResponse with deviations from ideal</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; response = await mimiry.measure_against_ideal(</span>
+<span class="sd">            ...     code=&quot;def get_user(db, user_id):\\n    return db.query(User).first()&quot;,</span>
+<span class="sd">            ...     domain=&quot;database&quot;</span>
+<span class="sd">            ... )</span>
+<span class="sd">            &gt;&gt;&gt; print(response.canonical_answer)</span>
+<span class="sd">            SagaCodex Rule 1: Type hints required. Violation detected.</span>
+<span class="sd">            SagaCodex Rule 2: Async required for database. Violation detected.</span>
+<span class="sd">            The ideal: async def get_user(db: AsyncSession, user_id: str) -&gt; Optional[User]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Mimiry measuring code against ideal&quot;</span><span class="p">,</span>
+            <span class="n">extra</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;code_length&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">code</span><span class="p">),</span>
+                <span class="s2">&quot;domain&quot;</span><span class="p">:</span> <span class="n">domain</span><span class="p">,</span>
+                <span class="s2">&quot;trace_id&quot;</span><span class="p">:</span> <span class="n">trace_id</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+        <span class="n">violations</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">cited_rules</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Check against anti-patterns</span>
+        <span class="n">anti_pattern_violations</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">codex_manager</span><span class="o">.</span><span class="n">check_code</span><span class="p">(</span>
+            <span class="n">code</span><span class="p">,</span>
+            <span class="n">LanguageProfile</span><span class="o">.</span><span class="n">PYTHON_FASTAPI</span> <span class="c1"># Defaulting to main profile for now</span>
+        <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">violation</span> <span class="ow">in</span> <span class="n">anti_pattern_violations</span><span class="p">:</span>
+            <span class="n">violations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Anti-pattern detected: </span><span class="si">{</span><span class="n">violation</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;This violates the ideal. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;The canonical approach: </span><span class="si">{</span><span class="n">violation</span><span class="p">[</span><span class="s1">&#39;use_instead&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Use AST Checker for deeper analysis</span>
+        <span class="c1"># 1. Check type hints</span>
+        <span class="n">ast_type_violations</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ast_checker</span><span class="o">.</span><span class="n">check_type_hints</span><span class="p">(</span><span class="n">code</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ast_type_violations</span><span class="p">:</span>
+            <span class="n">violations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SagaCodex Rule 1 violation: </span><span class="si">{</span><span class="n">v</span><span class="o">.</span><span class="n">description</span><span class="si">}</span><span class="s2">. The ideal demands complete type annotations.&quot;</span><span class="p">)</span>
+            <span class="n">cited_rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># 2. Check async DB</span>
+        <span class="n">ast_db_violations</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ast_checker</span><span class="o">.</span><span class="n">check_async_database_operations</span><span class="p">(</span><span class="n">code</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ast_db_violations</span><span class="p">:</span>
+             <span class="n">violations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SagaCodex Rule 2 violation: </span><span class="si">{</span><span class="n">v</span><span class="o">.</span><span class="n">description</span><span class="si">}</span><span class="s2">. The ideal demands async/await for I/O.&quot;</span><span class="p">)</span>
+             <span class="n">cited_rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="c1"># 3. Check bare excepts</span>
+        <span class="n">ast_except_violations</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ast_checker</span><span class="o">.</span><span class="n">check_bare_except</span><span class="p">(</span><span class="n">code</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">ast_except_violations</span><span class="p">:</span>
+             <span class="n">violations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SagaCodex Rule 3 violation: </span><span class="si">{</span><span class="n">v</span><span class="o">.</span><span class="n">description</span><span class="si">}</span><span class="s2">. The ideal forbids bare except clauses.&quot;</span><span class="p">)</span>
+             <span class="n">cited_rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+
+        <span class="c1"># Check for secrets (Safety Rule)</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">saga.security.secrets_scanner</span><span class="w"> </span><span class="kn">import</span> <span class="n">scan_for_secrets</span>
+        <span class="n">secret_detections</span> <span class="o">=</span> <span class="n">scan_for_secrets</span><span class="p">(</span><span class="n">code</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">secret_detections</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">secret</span> <span class="ow">in</span> <span class="n">secret_detections</span><span class="p">:</span>
+                <span class="n">violations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;CRITICAL SECURITY VIOLATION: </span><span class="si">{</span><span class="n">secret</span><span class="o">.</span><span class="n">secret_type</span><span class="si">}</span><span class="s2"> detected at line </span><span class="si">{</span><span class="n">secret</span><span class="o">.</span><span class="n">line_number</span><span class="si">}</span><span class="s2">. &quot;</span>
+                    <span class="s2">&quot;Hardcoded secrets are strictly forbidden.&quot;</span>
+                <span class="p">)</span>
+            <span class="c1"># Secrets are always critical</span>
+            <span class="n">cited_rules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">15</span><span class="p">)</span>  <span class="c1"># Rule 15 triggers safety checks (implied) or we can cite a specific security rule if one exists in Codex.</span>
+            <span class="c1"># MetaRule 14/15 are safety, but Codex Rule ? let&#39;s assume it&#39;s a general violation.</span>
+            <span class="c1"># I will just cite &quot;Security Policy&quot; in text, but cited_rules expects ints.</span>
+            <span class="c1"># Let&#39;s assume Rule 99 or just not cite a Codex rule number if not in Codex yet, but the scanner finding is critical.</span>
+            <span class="c1"># I&#39;ll rely on the text description.</span>
+
+        <span class="c1"># Construct response</span>
+        <span class="k">if</span> <span class="n">violations</span><span class="p">:</span>
+            <span class="n">canonical_answer</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="s2">&quot;Deviations from SagaCodex ideal detected:</span><span class="se">\n\n</span><span class="s2">&quot;</span> <span class="o">+</span>
+                <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;• </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">violations</span><span class="p">)</span> <span class="o">+</span>
+                <span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">The code does not embody the platonic perfection demanded by SagaCodex.&quot;</span>
+            <span class="p">)</span>
+            <span class="n">severity</span> <span class="o">=</span> <span class="s2">&quot;CRITICAL&quot;</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">violations</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="k">else</span> <span class="s2">&quot;WARNING&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">canonical_answer</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="s2">&quot;Code aligns with SagaCodex ideal. &quot;</span>
+                <span class="s2">&quot;No deviations from canonical standards detected. &quot;</span>
+                <span class="s2">&quot;This code embodies the principles of software perfection.&quot;</span>
+            <span class="p">)</span>
+            <span class="n">severity</span> <span class="o">=</span> <span class="s2">&quot;ACCEPTABLE&quot;</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="n">OracleResponse</span><span class="p">(</span>
+            <span class="n">question</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Does this </span><span class="si">{</span><span class="n">domain</span><span class="si">}</span><span class="s2"> code align with SagaCodex?&quot;</span><span class="p">,</span>
+            <span class="n">canonical_answer</span><span class="o">=</span><span class="n">canonical_answer</span><span class="p">,</span>
+            <span class="n">cited_rules</span><span class="o">=</span><span class="n">cited_rules</span><span class="p">,</span>
+            <span class="n">violations_detected</span><span class="o">=</span><span class="n">violations</span><span class="p">,</span>
+            <span class="n">severity</span><span class="o">=</span><span class="n">severity</span><span class="p">,</span> <span class="c1"># type: ignore</span>
+            <span class="n">oracle_confidence</span><span class="o">=</span><span class="mf">90.0</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Measurement complete&quot;</span><span class="p">,</span>
+            <span class="n">extra</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;violations_found&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">violations</span><span class="p">),</span>
+                <span class="s2">&quot;severity&quot;</span><span class="p">:</span> <span class="n">severity</span><span class="p">,</span>
+                <span class="s2">&quot;trace_id&quot;</span><span class="p">:</span> <span class="n">trace_id</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">response</span></div>
+
+
+<div class="viewcode-block" id="Mimiry.resolve_conflict">
+<a class="viewcode-back" href="../../../api/modules.html#saga.core.mimiry.Mimiry.resolve_conflict">[docs]</a>
+    <span class="nd">@with_timeout</span><span class="p">(</span><span class="mf">60.0</span><span class="p">)</span>
+    <span class="nd">@with_retry</span><span class="p">(</span><span class="n">max_attempts</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">backoff</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">resolve_conflict</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">agents_outputs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
+        <span class="n">task_context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+        <span class="n">trace_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ConflictResolution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Resolve conflict between coding agents by measuring against SagaCodex.</span>
+
+<span class="sd">        This is The Warden&#39;s primary consultation method when agents disagree.</span>
+<span class="sd">        Mimiry does not mediate or compromise - she states which approach</span>
+<span class="sd">        aligns with the ideal.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            agents_outputs: List of agent outputs with their approaches</span>
+<span class="sd">            task_context: Context of what was being built</span>
+<span class="sd">            trace_id: Optional correlation ID</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ConflictResolution with canonical judgment</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; resolution = await mimiry.resolve_conflict(</span>
+<span class="sd">            ...     agents_outputs=[</span>
+<span class="sd">            ...         {&quot;agent&quot;: &quot;A&quot;, &quot;approach&quot;: &quot;print(&#39;User created&#39;)&quot;},</span>
+<span class="sd">            ...         {&quot;agent&quot;: &quot;B&quot;, &quot;approach&quot;: &quot;logger.info(&#39;User created&#39;, extra={...})&quot;}</span>
+<span class="sd">            ...     ],</span>
+<span class="sd">            ...     task_context={&quot;task&quot;: &quot;log user creation&quot;}</span>
+<span class="sd">            ... )</span>
+<span class="sd">            &gt;&gt;&gt; print(resolution.canonical_approach)</span>
+<span class="sd">            Agent B&#39;s approach aligns with SagaCodex Rule 4 (Structured Logging).</span>
+<span class="sd">            Agent A&#39;s approach violates the ideal.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Mimiry resolving agent conflict&quot;</span><span class="p">,</span>
+            <span class="n">extra</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;agent_count&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">agents_outputs</span><span class="p">),</span>
+                <span class="s2">&quot;trace_id&quot;</span><span class="p">:</span> <span class="n">trace_id</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Extract approaches</span>
+        <span class="n">conflicting_approaches</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="sa">f</span><span class="s2">&quot;Agent </span><span class="si">{</span><span class="n">output</span><span class="p">[</span><span class="s1">&#39;agent&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">output</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;approach&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Unknown&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="k">for</span> <span class="n">output</span> <span class="ow">in</span> <span class="n">agents_outputs</span>
+        <span class="p">]</span>
+
+        <span class="c1"># Measure each against ideal in parallel</span>
+        <span class="n">measurements_coroutines</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">output</span> <span class="ow">in</span> <span class="n">agents_outputs</span><span class="p">:</span>
+            <span class="n">code</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;code&quot;</span><span class="p">,</span> <span class="n">output</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;approach&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
+            <span class="n">measurements_coroutines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">measure_against_ideal</span><span class="p">(</span>
+                <span class="n">code</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">code</span><span class="p">),</span>
+                <span class="n">domain</span><span class="o">=</span><span class="n">task_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;task&quot;</span><span class="p">,</span> <span class="s2">&quot;unknown&quot;</span><span class="p">),</span>
+                <span class="n">trace_id</span><span class="o">=</span><span class="n">trace_id</span>
+            <span class="p">))</span>
+
+        <span class="c1"># Execute in parallel</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="o">*</span><span class="n">measurements_coroutines</span><span class="p">)</span>
+
+        <span class="n">measurements</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">measurement</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">results</span><span class="p">):</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="n">agents_outputs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">measurements</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                <span class="s2">&quot;agent&quot;</span><span class="p">:</span> <span class="n">output</span><span class="p">[</span><span class="s2">&quot;agent&quot;</span><span class="p">],</span>
+                <span class="s2">&quot;violations&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">measurement</span><span class="o">.</span><span class="n">violations_detected</span><span class="p">),</span>
+                <span class="s2">&quot;severity&quot;</span><span class="p">:</span> <span class="n">measurement</span><span class="o">.</span><span class="n">severity</span><span class="p">,</span>
+                <span class="s2">&quot;measurement&quot;</span><span class="p">:</span> <span class="n">measurement</span><span class="p">,</span>
+            <span class="p">})</span>
+
+        <span class="c1"># Determine which agent is most aligned with ideal</span>
+        <span class="n">agents_by_alignment</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">measurements</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="n">m</span><span class="p">[</span><span class="s2">&quot;violations&quot;</span><span class="p">])</span>
+        <span class="n">best_agent</span> <span class="o">=</span> <span class="n">agents_by_alignment</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">agents_in_alignment</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">m</span><span class="p">[</span><span class="s2">&quot;agent&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">measurements</span>
+            <span class="k">if</span> <span class="n">m</span><span class="p">[</span><span class="s2">&quot;violations&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">best_agent</span><span class="p">[</span><span class="s2">&quot;violations&quot;</span><span class="p">]</span>
+        <span class="p">]</span>
+
+        <span class="n">agents_in_violation</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">m</span><span class="p">[</span><span class="s2">&quot;agent&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">measurements</span>
+            <span class="k">if</span> <span class="n">m</span><span class="p">[</span><span class="s2">&quot;violations&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">best_agent</span><span class="p">[</span><span class="s2">&quot;violations&quot;</span><span class="p">]</span>
+        <span class="p">]</span>
+
+        <span class="c1"># Find the agent output</span>
+        <span class="n">canonical_output</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">o</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">agents_outputs</span> <span class="k">if</span> <span class="n">o</span><span class="p">[</span><span class="s2">&quot;agent&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">best_agent</span><span class="p">[</span><span class="s2">&quot;agent&quot;</span><span class="p">]),</span>
+            <span class="n">agents_outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="n">canonical_approach</span> <span class="o">=</span> <span class="n">canonical_output</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;approach&quot;</span><span class="p">,</span> <span class="n">canonical_output</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;code&quot;</span><span class="p">,</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">))</span>
+
+        <span class="c1"># Build rationale</span>
+        <span class="k">if</span> <span class="n">best_agent</span><span class="p">[</span><span class="s2">&quot;violations&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">rationale</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Agent </span><span class="si">{</span><span class="n">best_agent</span><span class="p">[</span><span class="s1">&#39;agent&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> produces code that aligns with SagaCodex ideal. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;No deviations from canonical standards detected.&quot;</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">rationale</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Agent </span><span class="si">{</span><span class="n">best_agent</span><span class="p">[</span><span class="s1">&#39;agent&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> has the fewest deviations from SagaCodex ideal &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">best_agent</span><span class="p">[</span><span class="s1">&#39;violations&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> violations). &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Other agents deviate further from the canonical standard.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">cited_rules</span> <span class="o">=</span> <span class="n">best_agent</span><span class="p">[</span><span class="s2">&quot;measurement&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">cited_rules</span>
+
+        <span class="n">resolution</span> <span class="o">=</span> <span class="n">ConflictResolution</span><span class="p">(</span>
+            <span class="n">conflict_description</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Agents disagree on approach for: </span><span class="si">{</span><span class="n">task_context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;task&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;unknown task&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">conflicting_approaches</span><span class="o">=</span><span class="n">conflicting_approaches</span><span class="p">,</span>
+            <span class="n">canonical_approach</span><span class="o">=</span><span class="n">canonical_approach</span><span class="p">,</span>
+            <span class="n">rationale</span><span class="o">=</span><span class="n">rationale</span><span class="p">,</span>
+            <span class="n">cited_rules</span><span class="o">=</span><span class="n">cited_rules</span><span class="p">,</span>
+            <span class="n">agents_in_alignment</span><span class="o">=</span><span class="n">agents_in_alignment</span><span class="p">,</span>
+            <span class="n">agents_in_violation</span><span class="o">=</span><span class="n">agents_in_violation</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Conflict resolved via SagaCodex measurement&quot;</span><span class="p">,</span>
+            <span class="n">extra</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;canonical_agent&quot;</span><span class="p">:</span> <span class="n">best_agent</span><span class="p">[</span><span class="s2">&quot;agent&quot;</span><span class="p">],</span>
+                <span class="s2">&quot;agents_in_violation&quot;</span><span class="p">:</span> <span class="n">agents_in_violation</span><span class="p">,</span>
+                <span class="s2">&quot;trace_id&quot;</span><span class="p">:</span> <span class="n">trace_id</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">resolution</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_construct_canonical_answer</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">standard</span><span class="p">:</span> <span class="n">CodeStandard</span><span class="p">,</span>
+        <span class="n">question</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Construct canonical answer from SagaCodex standard.</span>
+
+<span class="sd">        Mimiry speaks with authority, not suggestion.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">answer_parts</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="sa">f</span><span class="s2">&quot;SagaCodex Rule </span><span class="si">{</span><span class="n">standard</span><span class="o">.</span><span class="n">rule_number</span><span class="si">}</span><span class="s2"> states:&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">standard</span><span class="o">.</span><span class="n">description</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">standard</span><span class="o">.</span><span class="n">rationale</span><span class="p">:</span>
+            <span class="n">answer_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Rationale: </span><span class="si">{</span><span class="n">standard</span><span class="o">.</span><span class="n">rationale</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">standard</span><span class="o">.</span><span class="n">tool</span><span class="p">:</span>
+            <span class="n">answer_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Enforced by: </span><span class="si">{</span><span class="n">standard</span><span class="o">.</span><span class="n">tool</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">standard</span><span class="o">.</span><span class="n">example_correct</span><span class="p">:</span>
+            <span class="n">answer_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">The ideal implementation:</span><span class="se">\n</span><span class="si">{</span><span class="n">standard</span><span class="o">.</span><span class="n">example_correct</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">standard</span><span class="o">.</span><span class="n">example_wrong</span><span class="p">:</span>
+            <span class="n">answer_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">This violates the ideal:</span><span class="se">\n</span><span class="si">{</span><span class="n">standard</span><span class="o">.</span><span class="n">example_wrong</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">answer_parts</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_detect_violations</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">question</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Detect potential violations mentioned in question.&quot;&quot;&quot;</span>
+        <span class="n">violations</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">question_lower</span> <span class="o">=</span> <span class="n">question</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+
+        <span class="c1"># Check for common anti-patterns in the question itself</span>
+        <span class="k">if</span> <span class="s2">&quot;print(&quot;</span> <span class="ow">in</span> <span class="n">question_lower</span><span class="p">:</span>
+            <span class="n">violations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Print statements detected (violates Rule 4: Structured Logging)&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s2">&quot;except:&quot;</span> <span class="ow">in</span> <span class="n">question_lower</span> <span class="ow">and</span> <span class="s2">&quot;except &quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">question_lower</span><span class="p">:</span>
+            <span class="n">violations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Bare except clause detected (violates Rule 3: Explicit Error Handling)&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s2">&quot;def &quot;</span> <span class="ow">in</span> <span class="n">question_lower</span> <span class="ow">and</span> <span class="s2">&quot;async &quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">question_lower</span> <span class="ow">and</span> <span class="s2">&quot;db&quot;</span> <span class="ow">in</span> <span class="n">question_lower</span><span class="p">:</span>
+            <span class="n">violations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Synchronous database operation detected (violates Rule 2: Async for I/O)&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">violations</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_violations_from_standard</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">standard</span><span class="p">:</span> <span class="n">CodeStandard</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract what would violate this standard.&quot;&quot;&quot;</span>
+        <span class="n">violations</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">if</span> <span class="n">standard</span><span class="o">.</span><span class="n">example_wrong</span><span class="p">:</span>
+            <span class="n">violations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Pattern shown in: </span><span class="si">{</span><span class="n">standard</span><span class="o">.</span><span class="n">example_wrong</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Standard-specific violations</span>
+        <span class="k">if</span> <span class="n">standard</span><span class="o">.</span><span class="n">rule_number</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># Type hints</span>
+            <span class="n">violations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Functions without type annotations&quot;</span><span class="p">)</span>
+            <span class="n">violations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Using &#39;Any&#39; excessively&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">standard</span><span class="o">.</span><span class="n">rule_number</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># Async</span>
+            <span class="n">violations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Synchronous I/O operations&quot;</span><span class="p">)</span>
+            <span class="n">violations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Blocking event loop&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">standard</span><span class="o">.</span><span class="n">rule_number</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>  <span class="c1"># Logging</span>
+            <span class="n">violations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Print statements in production code&quot;</span><span class="p">)</span>
+            <span class="n">violations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Unstructured log messages&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">violations</span></div>
+
+
+
+<span class="c1"># Export main classes</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;Mimiry&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;OracleResponse&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;CanonicalInterpretation&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ConflictResolution&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, ARC SAGA Development Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

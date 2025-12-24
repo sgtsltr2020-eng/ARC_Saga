@@ -1,0 +1,755 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>saga.core.warden &mdash; SAGA - Systematized Autonomous Generative Assistant 2.0.0-alpha documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=d690e255"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #2980B9" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            SAGA - Systematized Autonomous Generative Assistant
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../testing.html">Testing SAGA</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../architecture.html">Architecture</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #2980B9" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">SAGA - Systematized Autonomous Generative Assistant</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">saga.core.warden</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for saga.core.warden</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">The Warden - SAGA&#39;s Delegation &amp; Arbitration Agent</span>
+<span class="sd">===================================================</span>
+
+<span class="sd">The Warden (formerly JUDGE) is responsible for:</span>
+<span class="sd">1. Receiving proposals from SAGA</span>
+<span class="sd">2. Planning task decomposition</span>
+<span class="sd">3. Spawning transient coding agents dynamically</span>
+<span class="sd">4. Collecting agent outputs</span>
+<span class="sd">5. Detecting discrepancies between agents</span>
+<span class="sd">6. CONSULTING MIMIRY when conflicts arise (critical integration)</span>
+<span class="sd">7. Enforcing final consistency via SagaCodex (through Mimiry)</span>
+<span class="sd">8. Reporting approved output back to SAGA</span>
+
+<span class="sd">Authority:</span>
+<span class="sd">- The Warden can refuse SAGA&#39;s proposals if they violate SagaCodex</span>
+<span class="sd">- The Warden consults Mimiry (the oracle) when agents disagree</span>
+<span class="sd">- The Warden enforces quality gates before approval</span>
+<span class="sd">- The Warden escalates to user when Mimiry cannot resolve</span>
+
+<span class="sd">Named &quot;The Warden&quot; because:</span>
+<span class="sd">- Guards quality standards (via Mimiry/SagaCodex)</span>
+<span class="sd">- Oversees subagent execution</span>
+<span class="sd">- Maintains order in the delegation hierarchy</span>
+<span class="sd">- Resolves conflicts through consultation with the oracle</span>
+
+<span class="sd">Integration with Mimiry:</span>
+<span class="sd">- Mimiry is consulted reactively (not proactively)</span>
+<span class="sd">- Warden asks Mimiry to resolve conflicts between agents</span>
+<span class="sd">- Mimiry measures agent outputs against SagaCodex ideal</span>
+<span class="sd">- Warden enforces Mimiry&#39;s canonical judgment</span>
+
+<span class="sd">Author: ARC SAGA Development Team</span>
+<span class="sd">Date: December 14, 2025 (Revised for Mimiry Integration)</span>
+<span class="sd">Status: Phase 2 Week 1 - Foundation</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">uuid</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">saga.config.sagacodex_profiles</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_codex_manager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saga.config.sagarules_embedded</span><span class="w"> </span><span class="kn">import</span> <span class="n">SagaConstitution</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saga.core.mimiry</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConflictResolution</span><span class="p">,</span> <span class="n">Mimiry</span><span class="p">,</span> <span class="n">OracleResponse</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saga.core.task</span><span class="w"> </span><span class="kn">import</span> <span class="n">Task</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">saga.core.task_graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">TaskGraph</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="c1"># Task class and TODOList removed in favor of saga.core.task.Task and saga.core.task_graph.TaskGraph</span>
+
+
+<div class="viewcode-block" id="WardenProposal">
+<a class="viewcode-back" href="../../../api/modules.html#saga.core.warden.WardenProposal">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">WardenProposal</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The Warden&#39;s response to SAGA&#39;s delegation request.</span>
+<span class="sd">    </span>
+<span class="sd">    Can be:</span>
+<span class="sd">    - Approved: Tasks created, ready to execute</span>
+<span class="sd">    - Modified: Alternative approach suggested (via Mimiry consultation)</span>
+<span class="sd">    - Rejected: Violates SagaCodex, cannot proceed</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">decision</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;approved&quot;</span><span class="p">,</span> <span class="s2">&quot;modified&quot;</span><span class="p">,</span> <span class="s2">&quot;rejected&quot;</span><span class="p">]</span>
+    <span class="n">task_graph</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TaskGraph</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">rationale</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">sagacodex_violations</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">alternative_approach</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">mimiry_guidance</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OracleResponse</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># NEW: Oracle consultation</span>
+    <span class="n">estimated_cost</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">estimated_time_minutes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span></div>
+
+
+
+<div class="viewcode-block" id="Warden">
+<a class="viewcode-back" href="../../../api/modules.html#saga.core.warden.Warden">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Warden</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The Warden - SAGA&#39;s delegation and quality enforcement agent.</span>
+<span class="sd">    </span>
+<span class="sd">    Responsibilities:</span>
+<span class="sd">    1. Receive proposals from SAGA</span>
+<span class="sd">    2. Plan task decomposition</span>
+<span class="sd">    3. Spawn coding agents (future implementation)</span>
+<span class="sd">    4. Collect agent outputs</span>
+<span class="sd">    5. Detect discrepancies</span>
+<span class="sd">    6. CONSULT MIMIRY when conflicts arise ← CRITICAL INTEGRATION</span>
+<span class="sd">    7. Enforce canonical approach (via Mimiry)</span>
+<span class="sd">    8. Report completion to SAGA</span>
+<span class="sd">    </span>
+<span class="sd">    Mimiry Integration Flow:</span>
+<span class="sd">    </span>
+<span class="sd">    Normal path (no conflicts):</span>
+<span class="sd">        Warden receives proposal → Plans tasks → Agents execute → Warden verifies → Approved</span>
+<span class="sd">    </span>
+<span class="sd">    Conflict path (agents disagree):</span>
+<span class="sd">        Warden detects discrepancy → Consult Mimiry → Mimiry measures against ideal</span>
+<span class="sd">        → Warden enforces canonical approach → Approved or Escalate</span>
+<span class="sd">    </span>
+<span class="sd">    Usage:</span>
+<span class="sd">        warden = Warden()</span>
+<span class="sd">        </span>
+<span class="sd">        # SAGA sends delegation request</span>
+<span class="sd">        proposal = await warden.receive_proposal(</span>
+<span class="sd">            saga_request=&quot;Create user authentication system&quot;,</span>
+<span class="sd">            context={&quot;budget&quot;: 100},</span>
+<span class="sd">            trace_id=&quot;abc-123&quot;</span>
+<span class="sd">        )</span>
+<span class="sd">        </span>
+<span class="sd">        # If approved, execute tasks</span>
+<span class="sd">        if proposal.decision == &quot;approved&quot; and proposal.task_graph:</span>
+<span class="sd">            ready_tasks = proposal.task_graph.get_ready_tasks()</span>
+<span class="sd">            for task in ready_tasks:</span>
+<span class="sd">                # Spawn agent, execute, collect output</span>
+<span class="sd">                outputs = await warden.execute_task(task)</span>
+<span class="sd">                </span>
+<span class="sd">                # If multiple agents or conflict detected</span>
+<span class="sd">                if len(outputs) &gt; 1:</span>
+<span class="sd">                    resolution = await warden.resolve_via_mimiry(outputs, task)</span>
+<span class="sd">                    warden.enforce_canonical(task, resolution)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+<div class="viewcode-block" id="Warden.__init__">
+<a class="viewcode-back" href="../../../api/modules.html#saga.core.warden.Warden.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize The Warden with Mimiry integration.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constitution</span> <span class="o">=</span> <span class="n">SagaConstitution</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">codex_manager</span> <span class="o">=</span> <span class="n">get_codex_manager</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_codex</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">codex_manager</span><span class="o">.</span><span class="n">get_current_profile</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mimiry</span> <span class="o">=</span> <span class="n">Mimiry</span><span class="p">()</span>  <span class="c1"># NEW: The Oracle</span>
+        
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;The Warden initialized with Mimiry integration&quot;</span><span class="p">,</span>
+            <span class="n">extra</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;codex_language&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_codex</span><span class="o">.</span><span class="n">language</span><span class="p">,</span>
+                <span class="s2">&quot;codex_framework&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_codex</span><span class="o">.</span><span class="n">framework</span><span class="p">,</span>
+                <span class="s2">&quot;mimiry_role&quot;</span><span class="p">:</span> <span class="s2">&quot;oracle_consultant&quot;</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="Warden.receive_proposal">
+<a class="viewcode-back" href="../../../api/modules.html#saga.core.warden.Warden.receive_proposal">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">receive_proposal</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">saga_request</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">context</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+        <span class="n">trace_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WardenProposal</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Receive delegation proposal from SAGA.</span>
+<span class="sd">        </span>
+<span class="sd">        Process:</span>
+<span class="sd">        1. Consult Mimiry about the request (check if it aligns with ideal)</span>
+<span class="sd">        2. Check for rule violations via Mimiry</span>
+<span class="sd">        3. Decompose into tasks</span>
+<span class="sd">        4. Estimate costs</span>
+<span class="sd">        5. Create TODO list or reject</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            saga_request: What SAGA wants done</span>
+<span class="sd">            context: Additional context (user preferences, budget, etc.)</span>
+<span class="sd">            trace_id: Correlation ID for tracing</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            WardenProposal with decision and rationale</span>
+<span class="sd">            </span>
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; proposal = await warden.receive_proposal(</span>
+<span class="sd">            ...     saga_request=&quot;Create REST API endpoint for user creation&quot;,</span>
+<span class="sd">            ...     context={&quot;budget&quot;: 100, &quot;language&quot;: &quot;python&quot;},</span>
+<span class="sd">            ...     trace_id=&quot;xyz-789&quot;</span>
+<span class="sd">            ... )</span>
+<span class="sd">            &gt;&gt;&gt; proposal.decision</span>
+<span class="sd">            &#39;approved&#39;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Warden received proposal from SAGA&quot;</span><span class="p">,</span>
+            <span class="n">extra</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;request&quot;</span><span class="p">:</span> <span class="n">saga_request</span><span class="p">[:</span><span class="mi">100</span><span class="p">],</span>
+                <span class="s2">&quot;trace_id&quot;</span><span class="p">:</span> <span class="n">trace_id</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        
+        <span class="c1"># STEP 1: Consult Mimiry about the request</span>
+        <span class="n">mimiry_response</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">mimiry</span><span class="o">.</span><span class="n">consult_on_discrepancy</span><span class="p">(</span>
+            <span class="n">question</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Does this request align with SagaCodex ideal? Request: </span><span class="si">{</span><span class="n">saga_request</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">,</span>
+            <span class="n">trace_id</span><span class="o">=</span><span class="n">trace_id</span>
+        <span class="p">)</span>
+        
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Mimiry consulted on proposal&quot;</span><span class="p">,</span>
+            <span class="n">extra</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;mimiry_severity&quot;</span><span class="p">:</span> <span class="n">mimiry_response</span><span class="o">.</span><span class="n">severity</span><span class="p">,</span>
+                <span class="s2">&quot;violations&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">mimiry_response</span><span class="o">.</span><span class="n">violations_detected</span><span class="p">),</span>
+                <span class="s2">&quot;trace_id&quot;</span><span class="p">:</span> <span class="n">trace_id</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        
+        <span class="c1"># STEP 2: Check if violations are critical</span>
+        <span class="k">if</span> <span class="n">mimiry_response</span><span class="o">.</span><span class="n">severity</span> <span class="o">==</span> <span class="s2">&quot;CRITICAL&quot;</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;Proposal violates SagaCodex critically&quot;</span><span class="p">,</span>
+                <span class="n">extra</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">&quot;violations&quot;</span><span class="p">:</span> <span class="n">mimiry_response</span><span class="o">.</span><span class="n">violations_detected</span><span class="p">,</span>
+                    <span class="s2">&quot;trace_id&quot;</span><span class="p">:</span> <span class="n">trace_id</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+            
+            <span class="k">return</span> <span class="n">WardenProposal</span><span class="p">(</span>
+                <span class="n">decision</span><span class="o">=</span><span class="s2">&quot;rejected&quot;</span><span class="p">,</span>
+                <span class="n">rationale</span><span class="o">=</span><span class="n">mimiry_response</span><span class="o">.</span><span class="n">canonical_answer</span><span class="p">,</span>
+                <span class="n">sagacodex_violations</span><span class="o">=</span><span class="n">mimiry_response</span><span class="o">.</span><span class="n">violations_detected</span><span class="p">,</span>
+                <span class="n">mimiry_guidance</span><span class="o">=</span><span class="n">mimiry_response</span><span class="p">,</span>
+            <span class="p">)</span>
+        
+        <span class="c1"># STEP 3: If warnings exist, note them but proceed</span>
+        <span class="n">violations</span> <span class="o">=</span> <span class="n">mimiry_response</span><span class="o">.</span><span class="n">violations_detected</span> <span class="k">if</span> <span class="n">mimiry_response</span><span class="o">.</span><span class="n">severity</span> <span class="o">==</span> <span class="s2">&quot;WARNING&quot;</span> <span class="k">else</span> <span class="p">[]</span>
+        
+        <span class="c1"># STEP 4: Decompose into tasks</span>
+        <span class="n">tasks</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">decompose_into_tasks</span><span class="p">(</span><span class="n">saga_request</span><span class="p">,</span> <span class="n">context</span><span class="p">,</span> <span class="n">trace_id</span><span class="p">)</span>
+        
+        <span class="c1"># STEP 5: Create Task Graph</span>
+        <span class="n">task_graph</span> <span class="o">=</span> <span class="n">TaskGraph</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">:</span>
+            <span class="n">task_graph</span><span class="o">.</span><span class="n">add_task</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+        
+        <span class="c1"># STEP 6: Estimate costs</span>
+        <span class="n">total_cost</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">budget_allocation</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">)</span>
+        <span class="n">user_budget</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;budget&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;inf&#39;</span><span class="p">))</span>
+        
+        <span class="k">if</span> <span class="n">total_cost</span> <span class="o">&gt;</span> <span class="n">user_budget</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;Estimated cost exceeds user budget&quot;</span><span class="p">,</span>
+                <span class="n">extra</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">&quot;estimated_cost&quot;</span><span class="p">:</span> <span class="n">total_cost</span><span class="p">,</span>
+                    <span class="s2">&quot;user_budget&quot;</span><span class="p">:</span> <span class="n">user_budget</span><span class="p">,</span>
+                    <span class="s2">&quot;trace_id&quot;</span><span class="p">:</span> <span class="n">trace_id</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+            <span class="c1"># Triggers SagaConstitution Rule 14 (Budget Must Be Respected)</span>
+        
+        <span class="c1"># STEP 7: Return approval</span>
+        <span class="k">return</span> <span class="n">WardenProposal</span><span class="p">(</span>
+            <span class="n">decision</span><span class="o">=</span><span class="s2">&quot;approved&quot;</span><span class="p">,</span>
+            <span class="n">task_graph</span><span class="o">=</span><span class="n">task_graph</span><span class="p">,</span>
+            <span class="n">rationale</span><span class="o">=</span><span class="s2">&quot;Tasks decomposed and validated via Mimiry consultation&quot;</span><span class="p">,</span>
+            <span class="n">sagacodex_violations</span><span class="o">=</span><span class="n">violations</span><span class="p">,</span>
+            <span class="n">mimiry_guidance</span><span class="o">=</span><span class="n">mimiry_response</span><span class="p">,</span>
+            <span class="n">estimated_cost</span><span class="o">=</span><span class="n">total_cost</span><span class="p">,</span>
+            <span class="n">estimated_time_minutes</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">)</span> <span class="o">*</span> <span class="mi">5</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="Warden.resolve_via_mimiry">
+<a class="viewcode-back" href="../../../api/modules.html#saga.core.warden.Warden.resolve_via_mimiry">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">resolve_via_mimiry</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">agents_outputs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
+        <span class="n">task</span><span class="p">:</span> <span class="n">Task</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ConflictResolution</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Resolve conflict between coding agents via Mimiry consultation.</span>
+<span class="sd">        </span>
+<span class="sd">        This is the CRITICAL INTEGRATION POINT between Warden and Mimiry.</span>
+<span class="sd">        </span>
+<span class="sd">        When agents disagree or produce different outputs, Warden asks Mimiry</span>
+<span class="sd">        to measure each against the SagaCodex ideal. Mimiry returns canonical</span>
+<span class="sd">        judgment, Warden enforces it.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            agents_outputs: List of outputs from different agents</span>
+<span class="sd">            task: The task they were working on</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            ConflictResolution from Mimiry</span>
+<span class="sd">            </span>
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; outputs = [</span>
+<span class="sd">            ...     {&quot;agent&quot;: &quot;AgentA&quot;, &quot;code&quot;: &quot;print(&#39;hello&#39;)&quot;},</span>
+<span class="sd">            ...     {&quot;agent&quot;: &quot;AgentB&quot;, &quot;code&quot;: &quot;logger.info(&#39;hello&#39;)&quot;}</span>
+<span class="sd">            ... ]</span>
+<span class="sd">            &gt;&gt;&gt; resolution = await warden.resolve_via_mimiry(outputs, task)</span>
+<span class="sd">            &gt;&gt;&gt; print(resolution.canonical_approach)</span>
+<span class="sd">            &quot;Agent B&#39;s approach aligns with SagaCodex Rule 4 (Structured Logging).&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Warden consulting Mimiry to resolve agent conflict&quot;</span><span class="p">,</span>
+            <span class="n">extra</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;task_id&quot;</span><span class="p">:</span> <span class="n">task</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+                <span class="s2">&quot;agent_count&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">agents_outputs</span><span class="p">),</span>
+                <span class="s2">&quot;trace_id&quot;</span><span class="p">:</span> <span class="n">task</span><span class="o">.</span><span class="n">trace_id</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        
+        <span class="c1"># Consult the Oracle</span>
+        <span class="n">resolution</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">mimiry</span><span class="o">.</span><span class="n">resolve_conflict</span><span class="p">(</span>
+            <span class="n">agents_outputs</span><span class="o">=</span><span class="n">agents_outputs</span><span class="p">,</span>
+            <span class="n">task_context</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;task&quot;</span><span class="p">:</span> <span class="n">task</span><span class="o">.</span><span class="n">description</span><span class="p">,</span>
+                <span class="s2">&quot;weight&quot;</span><span class="p">:</span> <span class="n">task</span><span class="o">.</span><span class="n">weight</span><span class="p">,</span>
+                <span class="s2">&quot;budget&quot;</span><span class="p">:</span> <span class="n">task</span><span class="o">.</span><span class="n">budget_allocation</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="n">trace_id</span><span class="o">=</span><span class="n">task</span><span class="o">.</span><span class="n">trace_id</span>
+        <span class="p">)</span>
+        
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Mimiry resolved conflict&quot;</span><span class="p">,</span>
+            <span class="n">extra</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;task_id&quot;</span><span class="p">:</span> <span class="n">task</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+                <span class="s2">&quot;canonical_agent&quot;</span><span class="p">:</span> <span class="n">resolution</span><span class="o">.</span><span class="n">agents_in_alignment</span><span class="p">,</span>
+                <span class="s2">&quot;violated_agents&quot;</span><span class="p">:</span> <span class="n">resolution</span><span class="o">.</span><span class="n">agents_in_violation</span><span class="p">,</span>
+                <span class="s2">&quot;trace_id&quot;</span><span class="p">:</span> <span class="n">task</span><span class="o">.</span><span class="n">trace_id</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">resolution</span></div>
+
+    
+<div class="viewcode-block" id="Warden.enforce_canonical">
+<a class="viewcode-back" href="../../../api/modules.html#saga.core.warden.Warden.enforce_canonical">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">enforce_canonical</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span>
+        <span class="n">resolution</span><span class="p">:</span> <span class="n">ConflictResolution</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Enforce Mimiry&#39;s canonical judgment on the task.</span>
+<span class="sd">        </span>
+<span class="sd">        After Mimiry resolves conflict, Warden updates task status</span>
+<span class="sd">        to reflect the canonical approach.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            task: Task to update</span>
+<span class="sd">            resolution: Mimiry&#39;s resolution</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Warden enforcing Mimiry&#39;s canonical judgment&quot;</span><span class="p">,</span>
+            <span class="n">extra</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;task_id&quot;</span><span class="p">:</span> <span class="n">task</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+                <span class="s2">&quot;trace_id&quot;</span><span class="p">:</span> <span class="n">task</span><span class="o">.</span><span class="n">trace_id</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        
+        <span class="c1"># Update task with Mimiry&#39;s measurement</span>
+        <span class="n">task</span><span class="o">.</span><span class="n">mimiry_measurement</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;canonical_approach&quot;</span><span class="p">:</span> <span class="n">resolution</span><span class="o">.</span><span class="n">canonical_approach</span><span class="p">,</span>
+            <span class="s2">&quot;rationale&quot;</span><span class="p">:</span> <span class="n">resolution</span><span class="o">.</span><span class="n">rationale</span><span class="p">,</span>
+            <span class="s2">&quot;cited_rules&quot;</span><span class="p">:</span> <span class="n">resolution</span><span class="o">.</span><span class="n">cited_rules</span><span class="p">,</span>
+            <span class="s2">&quot;agents_in_alignment&quot;</span><span class="p">:</span> <span class="n">resolution</span><span class="o">.</span><span class="n">agents_in_alignment</span><span class="p">,</span>
+            <span class="s2">&quot;agents_in_violation&quot;</span><span class="p">:</span> <span class="n">resolution</span><span class="o">.</span><span class="n">agents_in_violation</span><span class="p">,</span>
+        <span class="p">}</span>
+        
+        <span class="c1"># If agents aligned with ideal, approve</span>
+        <span class="k">if</span> <span class="n">resolution</span><span class="o">.</span><span class="n">agents_in_alignment</span><span class="p">:</span>
+            <span class="n">task</span><span class="o">.</span><span class="n">warden_verification</span> <span class="o">=</span> <span class="s2">&quot;approved&quot;</span>
+            <span class="n">task</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="s2">&quot;done&quot;</span>
+            <span class="n">task</span><span class="o">.</span><span class="n">completed_at</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span>
+            
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;Task approved via Mimiry alignment&quot;</span><span class="p">,</span>
+                <span class="n">extra</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">&quot;task_id&quot;</span><span class="p">:</span> <span class="n">task</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+                    <span class="s2">&quot;canonical_agents&quot;</span><span class="p">:</span> <span class="n">resolution</span><span class="o">.</span><span class="n">agents_in_alignment</span><span class="p">,</span>
+                    <span class="s2">&quot;trace_id&quot;</span><span class="p">:</span> <span class="n">task</span><span class="o">.</span><span class="n">trace_id</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># All agents violated ideal - escalate</span>
+            <span class="n">task</span><span class="o">.</span><span class="n">warden_verification</span> <span class="o">=</span> <span class="s2">&quot;rejected&quot;</span>
+            <span class="n">task</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="s2">&quot;blocked&quot;</span>
+            
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;All agents violated SagaCodex ideal - escalating&quot;</span><span class="p">,</span>
+                <span class="n">extra</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">&quot;task_id&quot;</span><span class="p">:</span> <span class="n">task</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+                    <span class="s2">&quot;trace_id&quot;</span><span class="p">:</span> <span class="n">task</span><span class="o">.</span><span class="n">trace_id</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="Warden.decompose_into_tasks">
+<a class="viewcode-back" href="../../../api/modules.html#saga.core.warden.Warden.decompose_into_tasks">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">decompose_into_tasks</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">request</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">context</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+        <span class="n">trace_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Task</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Decompose SAGA&#39;s request into concrete tasks.</span>
+<span class="sd">        </span>
+<span class="sd">        Simple tasks: Checklist-based verification</span>
+<span class="sd">        Complex tasks: Full vetting (tests, types, security)</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            request: What SAGA wants done</span>
+<span class="sd">            context: User preferences, budget, etc.</span>
+<span class="sd">            trace_id: Correlation ID</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            List of tasks with weights and checklists</span>
+<span class="sd">            </span>
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; tasks = await warden.decompose_into_tasks(</span>
+<span class="sd">            ...     &quot;Create user CRUD endpoints&quot;,</span>
+<span class="sd">            ...     {&quot;budget&quot;: 100},</span>
+<span class="sd">            ...     &quot;trace-456&quot;</span>
+<span class="sd">            ... )</span>
+<span class="sd">            &gt;&gt;&gt; len(tasks)</span>
+<span class="sd">            4  # Create, Read, Update, Delete</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Warden decomposing request into tasks&quot;</span><span class="p">,</span>
+            <span class="n">extra</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;request&quot;</span><span class="p">:</span> <span class="n">request</span><span class="p">[:</span><span class="mi">100</span><span class="p">],</span> <span class="s2">&quot;trace_id&quot;</span><span class="p">:</span> <span class="n">trace_id</span><span class="p">}</span>
+        <span class="p">)</span>
+        
+        <span class="c1"># MVP: Simple decomposition (future: use LLM for intelligent decomposition)</span>
+        <span class="n">tasks</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="c1"># Example: User CRUD decomposition</span>
+        <span class="k">if</span> <span class="s2">&quot;user&quot;</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">and</span> <span class="p">(</span><span class="s2">&quot;crud&quot;</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">or</span> <span class="s2">&quot;endpoints&quot;</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">lower</span><span class="p">()):</span>
+            <span class="n">tasks</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">Task</span><span class="p">(</span>
+                    <span class="nb">id</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;task-</span><span class="si">{</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Create POST /users/ endpoint&quot;</span><span class="p">,</span>
+                    <span class="n">weight</span><span class="o">=</span><span class="s2">&quot;complex&quot;</span><span class="p">,</span>
+                    <span class="n">budget_allocation</span><span class="o">=</span><span class="mf">25.0</span><span class="p">,</span>
+                    <span class="n">checklist</span><span class="o">=</span><span class="p">[</span>
+                        <span class="s2">&quot;Consult Mimiry if uncertain&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;Pydantic model for UserCreate&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;Async database operation&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;Password hashing&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;Error handling&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;Structured logging&quot;</span><span class="p">,</span>
+                    <span class="p">],</span>
+                    <span class="n">vetting_criteria</span><span class="o">=</span><span class="p">{</span>
+                        <span class="s2">&quot;mypy_strict&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                        <span class="s2">&quot;test_coverage&quot;</span><span class="p">:</span> <span class="mi">99</span><span class="p">,</span>
+                        <span class="s2">&quot;security_scan&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                        <span class="s2">&quot;api_documented&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                    <span class="p">},</span>
+                    <span class="n">trace_id</span><span class="o">=</span><span class="n">trace_id</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">Task</span><span class="p">(</span>
+                    <span class="nb">id</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;task-</span><span class="si">{</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Create GET /users/</span><span class="si">{user_id}</span><span class="s2"> endpoint&quot;</span><span class="p">,</span>
+                    <span class="n">weight</span><span class="o">=</span><span class="s2">&quot;simple&quot;</span><span class="p">,</span>
+                    <span class="n">budget_allocation</span><span class="o">=</span><span class="mf">15.0</span><span class="p">,</span>
+                    <span class="n">checklist</span><span class="o">=</span><span class="p">[</span>
+                        <span class="s2">&quot;Consult Mimiry if uncertain&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;Pydantic model for UserResponse&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;Async database query&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;404 handling if user not found&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;Structured logging&quot;</span><span class="p">,</span>
+                    <span class="p">],</span>
+                    <span class="n">trace_id</span><span class="o">=</span><span class="n">trace_id</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">Task</span><span class="p">(</span>
+                    <span class="nb">id</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;task-</span><span class="si">{</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Create PATCH /users/</span><span class="si">{user_id}</span><span class="s2"> endpoint&quot;</span><span class="p">,</span>
+                    <span class="n">weight</span><span class="o">=</span><span class="s2">&quot;simple&quot;</span><span class="p">,</span>
+                    <span class="n">budget_allocation</span><span class="o">=</span><span class="mf">20.0</span><span class="p">,</span>
+                    <span class="n">checklist</span><span class="o">=</span><span class="p">[</span>
+                        <span class="s2">&quot;Consult Mimiry if uncertain&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;Pydantic model for UserUpdate&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;Async database update&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;Partial update support&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;Error handling&quot;</span><span class="p">,</span>
+                    <span class="p">],</span>
+                    <span class="n">trace_id</span><span class="o">=</span><span class="n">trace_id</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">Task</span><span class="p">(</span>
+                    <span class="nb">id</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;task-</span><span class="si">{</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Create DELETE /users/</span><span class="si">{user_id}</span><span class="s2"> endpoint&quot;</span><span class="p">,</span>
+                    <span class="n">weight</span><span class="o">=</span><span class="s2">&quot;simple&quot;</span><span class="p">,</span>
+                    <span class="n">budget_allocation</span><span class="o">=</span><span class="mf">15.0</span><span class="p">,</span>
+                    <span class="n">checklist</span><span class="o">=</span><span class="p">[</span>
+                        <span class="s2">&quot;Consult Mimiry if uncertain&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;Soft delete or hard delete decision&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;Async database delete&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;404 handling&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;Audit logging&quot;</span><span class="p">,</span>
+                    <span class="p">],</span>
+                    <span class="n">trace_id</span><span class="o">=</span><span class="n">trace_id</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Generic single task (future: smarter decomposition)</span>
+            <span class="n">tasks</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">Task</span><span class="p">(</span>
+                    <span class="nb">id</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;task-</span><span class="si">{</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">description</span><span class="o">=</span><span class="n">request</span><span class="p">,</span>
+                    <span class="n">weight</span><span class="o">=</span><span class="s2">&quot;complex&quot;</span><span class="p">,</span>  <span class="c1"># Default to complex for safety</span>
+                    <span class="n">budget_allocation</span><span class="o">=</span><span class="n">context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;budget&quot;</span><span class="p">,</span> <span class="mf">100.0</span><span class="p">),</span>
+                    <span class="n">checklist</span><span class="o">=</span><span class="p">[</span>
+                        <span class="s2">&quot;Consult Mimiry if uncertain&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;Follow SagaCodex standards&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;Add type safety&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;Add error handling&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;Add structured logging&quot;</span><span class="p">,</span>
+                    <span class="p">],</span>
+                    <span class="n">vetting_criteria</span><span class="o">=</span><span class="p">{</span>
+                        <span class="s2">&quot;mypy_strict&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                        <span class="s2">&quot;test_coverage&quot;</span><span class="p">:</span> <span class="mi">99</span><span class="p">,</span>
+                    <span class="p">},</span>
+                    <span class="n">trace_id</span><span class="o">=</span><span class="n">trace_id</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">]</span>
+        
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Tasks created&quot;</span><span class="p">,</span>
+            <span class="n">extra</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;task_count&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">),</span>
+                <span class="s2">&quot;simple_count&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">([</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tasks</span> <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">weight</span> <span class="o">==</span> <span class="s2">&quot;simple&quot;</span><span class="p">]),</span>
+                <span class="s2">&quot;complex_count&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">([</span><span class="n">t</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">tasks</span> <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">weight</span> <span class="o">==</span> <span class="s2">&quot;complex&quot;</span><span class="p">]),</span>
+                <span class="s2">&quot;trace_id&quot;</span><span class="p">:</span> <span class="n">trace_id</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">tasks</span></div>
+
+    
+<div class="viewcode-block" id="Warden.verify_task_completion">
+<a class="viewcode-back" href="../../../api/modules.html#saga.core.warden.Warden.verify_task_completion">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">verify_task_completion</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">task</span><span class="p">:</span> <span class="n">Task</span><span class="p">,</span>
+        <span class="n">agent_output</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;approved&quot;</span><span class="p">,</span> <span class="s2">&quot;rejected&quot;</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Verify subagent&#39;s work against quality gates.</span>
+<span class="sd">        </span>
+<span class="sd">        For critical tasks or when uncertain, consults Mimiry.</span>
+<span class="sd">        </span>
+<span class="sd">        Simple tasks: Check against checklist</span>
+<span class="sd">        Complex tasks: Full vetting + optional Mimiry measurement</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            task: Task that was completed</span>
+<span class="sd">            agent_output: Subagent&#39;s self-check and output</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            &quot;approved&quot; or &quot;rejected&quot;</span>
+<span class="sd">            </span>
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; result = await warden.verify_task_completion(</span>
+<span class="sd">            ...     task=some_task,</span>
+<span class="sd">            ...     agent_output={&quot;code&quot;: &quot;...&quot;, &quot;tests_passed&quot;: True}</span>
+<span class="sd">            ... )</span>
+<span class="sd">            &gt;&gt;&gt; result</span>
+<span class="sd">            &#39;approved&#39;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Warden verifying task completion&quot;</span><span class="p">,</span>
+            <span class="n">extra</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;task_id&quot;</span><span class="p">:</span> <span class="n">task</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+                <span class="s2">&quot;task_weight&quot;</span><span class="p">:</span> <span class="n">task</span><span class="o">.</span><span class="n">weight</span><span class="p">,</span>
+                <span class="s2">&quot;trace_id&quot;</span><span class="p">:</span> <span class="n">task</span><span class="o">.</span><span class="n">trace_id</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">task</span><span class="o">.</span><span class="n">weight</span> <span class="o">==</span> <span class="s2">&quot;simple&quot;</span><span class="p">:</span>
+            <span class="c1"># Checklist verification</span>
+            <span class="n">checklist_results</span> <span class="o">=</span> <span class="n">agent_output</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;checklist_results&quot;</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="n">all_passed</span> <span class="o">=</span> <span class="nb">all</span><span class="p">(</span><span class="n">checklist_results</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+            
+            <span class="k">if</span> <span class="n">all_passed</span><span class="p">:</span>
+                <span class="n">task</span><span class="o">.</span><span class="n">warden_verification</span> <span class="o">=</span> <span class="s2">&quot;approved&quot;</span>
+                <span class="n">task</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="s2">&quot;done&quot;</span>
+                <span class="n">task</span><span class="o">.</span><span class="n">completed_at</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                    <span class="s2">&quot;Task approved (checklist passed)&quot;</span><span class="p">,</span>
+                    <span class="n">extra</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;task_id&quot;</span><span class="p">:</span> <span class="n">task</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">&quot;trace_id&quot;</span><span class="p">:</span> <span class="n">task</span><span class="o">.</span><span class="n">trace_id</span><span class="p">}</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="s2">&quot;approved&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">failed_items</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">checklist_results</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">v</span><span class="p">]</span>
+                <span class="n">task</span><span class="o">.</span><span class="n">warden_verification</span> <span class="o">=</span> <span class="s2">&quot;rejected&quot;</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="s2">&quot;Task rejected (checklist failed)&quot;</span><span class="p">,</span>
+                    <span class="n">extra</span><span class="o">=</span><span class="p">{</span>
+                        <span class="s2">&quot;task_id&quot;</span><span class="p">:</span> <span class="n">task</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+                        <span class="s2">&quot;failed_items&quot;</span><span class="p">:</span> <span class="n">failed_items</span><span class="p">,</span>
+                        <span class="s2">&quot;trace_id&quot;</span><span class="p">:</span> <span class="n">task</span><span class="o">.</span><span class="n">trace_id</span><span class="p">,</span>
+                    <span class="p">}</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="s2">&quot;rejected&quot;</span>
+        
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># Complex task - full vetting + optional Mimiry</span>
+            <span class="n">vetting_results</span> <span class="o">=</span> <span class="n">agent_output</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;vetting_results&quot;</span><span class="p">,</span> <span class="p">{})</span>
+            
+            <span class="c1"># Check all criteria</span>
+            <span class="n">mypy_passed</span> <span class="o">=</span> <span class="n">vetting_results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;mypy_strict&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+            <span class="n">test_coverage</span> <span class="o">=</span> <span class="n">vetting_results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;test_coverage&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">security_passed</span> <span class="o">=</span> <span class="n">vetting_results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;security_scan&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+            
+            <span class="c1"># If all criteria pass, approve</span>
+            <span class="k">if</span> <span class="n">mypy_passed</span> <span class="ow">and</span> <span class="n">test_coverage</span> <span class="o">&gt;=</span> <span class="mi">99</span> <span class="ow">and</span> <span class="n">security_passed</span><span class="p">:</span>
+                <span class="c1"># Optional: Measure against ideal for learning</span>
+                <span class="k">if</span> <span class="n">agent_output</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;code&quot;</span><span class="p">):</span>
+                    <span class="n">mimiry_measurement</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">mimiry</span><span class="o">.</span><span class="n">measure_against_ideal</span><span class="p">(</span>
+                        <span class="n">code</span><span class="o">=</span><span class="n">agent_output</span><span class="p">[</span><span class="s2">&quot;code&quot;</span><span class="p">],</span>
+                        <span class="n">domain</span><span class="o">=</span><span class="n">task</span><span class="o">.</span><span class="n">description</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">],</span>  <span class="c1"># First word as domain</span>
+                        <span class="n">trace_id</span><span class="o">=</span><span class="n">task</span><span class="o">.</span><span class="n">trace_id</span>
+                    <span class="p">)</span>
+                    <span class="n">task</span><span class="o">.</span><span class="n">mimiry_measurement</span> <span class="o">=</span> <span class="n">mimiry_measurement</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+                
+                <span class="n">task</span><span class="o">.</span><span class="n">warden_verification</span> <span class="o">=</span> <span class="s2">&quot;approved&quot;</span>
+                <span class="n">task</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="s2">&quot;done&quot;</span>
+                <span class="n">task</span><span class="o">.</span><span class="n">completed_at</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                    <span class="s2">&quot;Task approved (full vetting passed)&quot;</span><span class="p">,</span>
+                    <span class="n">extra</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;task_id&quot;</span><span class="p">:</span> <span class="n">task</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="s2">&quot;trace_id&quot;</span><span class="p">:</span> <span class="n">task</span><span class="o">.</span><span class="n">trace_id</span><span class="p">}</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="s2">&quot;approved&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">failures</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">mypy_passed</span><span class="p">:</span>
+                    <span class="n">failures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;mypy --strict failed&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">test_coverage</span> <span class="o">&lt;</span> <span class="mi">99</span><span class="p">:</span>
+                    <span class="n">failures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;test coverage </span><span class="si">{</span><span class="n">test_coverage</span><span class="si">}</span><span class="s2">% &lt; 99%&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">security_passed</span><span class="p">:</span>
+                    <span class="n">failures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;security scan failed&quot;</span><span class="p">)</span>
+                
+                <span class="n">task</span><span class="o">.</span><span class="n">warden_verification</span> <span class="o">=</span> <span class="s2">&quot;rejected&quot;</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="s2">&quot;Task rejected (vetting failed)&quot;</span><span class="p">,</span>
+                    <span class="n">extra</span><span class="o">=</span><span class="p">{</span>
+                        <span class="s2">&quot;task_id&quot;</span><span class="p">:</span> <span class="n">task</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+                        <span class="s2">&quot;failures&quot;</span><span class="p">:</span> <span class="n">failures</span><span class="p">,</span>
+                        <span class="s2">&quot;trace_id&quot;</span><span class="p">:</span> <span class="n">task</span><span class="o">.</span><span class="n">trace_id</span><span class="p">,</span>
+                    <span class="p">}</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="s2">&quot;rejected&quot;</span></div>
+</div>
+
+
+
+<span class="c1"># Export main classes</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;Warden&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Task&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;TaskGraph&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;WardenProposal&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, ARC SAGA Development Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -2,12 +2,12 @@ from decimal import Decimal
 
 import pytest
 
-from arc_saga.orchestrator.cost_models import CostProfile, CostProfileRegistry
-from arc_saga.orchestrator.cost_optimizer import CostOptimizer
-from arc_saga.orchestrator.engine_registry import ReasoningEngineRegistry
-from arc_saga.orchestrator.errors import BudgetExceededRoutingError
-from arc_saga.orchestrator.provider_router import ProviderRouter
-from arc_saga.orchestrator.types import (
+from saga.orchestrator.cost_models import CostProfile, CostProfileRegistry
+from saga.orchestrator.cost_optimizer import CostOptimizer
+from saga.orchestrator.engine_registry import ReasoningEngineRegistry
+from saga.orchestrator.errors import BudgetExceededRoutingError
+from saga.orchestrator.provider_router import ProviderRouter
+from saga.orchestrator.types import (
     AIProvider,
     AIResult,
     AIResultOutput,
@@ -42,7 +42,7 @@ def reset_registry():
 
 @pytest.fixture(autouse=True)
 def reset_optimizer(monkeypatch):
-    from arc_saga.orchestrator import cost_optimizer
+    from saga.orchestrator import cost_optimizer
 
     cost_optimizer.CostOptimizer._instance = None
     monkeypatch.delenv("SAGA_COST_DISABLE", raising=False)

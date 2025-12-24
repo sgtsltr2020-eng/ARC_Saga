@@ -1,0 +1,814 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>saga.config.sagacodex_profiles &mdash; SAGA - Systematized Autonomous Generative Assistant 2.0.0-alpha documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=d690e255"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #2980B9" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            SAGA - Systematized Autonomous Generative Assistant
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../testing.html">Testing SAGA</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../architecture.html">Architecture</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #2980B9" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">SAGA - Systematized Autonomous Generative Assistant</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">saga.config.sagacodex_profiles</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for saga.config.sagacodex_profiles</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">SagaCodex Profile Manager</span>
+<span class="sd">=========================</span>
+
+<span class="sd">Manages language and framework-specific rule profiles.</span>
+
+<span class="sd">MVP (Phase 2): Python/FastAPI hardcoded</span>
+<span class="sd">Future (Phase 3+): TypeScript/React, Go, Rust, etc.</span>
+
+<span class="sd">Architecture:</span>
+<span class="sd">- Each profile is a collection of standards, patterns, anti-patterns</span>
+<span class="sd">- Profiles are versioned for compatibility tracking</span>
+<span class="sd">- Profiles can inherit from base profiles (e.g., TypeScript extends JavaScript)</span>
+<span class="sd">- User can select profile or SAGA auto-detects from project structure</span>
+
+<span class="sd">Author: ARC SAGA Development Team</span>
+<span class="sd">Date: December 14, 2025</span>
+<span class="sd">Status: Phase 2 Week 1 - Foundation</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="LanguageProfile">
+<a class="viewcode-back" href="../../../api/modules.html#saga.config.sagacodex_profiles.LanguageProfile">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LanguageProfile</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Supported language/framework profiles.&quot;&quot;&quot;</span>
+    <span class="n">PYTHON_FASTAPI</span> <span class="o">=</span> <span class="s2">&quot;python_fastapi&quot;</span>
+    <span class="n">PYTHON_DJANGO</span> <span class="o">=</span> <span class="s2">&quot;python_django&quot;</span>  <span class="c1"># Future</span>
+    <span class="n">PYTHON_FLASK</span> <span class="o">=</span> <span class="s2">&quot;python_flask&quot;</span>  <span class="c1"># Future</span>
+    <span class="n">TYPESCRIPT_REACT</span> <span class="o">=</span> <span class="s2">&quot;typescript_react&quot;</span>  <span class="c1"># Future</span>
+    <span class="n">TYPESCRIPT_NEXTJS</span> <span class="o">=</span> <span class="s2">&quot;typescript_nextjs&quot;</span>  <span class="c1"># Future</span>
+    <span class="n">GO</span> <span class="o">=</span> <span class="s2">&quot;go&quot;</span>  <span class="c1"># Future</span>
+    <span class="n">RUST</span> <span class="o">=</span> <span class="s2">&quot;rust&quot;</span>  <span class="c1"># Future</span></div>
+
+
+
+<div class="viewcode-block" id="CodeStandard">
+<a class="viewcode-back" href="../../../api/modules.html#saga.config.sagacodex_profiles.CodeStandard">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CodeStandard</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A single code quality standard.</span>
+<span class="sd">    </span>
+<span class="sd">    Example:</span>
+<span class="sd">        CodeStandard(</span>
+<span class="sd">            rule_number=3,</span>
+<span class="sd">            name=&quot;Type Safety Required&quot;,</span>
+<span class="sd">            description=&quot;All public functions must have type hints&quot;,</span>
+<span class="sd">            applies_to=[&quot;python&quot;],</span>
+<span class="sd">            tool=&quot;mypy --strict&quot;,</span>
+<span class="sd">            example_correct=&quot;def process(data: dict) -&gt; str: ...&quot;,</span>
+<span class="sd">            example_wrong=&quot;def process(data): ...&quot;,</span>
+<span class="sd">            rationale=&quot;Catches bugs at development time&quot;,</span>
+<span class="sd">            enforcement=&quot;CI blocks PRs with mypy errors&quot;</span>
+<span class="sd">        )</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">rule_number</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">applies_to</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>  <span class="c1"># [&quot;python&quot;, &quot;typescript&quot;, etc.]</span>
+    <span class="n">tool</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">example_correct</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">example_wrong</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">rationale</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">enforcement</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">severity</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;WARNING&quot;</span>  <span class="c1"># CRITICAL | WARNING | INFO</span>
+    
+<div class="viewcode-block" id="CodeStandard.to_dict">
+<a class="viewcode-back" href="../../../api/modules.html#saga.config.sagacodex_profiles.CodeStandard.to_dict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert to dictionary for serialization.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;rule_number&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">rule_number</span><span class="p">,</span>
+            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">description</span><span class="p">,</span>
+            <span class="s2">&quot;applies_to&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">applies_to</span><span class="p">,</span>
+            <span class="s2">&quot;tool&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">tool</span><span class="p">,</span>
+            <span class="s2">&quot;example_correct&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">example_correct</span><span class="p">,</span>
+            <span class="s2">&quot;example_wrong&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">example_wrong</span><span class="p">,</span>
+            <span class="s2">&quot;rationale&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">rationale</span><span class="p">,</span>
+            <span class="s2">&quot;enforcement&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">enforcement</span><span class="p">,</span>
+            <span class="s2">&quot;severity&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">severity</span><span class="p">,</span>
+        <span class="p">}</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="AntiPattern">
+<a class="viewcode-back" href="../../../api/modules.html#saga.config.sagacodex_profiles.AntiPattern">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AntiPattern</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A pattern to avoid.</span>
+<span class="sd">    </span>
+<span class="sd">    Example:</span>
+<span class="sd">        AntiPattern(</span>
+<span class="sd">            name=&quot;Print Statements in Production&quot;,</span>
+<span class="sd">            pattern=r&#39;print\(&#39;,</span>
+<span class="sd">            why_bad=&quot;Not structured, not parseable, not traceable&quot;,</span>
+<span class="sd">            use_instead=&quot;logger.info() with structured context&quot;,</span>
+<span class="sd">            severity=&quot;WARNING&quot;</span>
+<span class="sd">        )</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">pattern</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># Regex pattern to detect</span>
+    <span class="n">why_bad</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">use_instead</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">severity</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;WARNING&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="ElitePattern">
+<a class="viewcode-back" href="../../../api/modules.html#saga.config.sagacodex_profiles.ElitePattern">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ElitePattern</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Elite app pattern to emulate.</span>
+<span class="sd">    </span>
+<span class="sd">    Example:</span>
+<span class="sd">        ElitePattern(</span>
+<span class="sd">            name=&quot;Optimistic UI Updates&quot;,</span>
+<span class="sd">            source=&quot;Linear&quot;,</span>
+<span class="sd">            description=&quot;Update UI immediately, rollback if server fails&quot;,</span>
+<span class="sd">            code_example=&quot;...&quot;,</span>
+<span class="sd">            when_to_use=&quot;User actions that change state&quot;,</span>
+<span class="sd">            benefits=[&quot;Feels instant&quot;, &quot;Better UX&quot;, &quot;Users forgive slow backends&quot;]</span>
+<span class="sd">        )</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">source</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># &quot;Linear&quot;, &quot;Figma&quot;, &quot;Stripe&quot;, etc.</span>
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">code_example</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">when_to_use</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">benefits</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="SagaCodex">
+<a class="viewcode-back" href="../../../api/modules.html#saga.config.sagacodex_profiles.SagaCodex">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SagaCodex</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A complete set of standards for a language/framework.</span>
+<span class="sd">    </span>
+<span class="sd">    Contains:</span>
+<span class="sd">    - Core standards (type safety, error handling, logging, etc.)</span>
+<span class="sd">    - Language-specific patterns (async/await, dependency injection, etc.)</span>
+<span class="sd">    - Anti-patterns to avoid</span>
+<span class="sd">    - Elite patterns to emulate</span>
+<span class="sd">    - Testing requirements</span>
+<span class="sd">    - Performance guidelines</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">language</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">framework</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">standards</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">CodeStandard</span><span class="p">]</span>
+    <span class="n">anti_patterns</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">AntiPattern</span><span class="p">]</span>
+    <span class="n">elite_patterns</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ElitePattern</span><span class="p">]</span>
+    <span class="n">testing_requirements</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="n">performance_guidelines</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    
+<div class="viewcode-block" id="SagaCodex.get_standard">
+<a class="viewcode-back" href="../../../api/modules.html#saga.config.sagacodex_profiles.SagaCodex.get_standard">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_standard</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rule_number</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">CodeStandard</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get standard by rule number.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">standard</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">standards</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">standard</span><span class="o">.</span><span class="n">rule_number</span> <span class="o">==</span> <span class="n">rule_number</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">standard</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+    
+<div class="viewcode-block" id="SagaCodex.get_standards_by_severity">
+<a class="viewcode-back" href="../../../api/modules.html#saga.config.sagacodex_profiles.SagaCodex.get_standards_by_severity">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_standards_by_severity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">severity</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">CodeStandard</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get all standards of a given severity.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">standards</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">severity</span> <span class="o">==</span> <span class="n">severity</span><span class="p">]</span></div>
+
+    
+<div class="viewcode-block" id="SagaCodex.search_standards">
+<a class="viewcode-back" href="../../../api/modules.html#saga.config.sagacodex_profiles.SagaCodex.search_standards">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">search_standards</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">CodeStandard</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Search standards by keyword.&quot;&quot;&quot;</span>
+        <span class="n">query_lower</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="k">for</span> <span class="n">standard</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">standards</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">query_lower</span> <span class="ow">in</span> <span class="n">standard</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">or</span>
+                <span class="n">query_lower</span> <span class="ow">in</span> <span class="n">standard</span><span class="o">.</span><span class="n">description</span><span class="o">.</span><span class="n">lower</span><span class="p">()):</span>
+                <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">standard</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">results</span></div>
+
+    
+<div class="viewcode-block" id="SagaCodex.to_dict">
+<a class="viewcode-back" href="../../../api/modules.html#saga.config.sagacodex_profiles.SagaCodex.to_dict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert to dictionary for serialization.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;language&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">language</span><span class="p">,</span>
+            <span class="s2">&quot;framework&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">framework</span><span class="p">,</span>
+            <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">,</span>
+            <span class="s2">&quot;standards&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">standards</span><span class="p">],</span>
+            <span class="s2">&quot;anti_patterns&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">ap</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                    <span class="s2">&quot;pattern&quot;</span><span class="p">:</span> <span class="n">ap</span><span class="o">.</span><span class="n">pattern</span><span class="p">,</span>
+                    <span class="s2">&quot;why_bad&quot;</span><span class="p">:</span> <span class="n">ap</span><span class="o">.</span><span class="n">why_bad</span><span class="p">,</span>
+                    <span class="s2">&quot;use_instead&quot;</span><span class="p">:</span> <span class="n">ap</span><span class="o">.</span><span class="n">use_instead</span><span class="p">,</span>
+                    <span class="s2">&quot;severity&quot;</span><span class="p">:</span> <span class="n">ap</span><span class="o">.</span><span class="n">severity</span><span class="p">,</span>
+                <span class="p">}</span>
+                <span class="k">for</span> <span class="n">ap</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">anti_patterns</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;elite_patterns&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">ep</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                    <span class="s2">&quot;source&quot;</span><span class="p">:</span> <span class="n">ep</span><span class="o">.</span><span class="n">source</span><span class="p">,</span>
+                    <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="n">ep</span><span class="o">.</span><span class="n">description</span><span class="p">,</span>
+                    <span class="s2">&quot;code_example&quot;</span><span class="p">:</span> <span class="n">ep</span><span class="o">.</span><span class="n">code_example</span><span class="p">,</span>
+                    <span class="s2">&quot;when_to_use&quot;</span><span class="p">:</span> <span class="n">ep</span><span class="o">.</span><span class="n">when_to_use</span><span class="p">,</span>
+                    <span class="s2">&quot;benefits&quot;</span><span class="p">:</span> <span class="n">ep</span><span class="o">.</span><span class="n">benefits</span><span class="p">,</span>
+                <span class="p">}</span>
+                <span class="k">for</span> <span class="n">ep</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">elite_patterns</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;testing_requirements&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">testing_requirements</span><span class="p">,</span>
+            <span class="s2">&quot;performance_guidelines&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">performance_guidelines</span><span class="p">,</span>
+        <span class="p">}</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SagaCodexManager">
+<a class="viewcode-back" href="../../../api/modules.html#saga.config.sagacodex_profiles.SagaCodexManager">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SagaCodexManager</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Manages language-specific SagaCodex profiles.</span>
+<span class="sd">    </span>
+<span class="sd">    MVP: Python/FastAPI hardcoded</span>
+<span class="sd">    Future: Load from config files, support multiple profiles</span>
+<span class="sd">    </span>
+<span class="sd">    Usage:</span>
+<span class="sd">        manager = SagaCodexManager()</span>
+<span class="sd">        codex = manager.get_profile(LanguageProfile.PYTHON_FASTAPI)</span>
+<span class="sd">        </span>
+<span class="sd">        # Search for a standard</span>
+<span class="sd">        standards = codex.search_standards(&quot;type safety&quot;)</span>
+<span class="sd">        </span>
+<span class="sd">        # Check anti-patterns</span>
+<span class="sd">        violations = manager.check_code(code, LanguageProfile.PYTHON_FASTAPI)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+<div class="viewcode-block" id="SagaCodexManager.__init__">
+<a class="viewcode-back" href="../../../api/modules.html#saga.config.sagacodex_profiles.SagaCodexManager.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_dir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize SagaCodex manager.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            config_dir: Directory containing profile configs (future use)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config_dir</span> <span class="o">=</span> <span class="n">config_dir</span> <span class="ow">or</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_profiles</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">LanguageProfile</span><span class="p">,</span> <span class="n">SagaCodex</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_load_profiles</span><span class="p">()</span></div>
+
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_load_profiles</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Load all available profiles.&quot;&quot;&quot;</span>
+        <span class="c1"># MVP: Only Python/FastAPI</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_profiles</span><span class="p">[</span><span class="n">LanguageProfile</span><span class="o">.</span><span class="n">PYTHON_FASTAPI</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_python_fastapi_profile</span><span class="p">()</span>
+        
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;SagaCodex profiles loaded&quot;</span><span class="p">,</span>
+            <span class="n">extra</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;profiles&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_profiles</span><span class="o">.</span><span class="n">keys</span><span class="p">())}</span>
+        <span class="p">)</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_python_fastapi_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SagaCodex</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create Python/FastAPI profile (MVP).</span>
+<span class="sd">        </span>
+<span class="sd">        This is SAGA&#39;s expert knowledge for building herself.</span>
+<span class="sd">        Standards derived from Phase 1 achievements and FAANG practices.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">standards</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">CodeStandard</span><span class="p">(</span>
+                <span class="n">rule_number</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Type Safety Required&quot;</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="s2">&quot;All public functions must have complete type hints&quot;</span><span class="p">,</span>
+                <span class="n">applies_to</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;python&quot;</span><span class="p">],</span>
+                <span class="n">tool</span><span class="o">=</span><span class="s2">&quot;mypy --strict&quot;</span><span class="p">,</span>
+                <span class="n">example_correct</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;def process_request(user_id: str, data: Dict[str, Any]) -&gt; Response:</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;    ...&quot;</span>
+                <span class="p">),</span>
+                <span class="n">example_wrong</span><span class="o">=</span><span class="s2">&quot;def process_request(user_id, data):</span><span class="se">\n</span><span class="s2">    ...&quot;</span><span class="p">,</span>
+                <span class="n">rationale</span><span class="o">=</span><span class="s2">&quot;Python&#39;s dynamic typing causes runtime errors. Types catch bugs at dev time.&quot;</span><span class="p">,</span>
+                <span class="n">enforcement</span><span class="o">=</span><span class="s2">&quot;CI blocks PRs with mypy errors&quot;</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;CRITICAL&quot;</span>
+            <span class="p">),</span>
+            <span class="n">CodeStandard</span><span class="p">(</span>
+                <span class="n">rule_number</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Async for I/O Operations&quot;</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Use async/await for database, API calls, file I/O&quot;</span><span class="p">,</span>
+                <span class="n">applies_to</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;python&quot;</span><span class="p">],</span>
+                <span class="n">tool</span><span class="o">=</span><span class="s2">&quot;None (pattern review)&quot;</span><span class="p">,</span>
+                <span class="n">example_correct</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;async def get_user(db: AsyncSession, user_id: str) -&gt; User:</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;    result = await db.execute(select(User).where(User.id == user_id))</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;    return result.scalar_one_or_none()&quot;</span>
+                <span class="p">),</span>
+                <span class="n">example_wrong</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;def get_user(db: Session, user_id: str) -&gt; User:</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;    return db.query(User).filter(User.id == user_id).first()&quot;</span>
+                <span class="p">),</span>
+                <span class="n">rationale</span><span class="o">=</span><span class="s2">&quot;FastAPI is async-first. Blocking event loop kills performance.&quot;</span><span class="p">,</span>
+                <span class="n">enforcement</span><span class="o">=</span><span class="s2">&quot;Code review + pattern detection&quot;</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;CRITICAL&quot;</span>
+            <span class="p">),</span>
+            <span class="n">CodeStandard</span><span class="p">(</span>
+                <span class="n">rule_number</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Custom Exceptions with Context&quot;</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Never silent failures, never bare except:&quot;</span><span class="p">,</span>
+                <span class="n">applies_to</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;python&quot;</span><span class="p">],</span>
+                <span class="n">tool</span><span class="o">=</span><span class="s2">&quot;pylint, bandit&quot;</span><span class="p">,</span>
+                <span class="n">example_correct</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;class UserNotFoundError(Exception):</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;    def __init__(self, user_id: str):</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;        self.user_id = user_id</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;        super().__init__(f&#39;User </span><span class="si">{user_id}</span><span class="s2"> not found&#39;)&quot;</span>
+                <span class="p">),</span>
+                <span class="n">example_wrong</span><span class="o">=</span><span class="s2">&quot;try:</span><span class="se">\n</span><span class="s2">    ...</span><span class="se">\n</span><span class="s2">except:</span><span class="se">\n</span><span class="s2">    pass&quot;</span><span class="p">,</span>
+                <span class="n">rationale</span><span class="o">=</span><span class="s2">&quot;Silent failures hide bugs. Context enables debugging.&quot;</span><span class="p">,</span>
+                <span class="n">enforcement</span><span class="o">=</span><span class="s2">&quot;Linter blocks bare except&quot;</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;CRITICAL&quot;</span>
+            <span class="p">),</span>
+            <span class="n">CodeStandard</span><span class="p">(</span>
+                <span class="n">rule_number</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Structured Logging Only&quot;</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="s2">&quot;All logs include trace_id, operation, outcome&quot;</span><span class="p">,</span>
+                <span class="n">applies_to</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;python&quot;</span><span class="p">],</span>
+                <span class="n">tool</span><span class="o">=</span><span class="s2">&quot;None (pattern review)&quot;</span><span class="p">,</span>
+                <span class="n">example_correct</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;logger.info(</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;    &#39;User created&#39;,</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;    extra={&#39;user_id&#39;: user.id, &#39;trace_id&#39;: get_trace_id()}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;)&quot;</span>
+                <span class="p">),</span>
+                <span class="n">example_wrong</span><span class="o">=</span><span class="s2">&quot;print(f&#39;User created: </span><span class="si">{user.id}</span><span class="s2">&#39;)&quot;</span><span class="p">,</span>
+                <span class="n">rationale</span><span class="o">=</span><span class="s2">&quot;Print statements not parseable, not traceable.&quot;</span><span class="p">,</span>
+                <span class="n">enforcement</span><span class="o">=</span><span class="s2">&quot;Linter detects print() in production paths&quot;</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;WARNING&quot;</span>
+            <span class="p">),</span>
+            <span class="n">CodeStandard</span><span class="p">(</span>
+                <span class="n">rule_number</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Pydantic Validation for API Inputs&quot;</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="s2">&quot;All API inputs/outputs use Pydantic models&quot;</span><span class="p">,</span>
+                <span class="n">applies_to</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;python&quot;</span><span class="p">],</span>
+                <span class="n">tool</span><span class="o">=</span><span class="s2">&quot;FastAPI automatic validation&quot;</span><span class="p">,</span>
+                <span class="n">example_correct</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;class UserCreate(BaseModel):</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;    email: EmailStr</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;    password: str = Field(min_length=8)&quot;</span>
+                <span class="p">),</span>
+                <span class="n">example_wrong</span><span class="o">=</span><span class="s2">&quot;@app.post(&#39;/users/&#39;)</span><span class="se">\n</span><span class="s2">async def create_user(request: dict): ...&quot;</span><span class="p">,</span>
+                <span class="n">rationale</span><span class="o">=</span><span class="s2">&quot;Automatic validation, documentation, type safety.&quot;</span><span class="p">,</span>
+                <span class="n">enforcement</span><span class="o">=</span><span class="s2">&quot;Code review&quot;</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;CRITICAL&quot;</span>
+            <span class="p">),</span>
+            <span class="n">CodeStandard</span><span class="p">(</span>
+                <span class="n">rule_number</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Dependency Injection via FastAPI Depends&quot;</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Use Depends() for database, auth, config&quot;</span><span class="p">,</span>
+                <span class="n">applies_to</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;python&quot;</span><span class="p">],</span>
+                <span class="n">tool</span><span class="o">=</span><span class="s2">&quot;FastAPI pattern&quot;</span><span class="p">,</span>
+                <span class="n">example_correct</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;@app.post(&#39;/users/&#39;)</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;async def create_user(</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;    user: UserCreate,</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;    db: AsyncSession = Depends(get_db)</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;): ...&quot;</span>
+                <span class="p">),</span>
+                <span class="n">example_wrong</span><span class="o">=</span><span class="s2">&quot;db = create_engine(DATABASE_URL)</span><span class="se">\n</span><span class="s2">@app.post(&#39;/users/&#39;)</span><span class="se">\n</span><span class="s2">async def create_user(user: dict): ...&quot;</span><span class="p">,</span>
+                <span class="n">rationale</span><span class="o">=</span><span class="s2">&quot;Testable, mockable, clean separation of concerns.&quot;</span><span class="p">,</span>
+                <span class="n">enforcement</span><span class="o">=</span><span class="s2">&quot;Code review&quot;</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;CRITICAL&quot;</span>
+            <span class="p">),</span>
+            <span class="n">CodeStandard</span><span class="p">(</span>
+                <span class="n">rule_number</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;99% Test Coverage&quot;</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="s2">&quot;All modules achieve 99</span><span class="si">% c</span><span class="s2">overage (Phase 1 standard)&quot;</span><span class="p">,</span>
+                <span class="n">applies_to</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;python&quot;</span><span class="p">],</span>
+                <span class="n">tool</span><span class="o">=</span><span class="s2">&quot;pytest-cov&quot;</span><span class="p">,</span>
+                <span class="n">example_correct</span><span class="o">=</span><span class="s2">&quot;pytest --cov=saga --cov-report=term-missing --cov-fail-under=99&quot;</span><span class="p">,</span>
+                <span class="n">example_wrong</span><span class="o">=</span><span class="s2">&quot;# No tests&quot;</span><span class="p">,</span>
+                <span class="n">rationale</span><span class="o">=</span><span class="s2">&quot;Proven in Phase 1. High coverage catches regressions.&quot;</span><span class="p">,</span>
+                <span class="n">enforcement</span><span class="o">=</span><span class="s2">&quot;CI blocks PRs below 99%&quot;</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;CRITICAL&quot;</span>
+            <span class="p">),</span>
+            <span class="n">CodeStandard</span><span class="p">(</span>
+                <span class="n">rule_number</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Event Sourcing for State Changes&quot;</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Emit events for all state changes (Phase 1 pattern)&quot;</span><span class="p">,</span>
+                <span class="n">applies_to</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;python&quot;</span><span class="p">],</span>
+                <span class="n">tool</span><span class="o">=</span><span class="s2">&quot;saga.core.events&quot;</span><span class="p">,</span>
+                <span class="n">example_correct</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;event = Event(</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;    type=EventType.USER_CREATED,</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;    trace_id=trace_id,</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;    payload={&#39;user_id&#39;: user.id}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;)</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;await event_store.append(event)&quot;</span>
+                <span class="p">),</span>
+                <span class="n">example_wrong</span><span class="o">=</span><span class="s2">&quot;# State change without event&quot;</span><span class="p">,</span>
+                <span class="n">rationale</span><span class="o">=</span><span class="s2">&quot;Enables audit trail, rollback, debugging.&quot;</span><span class="p">,</span>
+                <span class="n">enforcement</span><span class="o">=</span><span class="s2">&quot;Code review&quot;</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;WARNING&quot;</span>
+            <span class="p">),</span>
+            <span class="n">CodeStandard</span><span class="p">(</span>
+                <span class="n">rule_number</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Circuit Breaker for External APIs&quot;</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="s2">&quot;All external API calls protected (Phase 1 pattern)&quot;</span><span class="p">,</span>
+                <span class="n">applies_to</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;python&quot;</span><span class="p">],</span>
+                <span class="n">tool</span><span class="o">=</span><span class="s2">&quot;saga.resilience.circuit_breaker&quot;</span><span class="p">,</span>
+                <span class="n">example_correct</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;@circuit_breaker</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;async def call_external_api(data: dict) -&gt; Response:</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;    ...&quot;</span>
+                <span class="p">),</span>
+                <span class="n">example_wrong</span><span class="o">=</span><span class="s2">&quot;async def call_external_api(data: dict):</span><span class="se">\n</span><span class="s2">    # No protection&quot;</span><span class="p">,</span>
+                <span class="n">rationale</span><span class="o">=</span><span class="s2">&quot;Prevents cascade failures, enables graceful degradation.&quot;</span><span class="p">,</span>
+                <span class="n">enforcement</span><span class="o">=</span><span class="s2">&quot;Code review&quot;</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;WARNING&quot;</span>
+            <span class="p">),</span>
+            <span class="n">CodeStandard</span><span class="p">(</span>
+                <span class="n">rule_number</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;trace_id Required for All Operations&quot;</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Every operation has trace_id for debugging&quot;</span><span class="p">,</span>
+                <span class="n">applies_to</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;python&quot;</span><span class="p">],</span>
+                <span class="n">tool</span><span class="o">=</span><span class="s2">&quot;contextvars&quot;</span><span class="p">,</span>
+                <span class="n">example_correct</span><span class="o">=</span><span class="s2">&quot;trace_id = str(uuid.uuid4())</span><span class="se">\n</span><span class="s2">trace_id_var.set(trace_id)&quot;</span><span class="p">,</span>
+                <span class="n">example_wrong</span><span class="o">=</span><span class="s2">&quot;# No trace_id&quot;</span><span class="p">,</span>
+                <span class="n">rationale</span><span class="o">=</span><span class="s2">&quot;Enables distributed tracing, debugging production issues.&quot;</span><span class="p">,</span>
+                <span class="n">enforcement</span><span class="o">=</span><span class="s2">&quot;Code review&quot;</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;WARNING&quot;</span>
+            <span class="p">),</span>
+        <span class="p">]</span>
+        
+        <span class="n">anti_patterns</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">AntiPattern</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Print Statements in Production&quot;</span><span class="p">,</span>
+                <span class="n">pattern</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;print\(&#39;</span><span class="p">,</span>
+                <span class="n">why_bad</span><span class="o">=</span><span class="s2">&quot;Not structured, not parseable, not traceable&quot;</span><span class="p">,</span>
+                <span class="n">use_instead</span><span class="o">=</span><span class="s2">&quot;logger.info() with structured context&quot;</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;WARNING&quot;</span>
+            <span class="p">),</span>
+            <span class="n">AntiPattern</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Bare Except Clauses&quot;</span><span class="p">,</span>
+                <span class="n">pattern</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;except\s*:&#39;</span><span class="p">,</span>
+                <span class="n">why_bad</span><span class="o">=</span><span class="s2">&quot;Catches KeyboardInterrupt, SystemExit, hides bugs&quot;</span><span class="p">,</span>
+                <span class="n">use_instead</span><span class="o">=</span><span class="s2">&quot;except SpecificException:&quot;</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;CRITICAL&quot;</span>
+            <span class="p">),</span>
+            <span class="n">AntiPattern</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Synchronous Database Calls&quot;</span><span class="p">,</span>
+                <span class="n">pattern</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;db\.query\(&#39;</span><span class="p">,</span>
+                <span class="n">why_bad</span><span class="o">=</span><span class="s2">&quot;Blocks FastAPI event loop, kills performance&quot;</span><span class="p">,</span>
+                <span class="n">use_instead</span><span class="o">=</span><span class="s2">&quot;await db.execute(select(...))&quot;</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;CRITICAL&quot;</span>
+            <span class="p">),</span>
+            <span class="n">AntiPattern</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Global Database Connection&quot;</span><span class="p">,</span>
+                <span class="n">pattern</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;db\s*=\s*create_engine&#39;</span><span class="p">,</span>
+                <span class="n">why_bad</span><span class="o">=</span><span class="s2">&quot;Not testable, no lifecycle management, connection leaks&quot;</span><span class="p">,</span>
+                <span class="n">use_instead</span><span class="o">=</span><span class="s2">&quot;Depends(get_db) for session per request&quot;</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;CRITICAL&quot;</span>
+            <span class="p">),</span>
+            <span class="n">AntiPattern</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Type Hints with &#39;Any&#39; Everywhere&quot;</span><span class="p">,</span>
+                <span class="n">pattern</span><span class="o">=</span><span class="sa">r</span><span class="s1">&#39;:\s*Any\b&#39;</span><span class="p">,</span>
+                <span class="n">why_bad</span><span class="o">=</span><span class="s2">&quot;Defeats purpose of type checking&quot;</span><span class="p">,</span>
+                <span class="n">use_instead</span><span class="o">=</span><span class="s2">&quot;Specific types: Dict[str, int], List[User], etc.&quot;</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;WARNING&quot;</span>
+            <span class="p">),</span>
+        <span class="p">]</span>
+        
+        <span class="n">elite_patterns</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">ElitePattern</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Optimistic UI Updates&quot;</span><span class="p">,</span>
+                <span class="n">source</span><span class="o">=</span><span class="s2">&quot;Linear&quot;</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Update UI immediately, rollback if backend fails&quot;</span><span class="p">,</span>
+                <span class="n">code_example</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;# Update UI state</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;set_task_completed(task_id)</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;# Send to backend</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;try:</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;    await api.complete_task(task_id)</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;except Exception:</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;    set_task_pending(task_id)  # Rollback&quot;</span>
+                <span class="p">),</span>
+                <span class="n">when_to_use</span><span class="o">=</span><span class="s2">&quot;User actions that change state&quot;</span><span class="p">,</span>
+                <span class="n">benefits</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Feels instant&quot;</span><span class="p">,</span> <span class="s2">&quot;Better UX&quot;</span><span class="p">,</span> <span class="s2">&quot;Users forgive slow backends&quot;</span><span class="p">]</span>
+            <span class="p">),</span>
+            <span class="n">ElitePattern</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Prefetch on Hover&quot;</span><span class="p">,</span>
+                <span class="n">source</span><span class="o">=</span><span class="s2">&quot;Vercel&quot;</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Prefetch destination on link hover&quot;</span><span class="p">,</span>
+                <span class="n">code_example</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;&lt;Link</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;    href=&#39;/dashboard&#39;</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;    onMouseEnter={() =&gt; prefetch(&#39;/dashboard&#39;)}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;&gt;</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;    Dashboard</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;&lt;/Link&gt;&quot;</span>
+                <span class="p">),</span>
+                <span class="n">when_to_use</span><span class="o">=</span><span class="s2">&quot;Navigation-heavy apps&quot;</span><span class="p">,</span>
+                <span class="n">benefits</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Instant navigation&quot;</span><span class="p">,</span> <span class="s2">&quot;Perceived performance&quot;</span><span class="p">,</span> <span class="s2">&quot;Simple implementation&quot;</span><span class="p">]</span>
+            <span class="p">),</span>
+            <span class="n">ElitePattern</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Skeleton Screens&quot;</span><span class="p">,</span>
+                <span class="n">source</span><span class="o">=</span><span class="s2">&quot;Linear, Figma&quot;</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Show content structure while loading&quot;</span><span class="p">,</span>
+                <span class="n">code_example</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;if loading:</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;    return &lt;UserCardSkeleton /&gt;  # Shows shape of content</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;return &lt;UserCard user=</span><span class="si">{user}</span><span class="s2"> /&gt;&quot;</span>
+                <span class="p">),</span>
+                <span class="n">when_to_use</span><span class="o">=</span><span class="s2">&quot;Any async data loading&quot;</span><span class="p">,</span>
+                <span class="n">benefits</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Better than spinners&quot;</span><span class="p">,</span> <span class="s2">&quot;Shows progress&quot;</span><span class="p">,</span> <span class="s2">&quot;Feels faster&quot;</span><span class="p">]</span>
+            <span class="p">),</span>
+        <span class="p">]</span>
+        
+        <span class="n">testing_requirements</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;coverage_minimum&quot;</span><span class="p">:</span> <span class="mi">99</span><span class="p">,</span>
+            <span class="s2">&quot;tool&quot;</span><span class="p">:</span> <span class="s2">&quot;pytest-cov&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;async_support&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="s2">&quot;fixtures_required&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="s2">&quot;integration_tests&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="s2">&quot;example&quot;</span><span class="p">:</span> <span class="p">(</span>
+                <span class="s2">&quot;@pytest.mark.asyncio</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;async def test_create_user(client: AsyncClient):</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;    response = await client.post(&#39;/users/&#39;, json={...})</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;    assert response.status_code == 201&quot;</span>
+            <span class="p">)</span>
+        <span class="p">}</span>
+        
+        <span class="n">performance_guidelines</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;api_latency_p99&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt; 100ms&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;database_queries&quot;</span><span class="p">:</span> <span class="s2">&quot;Use indexes on all WHERE/JOIN fields&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;n_plus_one&quot;</span><span class="p">:</span> <span class="s2">&quot;Use selectinload() or joinedload()&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;background_tasks&quot;</span><span class="p">:</span> <span class="s2">&quot;Operations &gt; 100ms use BackgroundTasks&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;caching&quot;</span><span class="p">:</span> <span class="s2">&quot;Cache expensive operations with TTL&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+        
+        <span class="k">return</span> <span class="n">SagaCodex</span><span class="p">(</span>
+            <span class="n">language</span><span class="o">=</span><span class="s2">&quot;Python&quot;</span><span class="p">,</span>
+            <span class="n">framework</span><span class="o">=</span><span class="s2">&quot;FastAPI&quot;</span><span class="p">,</span>
+            <span class="n">version</span><span class="o">=</span><span class="s2">&quot;1.0.0&quot;</span><span class="p">,</span>
+            <span class="n">standards</span><span class="o">=</span><span class="n">standards</span><span class="p">,</span>
+            <span class="n">anti_patterns</span><span class="o">=</span><span class="n">anti_patterns</span><span class="p">,</span>
+            <span class="n">elite_patterns</span><span class="o">=</span><span class="n">elite_patterns</span><span class="p">,</span>
+            <span class="n">testing_requirements</span><span class="o">=</span><span class="n">testing_requirements</span><span class="p">,</span>
+            <span class="n">performance_guidelines</span><span class="o">=</span><span class="n">performance_guidelines</span><span class="p">,</span>
+        <span class="p">)</span>
+    
+<div class="viewcode-block" id="SagaCodexManager.get_profile">
+<a class="viewcode-back" href="../../../api/modules.html#saga.config.sagacodex_profiles.SagaCodexManager.get_profile">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">profile</span><span class="p">:</span> <span class="n">LanguageProfile</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SagaCodex</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get SagaCodex for a language/framework profile.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            profile: Language profile enum</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            SagaCodex instance</span>
+<span class="sd">            </span>
+<span class="sd">        Raises:</span>
+<span class="sd">            NotImplementedError: If profile not yet supported</span>
+<span class="sd">            </span>
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; manager = SagaCodexManager()</span>
+<span class="sd">            &gt;&gt;&gt; codex = manager.get_profile(LanguageProfile.PYTHON_FASTAPI)</span>
+<span class="sd">            &gt;&gt;&gt; print(codex.language)</span>
+<span class="sd">            Python</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">profile</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_profiles</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Profile </span><span class="si">{</span><span class="n">profile</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> not yet implemented. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Available: </span><span class="si">{</span><span class="p">[</span><span class="n">p</span><span class="o">.</span><span class="n">value</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">_profiles</span><span class="o">.</span><span class="n">keys</span><span class="p">()]</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_profiles</span><span class="p">[</span><span class="n">profile</span><span class="p">]</span></div>
+
+    
+<div class="viewcode-block" id="SagaCodexManager.get_current_profile">
+<a class="viewcode-back" href="../../../api/modules.html#saga.config.sagacodex_profiles.SagaCodexManager.get_current_profile">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_current_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SagaCodex</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get current profile (MVP: always Python/FastAPI).</span>
+<span class="sd">        </span>
+<span class="sd">        Future: Will detect from project structure or user config.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_profile</span><span class="p">(</span><span class="n">LanguageProfile</span><span class="o">.</span><span class="n">PYTHON_FASTAPI</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="SagaCodexManager.check_code">
+<a class="viewcode-back" href="../../../api/modules.html#saga.config.sagacodex_profiles.SagaCodexManager.check_code">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_code</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">code</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">profile</span><span class="p">:</span> <span class="n">LanguageProfile</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check code against anti-patterns.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            code: Code to check</span>
+<span class="sd">            profile: Language profile to use</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            List of violations with details</span>
+<span class="sd">            </span>
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; violations = manager.check_code(&quot;print(&#39;hello&#39;)&quot;, LanguageProfile.PYTHON_FASTAPI)</span>
+<span class="sd">            &gt;&gt;&gt; print(violations[0][&#39;name&#39;])</span>
+<span class="sd">            Print Statements in Production</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+        
+        <span class="n">codex</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_profile</span><span class="p">(</span><span class="n">profile</span><span class="p">)</span>
+        <span class="n">violations</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="k">for</span> <span class="n">anti_pattern</span> <span class="ow">in</span> <span class="n">codex</span><span class="o">.</span><span class="n">anti_patterns</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">anti_pattern</span><span class="o">.</span><span class="n">pattern</span><span class="p">,</span> <span class="n">code</span><span class="p">):</span>
+                <span class="n">violations</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">anti_pattern</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                    <span class="s2">&quot;pattern&quot;</span><span class="p">:</span> <span class="n">anti_pattern</span><span class="o">.</span><span class="n">pattern</span><span class="p">,</span>
+                    <span class="s2">&quot;why_bad&quot;</span><span class="p">:</span> <span class="n">anti_pattern</span><span class="o">.</span><span class="n">why_bad</span><span class="p">,</span>
+                    <span class="s2">&quot;use_instead&quot;</span><span class="p">:</span> <span class="n">anti_pattern</span><span class="o">.</span><span class="n">use_instead</span><span class="p">,</span>
+                    <span class="s2">&quot;severity&quot;</span><span class="p">:</span> <span class="n">anti_pattern</span><span class="o">.</span><span class="n">severity</span><span class="p">,</span>
+                <span class="p">})</span>
+        
+        <span class="k">if</span> <span class="n">violations</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;Anti-patterns detected&quot;</span><span class="p">,</span>
+                <span class="n">extra</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;count&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">violations</span><span class="p">),</span> <span class="s2">&quot;profile&quot;</span><span class="p">:</span> <span class="n">profile</span><span class="o">.</span><span class="n">value</span><span class="p">}</span>
+            <span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">violations</span></div>
+
+    
+<div class="viewcode-block" id="SagaCodexManager.export_profile">
+<a class="viewcode-back" href="../../../api/modules.html#saga.config.sagacodex_profiles.SagaCodexManager.export_profile">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">export_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">profile</span><span class="p">:</span> <span class="n">LanguageProfile</span><span class="p">,</span> <span class="n">output_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Export profile to JSON for external tools.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            profile: Profile to export</span>
+<span class="sd">            output_path: Path to write JSON file</span>
+<span class="sd">            </span>
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; manager.export_profile(</span>
+<span class="sd">            ...     LanguageProfile.PYTHON_FASTAPI,</span>
+<span class="sd">            ...     Path(&quot;sagacodex_python_fastapi.json&quot;)</span>
+<span class="sd">            ... )</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">codex</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_profile</span><span class="p">(</span><span class="n">profile</span><span class="p">)</span>
+        
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">codex</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Profile exported&quot;</span><span class="p">,</span>
+            <span class="n">extra</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;profile&quot;</span><span class="p">:</span> <span class="n">profile</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">output_path</span><span class="p">)}</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<span class="c1"># Singleton instance for easy access</span>
+<span class="n">_manager</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">SagaCodexManager</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="get_codex_manager">
+<a class="viewcode-back" href="../../../api/modules.html#saga.config.sagacodex_profiles.get_codex_manager">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_codex_manager</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">SagaCodexManager</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get singleton SagaCodex manager instance.&quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">_manager</span>
+    <span class="k">if</span> <span class="n">_manager</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_manager</span> <span class="o">=</span> <span class="n">SagaCodexManager</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">_manager</span></div>
+
+
+
+<span class="c1"># Export main classes</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;SagaCodexManager&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;SagaCodex&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;CodeStandard&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;AntiPattern&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ElitePattern&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;LanguageProfile&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;get_codex_manager&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, ARC SAGA Development Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

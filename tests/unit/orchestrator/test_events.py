@@ -23,7 +23,7 @@ from pathlib import Path
 import pytest
 import pytest_asyncio
 
-from arc_saga.orchestrator.events import (
+from saga.orchestrator.events import (
     EVENT_TYPE_REGISTRY,
     EventStoreError,
     InMemoryEventStore,
@@ -755,7 +755,7 @@ class TestSQLiteEventStoreErrors:
             # Temporarily rename schema.sql to simulate missing file
             schema_path = (
                 Path(__file__).parent.parent.parent.parent
-                / "arc_saga"
+                / "saga"
                 / "orchestrator"
                 / "schema.sql"
             )

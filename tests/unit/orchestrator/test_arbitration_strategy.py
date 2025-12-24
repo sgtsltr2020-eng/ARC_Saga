@@ -1,8 +1,8 @@
 import pytest
 
-from arc_saga.orchestrator.core import Task
-from arc_saga.orchestrator.patterns import ArbitrationStrategy
-from arc_saga.orchestrator.types import AIProvider, AITaskInput, Result
+from saga.orchestrator.core import Task
+from saga.orchestrator.patterns import ArbitrationStrategy
+from saga.orchestrator.types import AIProvider, AITaskInput, Result
 
 
 # Mock Executor

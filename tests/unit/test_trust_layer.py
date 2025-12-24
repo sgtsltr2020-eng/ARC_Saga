@@ -15,9 +15,9 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from arc_saga.exceptions.integration_exceptions import AuthenticationError
-from arc_saga.integrations.entra_id_auth_manager import EntraIDAuthManager
-from arc_saga.integrations.perplexity_client import (
+from saga.exceptions.integration_exceptions import AuthenticationError
+from saga.integrations.entra_id_auth_manager import EntraIDAuthManager
+from saga.integrations.perplexity_client import (
     PerplexityClient,
     PerplexityStorageError,
 )

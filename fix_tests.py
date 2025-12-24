@@ -30,8 +30,8 @@ if test_models.exists():
     # Add import
     if 'FileType' not in content:
         content = content.replace(
-            'from arc_saga.models import Message, MessageRole, Provider, File',
-            'from arc_saga.models import Message, MessageRole, Provider, File, FileType'
+            'from saga.models import Message, MessageRole, Provider, File',
+            'from saga.models import Message, MessageRole, Provider, File, FileType'
         )
     test_models.write_text(content)
     print("✅ tests/test_models.py fixed")

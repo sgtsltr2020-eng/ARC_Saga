@@ -14,13 +14,13 @@ class SharedConfig:
     """
     Shared configuration constants.
     
-    Used by both arc_saga and validator modules.
+    Used by both saga and validator modules.
     All paths are Windows-compatible.
     """
     
     # Project paths
     PROJECT_ROOT = Path(__file__).parent.parent
-    ARC_SAGA_ROOT = PROJECT_ROOT / "arc_saga"
+    saga_ROOT = PROJECT_ROOT / "saga"
     
     # Storage settings
     DB_PATH = Path.home() / ".arc-saga" / "memory.db"
@@ -28,7 +28,7 @@ class SharedConfig:
     DB_CHECK_SAME_THREAD = False  # Allow multi-threading
     
     # Logging settings
-    LOG_LEVEL = os.getenv("ARC_SAGA_LOG_LEVEL", "INFO")
+    LOG_LEVEL = os.getenv("saga_LOG_LEVEL", "INFO")
     LOG_FORMAT = "json"  # or "text"
     LOG_PATH = PROJECT_ROOT / "logs"
     

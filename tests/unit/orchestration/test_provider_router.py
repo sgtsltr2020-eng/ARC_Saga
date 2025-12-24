@@ -12,13 +12,13 @@ from decimal import Decimal
 
 import pytest
 
-from arc_saga.orchestrator.engine_registry import ReasoningEngineRegistry
-from arc_saga.orchestrator.errors import PermanentError, ProviderError, TransientError
-from arc_saga.orchestrator.provider_router import (
+from saga.orchestrator.engine_registry import ReasoningEngineRegistry
+from saga.orchestrator.errors import PermanentError, ProviderError, TransientError
+from saga.orchestrator.provider_router import (
     ProviderRouter,
     RoutingRule,
 )
-from arc_saga.orchestrator.types import (
+from saga.orchestrator.types import (
     AIProvider,
     AIResult,
     AIResultOutput,
@@ -390,7 +390,7 @@ async def test_correlation_id_flows_through_logs(caplog: pytest.LogCaptureFixtur
 async def test_backoff_timing_is_exponential(monkeypatch) -> None:
     """Backoff delays follow exponential growth: 0.2, 0.4, 0.8, etc."""
 
-    from arc_saga.orchestrator import provider_router as pr_mod
+    from saga.orchestrator import provider_router as pr_mod
 
     sleep_calls: list[float] = []
 

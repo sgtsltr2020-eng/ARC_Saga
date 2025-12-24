@@ -22,18 +22,18 @@ from unittest.mock import patch
 
 import pytest
 
-from arc_saga.orchestrator.core import (
+from saga.orchestrator.core import (
     BudgetExceededError,
     Orchestrator,
     WorkflowPattern,
 )
-from arc_saga.orchestrator.events import InMemoryEventStore, WorkflowCompletedEvent
-from arc_saga.orchestrator.token_manager import (
+from saga.orchestrator.events import InMemoryEventStore, WorkflowCompletedEvent
+from saga.orchestrator.token_manager import (
     LocalTokenEstimator,
     TokenBudget,
     TokenBudgetManager,
 )
-from arc_saga.orchestrator.types import (
+from saga.orchestrator.types import (
     AIProvider,
     AIResult,
     AIResultOutput,
@@ -250,7 +250,7 @@ class TestWorkflowBudgetIntegration:
 
         orchestrator_with_budget._task_executor = mock_executor
 
-        with patch("arc_saga.orchestrator.core.log_with_context") as mock_log:
+        with patch("saga.orchestrator.core.log_with_context") as mock_log:
             await orchestrator_with_budget.execute_workflow(
                 WorkflowPattern.SEQUENTIAL, ai_tasks
             )
@@ -284,7 +284,7 @@ class TestWorkflowBudgetIntegration:
             token_budget_manager=token_budget_manager_insufficient,
         )
 
-        with patch("arc_saga.orchestrator.core.log_with_context") as mock_log:
+        with patch("saga.orchestrator.core.log_with_context") as mock_log:
             with pytest.raises(BudgetExceededError):
                 await orchestrator.execute_workflow(
                     WorkflowPattern.SEQUENTIAL, ai_tasks
@@ -393,7 +393,7 @@ class TestWorkflowBudgetIntegration:
             side_effect=Exception("Event store failure"),
         ):
             with patch(
-                "arc_saga.orchestrator.token_manager.log_with_context"
+                "saga.orchestrator.token_manager.log_with_context"
             ) as mock_log:
                 # Workflow should still complete successfully
                 results = await orchestrator_with_budget.execute_workflow(

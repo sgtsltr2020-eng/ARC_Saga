@@ -1,7 +1,7 @@
 """Diagnose SearchResult structure"""
 
-from arc_saga.storage.sqlite import SQLiteStorage
-from arc_saga.models import Message, MessageRole, Provider
+from saga.storage.sqlite import SQLiteStorage
+from saga.models import Message, MessageRole, Provider
 import asyncio
 from pathlib import Path
 

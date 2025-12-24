@@ -19,7 +19,7 @@ print("1. CHECKING IMPORTS...")
 print("-" * 70)
 
 try:
-    from arc_saga.models import Message, MessageRole, Provider
+    from saga.models import Message, MessageRole, Provider
     print("✅ Models imported successfully")
     
     # Inspect Message class
@@ -54,7 +54,7 @@ except Exception as e:
 print()
 
 try:
-    from arc_saga.storage.sqlite import SQLiteStorage
+    from saga.storage.sqlite import SQLiteStorage
     print("✅ SQLiteStorage imported successfully")
     
     # Inspect SQLiteStorage methods
@@ -128,7 +128,7 @@ print("3. TESTING STORAGE INITIALIZATION...")
 print("-" * 70)
 
 try:
-    from arc_saga.storage.sqlite import SQLiteStorage
+    from saga.storage.sqlite import SQLiteStorage
     import asyncio
     
     storage = SQLiteStorage(str(db_path))
@@ -173,7 +173,7 @@ print("4. TESTING MESSAGE CREATION...")
 print("-" * 70)
 
 try:
-    from arc_saga.models import Message, MessageRole, Provider
+    from saga.models import Message, MessageRole, Provider
     from datetime import datetime
     
     # Try to create a Message
@@ -208,8 +208,8 @@ print("5. TESTING SAVE MESSAGE...")
 print("-" * 70)
 
 try:
-    from arc_saga.storage.sqlite import SQLiteStorage
-    from arc_saga.models import Message, MessageRole, Provider
+    from saga.storage.sqlite import SQLiteStorage
+    from saga.models import Message, MessageRole, Provider
     import asyncio
     
     storage = SQLiteStorage(str(db_path))

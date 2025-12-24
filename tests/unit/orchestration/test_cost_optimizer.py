@@ -2,15 +2,15 @@ from decimal import Decimal
 
 import pytest
 
-from arc_saga.orchestrator.cost_models import CostProfile, CostProfileRegistry
-from arc_saga.orchestrator.cost_optimizer import CostOptimizer
-from arc_saga.orchestrator.errors import BudgetExceededRoutingError
-from arc_saga.orchestrator.types import AIProvider, AITask, AITaskInput
+from saga.orchestrator.cost_models import CostProfile, CostProfileRegistry
+from saga.orchestrator.cost_optimizer import CostOptimizer
+from saga.orchestrator.errors import BudgetExceededRoutingError
+from saga.orchestrator.types import AIProvider, AITask, AITaskInput
 
 
 @pytest.fixture(autouse=True)
 def reset_optimizer_singleton(monkeypatch):
-    from arc_saga.orchestrator import cost_optimizer
+    from saga.orchestrator import cost_optimizer
 
     cost_optimizer.CostOptimizer._instance = None
     yield

@@ -22,14 +22,14 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
-from arc_saga.api.health_monitor import (
+from saga.api.health_monitor import (
     HealthMonitor,
     check_database_health,
     check_storage_space,
     determine_health_status,
     health_monitor,
 )
-from arc_saga.integrations.circuit_breaker import CircuitBreaker, CircuitState
+from saga.integrations.circuit_breaker import CircuitBreaker, CircuitState
 
 
 class TestHealthMonitor:
@@ -323,10 +323,10 @@ class TestHealthEndpoints:
     @pytest.fixture
     def client(self, mock_storage: AsyncMock) -> TestClient:
         """Create test client with mocked storage."""
-        from arc_saga.api.server import app
+        from saga.api.server import app
 
         # Patch storage
-        with patch("arc_saga.api.server.storage", mock_storage):
+        with patch("saga.api.server.storage", mock_storage):
             # Clear health monitor state
             health_monitor._circuit_breakers.clear()
             health_monitor._endpoint_latencies.clear()
@@ -450,7 +450,7 @@ class TestHealthEndpoints:
     def test_health_endpoint_handles_errors(self, client: TestClient) -> None:
         """Test /health handles errors gracefully."""
         # Make storage health check fail
-        with patch("arc_saga.api.server.storage") as mock_storage:
+        with patch("saga.api.server.storage") as mock_storage:
             mock_storage.health_check.side_effect = Exception("Database error")
 
             response = client.get("/health")
@@ -463,7 +463,7 @@ class TestHealthEndpoints:
     def test_health_detailed_handles_errors(self, client: TestClient) -> None:
         """Test /health/detailed handles errors gracefully."""
         # Make storage health check fail
-        with patch("arc_saga.api.server.storage") as mock_storage:
+        with patch("saga.api.server.storage") as mock_storage:
             mock_storage.health_check.side_effect = Exception("Database error")
 
             response = client.get("/health/detailed")
@@ -495,7 +495,7 @@ class TestLatencyTrackingMiddleware:
     @pytest.mark.asyncio
     async def test_middleware_tracks_latency(self) -> None:
         """Test middleware tracks endpoint latency."""
-        from arc_saga.api.health_monitor import LatencyTrackingMiddleware
+        from saga.api.health_monitor import LatencyTrackingMiddleware
         from starlette.responses import Response
         from starlette.requests import Request
 
@@ -529,7 +529,7 @@ class TestLatencyTrackingMiddleware:
     @pytest.mark.asyncio
     async def test_middleware_handles_errors(self) -> None:
         """Test middleware handles errors and records them."""
-        from arc_saga.api.health_monitor import LatencyTrackingMiddleware
+        from saga.api.health_monitor import LatencyTrackingMiddleware
         from starlette.requests import Request
 
         # Clear errors

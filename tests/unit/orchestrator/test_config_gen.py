@@ -21,7 +21,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from arc_saga.orchestrator.config_gen import (
+from saga.orchestrator.config_gen import (
     ConfigGenerator,
     FileSystemDetector,
     IProjectDetector,

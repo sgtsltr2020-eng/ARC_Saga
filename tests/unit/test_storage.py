@@ -1,5 +1,5 @@
 """
-arc_saga/tests/unit/test_storage.py
+saga/tests/unit/test_storage.py
 Unit tests for SQLite storage backend.
 
 Covers: CRUD operations, FTS search, session grouping, error handling
@@ -13,9 +13,9 @@ import shutil
 import sqlite3
 from unittest.mock import patch, MagicMock
 
-from arc_saga.storage.sqlite import SQLiteStorage
-from arc_saga.models import Message, Provider, MessageRole, File, FileType
-from arc_saga.exceptions import StorageError
+from saga.storage.sqlite import SQLiteStorage
+from saga.models import Message, Provider, MessageRole, File, FileType
+from saga.exceptions import StorageError
 
 
 @pytest_asyncio.fixture
@@ -299,7 +299,7 @@ async def test_initialize_database_error() -> None:
 
         # Mock sqlite3.connect to raise error
         with patch(
-            "arc_saga.storage.sqlite.sqlite3.connect",
+            "saga.storage.sqlite.sqlite3.connect",
             side_effect=sqlite3.Error("DB error"),
         ):
             with pytest.raises(StorageError) as exc_info:

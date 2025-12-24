@@ -10,8 +10,8 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from arc_saga.integrations.copilot_reasoning_engine import CopilotReasoningEngine
-from arc_saga.orchestrator.types import AIProvider, AITask, AITaskInput, ResponseMode
+from saga.integrations.copilot_reasoning_engine import CopilotReasoningEngine
+from saga.orchestrator.types import AIProvider, AITask, AITaskInput, ResponseMode
 
 
 @pytest.fixture
@@ -102,7 +102,7 @@ async def test_response_mode_complete_returns_airesult(
 
     copilot_engine.http_client.post = MagicMock(return_value=mock_post)
 
-    await copilot_engine.reason(task)
+    result = await copilot_engine.reason(task)
 
     # Check if it's an AIResult instance (AIResult is a type alias, check attributes)
     assert hasattr(result, "task_id")
@@ -440,7 +440,7 @@ async def test_response_mode_complete_error_handling(
 
     copilot_engine.http_client.post = MagicMock(return_value=mock_post)
 
-    from arc_saga.exceptions.integration_exceptions import AuthenticationError
+    from saga.exceptions.integration_exceptions import AuthenticationError
 
     with pytest.raises(AuthenticationError):
         await copilot_engine.reason(task)

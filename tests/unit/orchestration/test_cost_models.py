@@ -3,14 +3,14 @@ from decimal import Decimal
 import pytest
 from fastapi import HTTPException
 
-from arc_saga.orchestrator.cost_models import (
+from saga.orchestrator.cost_models import (
     CostProfile,
     CostProfileRegistry,
     CostSettings,
     CostWeights,
     score_provider,
 )
-from arc_saga.orchestrator.types import AIProvider
+from saga.orchestrator.types import AIProvider
 
 
 def test_score_provider_balanced_weights():

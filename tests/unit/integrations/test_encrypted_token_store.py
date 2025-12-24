@@ -14,8 +14,8 @@ from unittest.mock import patch
 import pytest
 import pytest_asyncio
 
-from arc_saga.exceptions.integration_exceptions import TokenStorageError
-from arc_saga.integrations.encrypted_token_store import SQLiteEncryptedTokenStore
+from saga.exceptions.integration_exceptions import TokenStorageError
+from saga.integrations.encrypted_token_store import SQLiteEncryptedTokenStore
 
 
 @pytest_asyncio.fixture
@@ -77,7 +77,7 @@ async def test_key_derivation_from_env(tmp_path: Path) -> None:
 
     test_key = Fernet.generate_key().decode("utf-8")
 
-    with patch.dict(os.environ, {"ARC_SAGA_TOKEN_ENCRYPTION_KEY": test_key}):
+    with patch.dict(os.environ, {"saga_TOKEN_ENCRYPTION_KEY": test_key}):
         db_path = tmp_path / "tokens.db"
         store = SQLiteEncryptedTokenStore(str(db_path))
         await store.initialize()
@@ -101,7 +101,7 @@ async def test_key_derivation_from_file(tmp_path: Path) -> None:
 
     test_key = Fernet.generate_key().decode("utf-8")
     # Use tmp_path instead of home directory to avoid Path.home() issues in test env
-    key_dir = tmp_path / ".arc_saga"
+    key_dir = tmp_path / ".saga"
     key_dir.mkdir(parents=True, exist_ok=True)
     key_file = key_dir / ".token_key"
     key_file.write_text(test_key, encoding="utf-8")
@@ -112,8 +112,8 @@ async def test_key_derivation_from_file(tmp_path: Path) -> None:
             "pathlib.Path.home", return_value=tmp_path
         ):
             # Remove env var if set
-            if "ARC_SAGA_TOKEN_ENCRYPTION_KEY" in os.environ:
-                del os.environ["ARC_SAGA_TOKEN_ENCRYPTION_KEY"]
+            if "saga_TOKEN_ENCRYPTION_KEY" in os.environ:
+                del os.environ["saga_TOKEN_ENCRYPTION_KEY"]
 
             db_path = tmp_path / "tokens.db"
             store = SQLiteEncryptedTokenStore(str(db_path))
@@ -138,7 +138,7 @@ async def test_key_derivation_from_file(tmp_path: Path) -> None:
 @pytest.mark.asyncio
 async def test_key_generation_if_not_exists(tmp_path: Path) -> None:
     """Test key generation if not exists."""
-    key_file = tmp_path / ".arc_saga" / ".token_key"
+    key_file = tmp_path / ".saga" / ".token_key"
 
     # Remove key file if exists
     if key_file.exists():
@@ -148,8 +148,8 @@ async def test_key_generation_if_not_exists(tmp_path: Path) -> None:
         "pathlib.Path.home", return_value=tmp_path
     ):
         # Remove env var if set
-        if "ARC_SAGA_TOKEN_ENCRYPTION_KEY" in os.environ:
-            del os.environ["ARC_SAGA_TOKEN_ENCRYPTION_KEY"]
+        if "saga_TOKEN_ENCRYPTION_KEY" in os.environ:
+            del os.environ["saga_TOKEN_ENCRYPTION_KEY"]
 
         db_path = tmp_path / "tokens.db"
         store = SQLiteEncryptedTokenStore(str(db_path))

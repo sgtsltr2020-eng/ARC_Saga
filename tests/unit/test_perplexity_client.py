@@ -19,13 +19,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from arc_saga.integrations.perplexity_client import (
+from saga.integrations.perplexity_client import (
     PerplexityAPIError,
     PerplexityClient,
     PerplexityClientError,
     PerplexityStorageError,
 )
-from arc_saga.models import Message, MessageRole, Provider
+from saga.models import Message, MessageRole, Provider
 
 
 class MockStorageBackend:

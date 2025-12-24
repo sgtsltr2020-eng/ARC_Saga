@@ -9,7 +9,7 @@ from __future__ import annotations
 from unittest.mock import patch, MagicMock
 
 
-from arc_saga.error_instrumentation import LatencyMetrics, log_with_context
+from saga.error_instrumentation import LatencyMetrics, log_with_context
 
 
 class TestLogWithContext:
@@ -18,7 +18,7 @@ class TestLogWithContext:
     def test_log_critical_level(self) -> None:
         """Test CRITICAL log level is handled correctly."""
         with patch(
-            "arc_saga.error_instrumentation.logging.getLogger"
+            "saga.error_instrumentation.logging.getLogger"
         ) as mock_get_logger:
             mock_logger = MagicMock()
             mock_get_logger.return_value = mock_logger
@@ -31,7 +31,7 @@ class TestLogWithContext:
     def test_log_info_level(self) -> None:
         """Test INFO log level is handled correctly."""
         with patch(
-            "arc_saga.error_instrumentation.logging.getLogger"
+            "saga.error_instrumentation.logging.getLogger"
         ) as mock_get_logger:
             mock_logger = MagicMock()
             mock_get_logger.return_value = mock_logger
@@ -41,7 +41,7 @@ class TestLogWithContext:
     def test_log_warning_level(self) -> None:
         """Test WARNING log level is handled correctly."""
         with patch(
-            "arc_saga.error_instrumentation.logging.getLogger"
+            "saga.error_instrumentation.logging.getLogger"
         ) as mock_get_logger:
             mock_logger = MagicMock()
             mock_get_logger.return_value = mock_logger
@@ -51,7 +51,7 @@ class TestLogWithContext:
     def test_log_error_level(self) -> None:
         """Test ERROR log level is handled correctly."""
         with patch(
-            "arc_saga.error_instrumentation.logging.getLogger"
+            "saga.error_instrumentation.logging.getLogger"
         ) as mock_get_logger:
             mock_logger = MagicMock()
             mock_get_logger.return_value = mock_logger
@@ -61,7 +61,7 @@ class TestLogWithContext:
     def test_log_unknown_level_defaults_to_info(self) -> None:
         """Test unknown log level defaults to INFO."""
         with patch(
-            "arc_saga.error_instrumentation.logging.getLogger"
+            "saga.error_instrumentation.logging.getLogger"
         ) as mock_get_logger:
             mock_logger = MagicMock()
             mock_get_logger.return_value = mock_logger
@@ -119,7 +119,7 @@ class TestLatencyMetrics:
     def test_add_latency_above_threshold_logs_warning(self) -> None:
         """Test adding latency > 1000ms logs warning."""
         metrics = LatencyMetrics("test_operation")
-        with patch("arc_saga.error_instrumentation.log_with_context") as mock_log:
+        with patch("saga.error_instrumentation.log_with_context") as mock_log:
             metrics.add(1500.0)
             # Verify warning was logged
             warning_calls = [
@@ -132,7 +132,7 @@ class TestLatencyMetrics:
     def test_add_latency_below_threshold_no_warning(self) -> None:
         """Test adding latency < 1000ms does not log warning."""
         metrics = LatencyMetrics("test_operation")
-        with patch("arc_saga.error_instrumentation.log_with_context") as mock_log:
+        with patch("saga.error_instrumentation.log_with_context") as mock_log:
             metrics.add(500.0)
             # Verify no slow warning was logged
             warning_calls = [

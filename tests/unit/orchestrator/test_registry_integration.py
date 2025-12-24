@@ -6,13 +6,19 @@ Orchestrator -> RegistryAwareTaskExecutor -> ProviderRouter -> EngineRegistry ->
 """
 import pytest
 
-from arc_saga.orchestrator.core import Orchestrator, WorkflowPattern
-from arc_saga.orchestrator.engine_registry import EngineRegistry
-from arc_saga.orchestrator.events import InMemoryEventStore
-from arc_saga.orchestrator.executor import RegistryAwareTaskExecutor
-from arc_saga.orchestrator.protocols import IReasoningEngine
-from arc_saga.orchestrator.provider_router import ProviderRouter, RoutingRule
-from arc_saga.orchestrator.types import (
+from saga.orchestrator.budget_enforcer import BudgetEnforcer
+from saga.orchestrator.core import Orchestrator, WorkflowPattern
+from saga.orchestrator.engine_registry import EngineRegistry
+from saga.orchestrator.events import InMemoryEventStore
+from saga.orchestrator.executor import RegistryAwareTaskExecutor
+from saga.orchestrator.protocols import IReasoningEngine
+from saga.orchestrator.provider_router import ProviderRouter, RoutingRule
+from saga.orchestrator.token_manager import (
+    LocalTokenEstimator,
+    TokenBudget,
+    TokenBudgetManager,
+)
+from saga.orchestrator.types import (
     AIProvider,
     AIResult,
     AIResultOutput,
@@ -35,9 +41,10 @@ class MockEngine(IReasoningEngine):
                 model="mock-model"
             )
         )
-    
+
     async def close(self):
         pass
+
 
 @pytest.mark.asyncio
 async def test_registry_aware_orchestration():
@@ -45,7 +52,7 @@ async def test_registry_aware_orchestration():
     registry = EngineRegistry()
     mock_engine = MockEngine()
     registry.register(AIProvider.OPENAI, mock_engine)
-    
+
     # 2. Setup Router
     rules = [
         RoutingRule(
@@ -54,18 +61,33 @@ async def test_registry_aware_orchestration():
         )
     ]
     router = ProviderRouter(rules=rules, registry=registry)
-    
-    # 3. Setup Executor
-    executor = RegistryAwareTaskExecutor(router)
-    
-    # 4. Setup Orchestrator
+
+    # 3. Setup Budget Enforcer and Token Manager
+    budget_enforcer = BudgetEnforcer(soft_cap_ratio=0.8)
+    token_event_store = InMemoryEventStore()
+    estimator = LocalTokenEstimator()
+    budget = TokenBudget(total=10000, remaining=10000)
+    token_manager = TokenBudgetManager(
+        estimator=estimator,
+        budget=budget,
+        event_store=token_event_store
+    )
+
+    # 4. Setup Executor with required dependencies
+    executor = RegistryAwareTaskExecutor(
+        provider_router=router,
+        budget_enforcer=budget_enforcer,
+        token_manager=token_manager
+    )
+
+    # 5. Setup Orchestrator
     event_store = InMemoryEventStore()
     orchestrator = Orchestrator(
         event_store=event_store,
         task_executor=executor,
     )
-    
-    # 5. Create Task
+
+    # 6. Create Task
     task_input = AITaskInput(
         prompt="Test",
         model="gpt-4",
@@ -75,15 +97,16 @@ async def test_registry_aware_orchestration():
         operation="ai_completion",
         input_data=task_input
     )
-    
-    # 6. Execute
+
+    # 7. Execute
     results = await orchestrator.execute_workflow(
         WorkflowPattern.SEQUENTIAL,
         [task]
     )
-    
-    # 7. Verify
+
+    # 8. Verify
     assert len(results) == 1
     assert results[0].success
     assert results[0].output_data.response == "Mock response"
     assert results[0].output_data.provider == AIProvider.OPENAI
+

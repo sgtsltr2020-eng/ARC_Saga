@@ -6,9 +6,9 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from arc_saga.orchestrator.engine_registry import ReasoningEngineRegistry
-from arc_saga.orchestrator.protocols import IReasoningEngine
-from arc_saga.orchestrator.types import AIProvider
+from saga.orchestrator.engine_registry import ReasoningEngineRegistry
+from saga.orchestrator.protocols import IReasoningEngine
+from saga.orchestrator.types import AIProvider
 
 
 @pytest.fixture

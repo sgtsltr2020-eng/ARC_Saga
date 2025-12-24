@@ -1,7 +1,7 @@
 """Test Message and File models"""
 
 from datetime import datetime
-from arc_saga.models import Message, MessageRole, Provider, File, FileType
+from saga.models import Message, MessageRole, Provider, File, FileType
 
 
 class TestMessage:

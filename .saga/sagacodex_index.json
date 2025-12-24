@@ -1,0 +1,296 @@
+{
+  "version": "1.0.0",
+  "language": "Python",
+  "framework": "FastAPI",
+  "generated_at": "2025-12-23T01:10:28.380649Z",
+  "rules": [
+    {
+      "id": "1",
+      "title": "Type Safety (MANDATORY)",
+      "severity": "CRITICAL",
+      "category": "Core Python",
+      "tags": [],
+      "affected_artifacts": [
+        "all"
+      ],
+      "enforcement_phase": "pre-merge",
+      "description": "Why: Python's dynamic typing causes runtime errors. Static typing catches bugs at development time. Every function signature must have complete type hints.",
+      "checklist_item": "Ensure compliance with Type Safety (MANDATORY).",
+      "detection_hint": null,
+      "examples": [],
+      "antipatterns": [],
+      "references": [],
+      "related_rules": []
+    },
+    {
+      "id": "2",
+      "title": "Async/Await Best Practices",
+      "severity": "CRITICAL",
+      "category": "Core Python",
+      "tags": [
+        "async",
+        "io",
+        "fastapi",
+        "performance"
+      ],
+      "affected_artifacts": [
+        "all"
+      ],
+      "enforcement_phase": "pre-merge",
+      "description": "Use `async/await` for I/O-bound operations (database, API calls, file I/O) Use synchronous code for CPU-bound operations (computation, parsing, validation) Why: FastAPI is async-first. Blocking the event loop kills performance.",
+      "checklist_item": "Ensure compliance with Async/Await Best Practices.",
+      "detection_hint": null,
+      "examples": [],
+      "antipatterns": [],
+      "references": [],
+      "related_rules": []
+    },
+    {
+      "id": "3",
+      "title": "Error Handling (Explicit & Contextual)",
+      "severity": "ERROR",
+      "category": "Core Python",
+      "tags": [
+        "error-handling",
+        "exceptions",
+        "defensive"
+      ],
+      "affected_artifacts": [
+        "all"
+      ],
+      "enforcement_phase": "pre-merge",
+      "description": "Custom exceptions with context Never silent failures, never bare `except:` Log before raising, include trace_id",
+      "checklist_item": "Ensure compliance with Error Handling (Explicit & Contextual).",
+      "detection_hint": null,
+      "examples": [],
+      "antipatterns": [],
+      "references": [],
+      "related_rules": []
+    },
+    {
+      "id": "4",
+      "title": "Structured Logging (No Print Statements)",
+      "severity": "WARNING",
+      "category": "Core Python",
+      "tags": [
+        "logging",
+        "observability",
+        "debugging"
+      ],
+      "affected_artifacts": [
+        "all"
+      ],
+      "enforcement_phase": "pre-merge",
+      "description": "All logs include `trace_id`, `user_id`, `operation`, `outcome` Why: Grep-able, parseable, traceable logs enable debugging production issues",
+      "checklist_item": "Ensure compliance with Structured Logging (No Print Statements).",
+      "detection_hint": null,
+      "examples": [],
+      "antipatterns": [],
+      "references": [],
+      "related_rules": []
+    },
+    {
+      "id": "5",
+      "title": "Input Validation at Boundaries",
+      "severity": "CRITICAL",
+      "category": "Core Python",
+      "tags": [],
+      "affected_artifacts": [
+        "all"
+      ],
+      "enforcement_phase": "pre-merge",
+      "description": "Validate all external inputs before use Why: Prevents injection, type errors, malformed data crashes",
+      "checklist_item": "Ensure compliance with Input Validation at Boundaries.",
+      "detection_hint": null,
+      "examples": [],
+      "antipatterns": [],
+      "references": [],
+      "related_rules": []
+    },
+    {
+      "id": "6",
+      "title": "Dependency Injection (Always)",
+      "severity": "CRITICAL",
+      "category": "Fastapi",
+      "tags": [],
+      "affected_artifacts": [
+        "all"
+      ],
+      "enforcement_phase": "pre-merge",
+      "description": "Use FastAPI's `Depends()` for all external dependencies Why: Testable, mockable, clean separation of concerns, automatic lifecycle management",
+      "checklist_item": "Ensure compliance with Dependency Injection (Always).",
+      "detection_hint": null,
+      "examples": [],
+      "antipatterns": [],
+      "references": [],
+      "related_rules": []
+    },
+    {
+      "id": "7",
+      "title": "Pydantic Models for Request/Response",
+      "severity": "CRITICAL",
+      "category": "Fastapi",
+      "tags": [],
+      "affected_artifacts": [
+        "all"
+      ],
+      "enforcement_phase": "pre-merge",
+      "description": "All API inputs and outputs use Pydantic models Why: Automatic validation, OpenAPI docs generation, type safety, serialization",
+      "checklist_item": "Ensure compliance with Pydantic Models for Request/Response.",
+      "detection_hint": null,
+      "examples": [],
+      "antipatterns": [],
+      "references": [],
+      "related_rules": []
+    },
+    {
+      "id": "8",
+      "title": "Background Tasks for Long Operations",
+      "severity": "CRITICAL",
+      "category": "Fastapi",
+      "tags": [],
+      "affected_artifacts": [
+        "all"
+      ],
+      "enforcement_phase": "pre-merge",
+      "description": "Operations >100ms use `BackgroundTasks` Why: Don't block HTTP response waiting for emails, webhooks, cleanup",
+      "checklist_item": "Ensure compliance with Background Tasks for Long Operations.",
+      "detection_hint": null,
+      "examples": [],
+      "antipatterns": [],
+      "references": [],
+      "related_rules": []
+    },
+    {
+      "id": "9",
+      "title": "Session Management (Context Manager)",
+      "severity": "CRITICAL",
+      "category": "Sqlalchemy Async Patterns",
+      "tags": [],
+      "affected_artifacts": [
+        "all"
+      ],
+      "enforcement_phase": "pre-merge",
+      "description": "Use async context manager for session lifecycle Never hold sessions across requests Why: Prevents connection leaks, ensures proper cleanup",
+      "checklist_item": "Ensure compliance with Session Management (Context Manager).",
+      "detection_hint": null,
+      "examples": [],
+      "antipatterns": [],
+      "references": [],
+      "related_rules": []
+    },
+    {
+      "id": "10",
+      "title": "Explicit Queries (No Lazy Loading)",
+      "severity": "CRITICAL",
+      "category": "Sqlalchemy Async Patterns",
+      "tags": [],
+      "affected_artifacts": [
+        "all"
+      ],
+      "enforcement_phase": "pre-merge",
+      "description": "Use `selectinload()` or `joinedload()` for relationships Why: Async SQLAlchemy doesn't support lazy loading. N+1 query problem kills performance.",
+      "checklist_item": "Ensure compliance with Explicit Queries (No Lazy Loading).",
+      "detection_hint": null,
+      "examples": [],
+      "antipatterns": [],
+      "references": [],
+      "related_rules": []
+    },
+    {
+      "id": "11",
+      "title": "Pytest + Async",
+      "severity": "CRITICAL",
+      "category": "Testing",
+      "tags": [],
+      "affected_artifacts": [
+        "all"
+      ],
+      "enforcement_phase": "pre-merge",
+      "description": "",
+      "checklist_item": "Ensure compliance with Pytest + Async.",
+      "detection_hint": null,
+      "examples": [],
+      "antipatterns": [],
+      "references": [],
+      "related_rules": []
+    },
+    {
+      "id": "12",
+      "title": "Event Sourcing Pattern (Phase 1 Architecture)",
+      "severity": "CRITICAL",
+      "category": "Saga Mvp Specific Rules",
+      "tags": [],
+      "affected_artifacts": [
+        "all"
+      ],
+      "enforcement_phase": "pre-merge",
+      "description": "Use existing event-sourced architecture Why: Proven pattern from Phase 1, enables audit trail and rollback",
+      "checklist_item": "Ensure compliance with Event Sourcing Pattern (Phase 1 Architecture).",
+      "detection_hint": null,
+      "examples": [],
+      "antipatterns": [],
+      "references": [],
+      "related_rules": []
+    },
+    {
+      "id": "13",
+      "title": "Circuit Breaker for External APIs (Phase 1 Pattern)",
+      "severity": "CRITICAL",
+      "category": "Saga Mvp Specific Rules",
+      "tags": [],
+      "affected_artifacts": [
+        "all"
+      ],
+      "enforcement_phase": "pre-merge",
+      "description": "All external API calls use circuit breaker Why: Graceful degradation, prevents cascade failures",
+      "checklist_item": "Ensure compliance with Circuit Breaker for External APIs (Phase 1 Pattern).",
+      "detection_hint": null,
+      "examples": [],
+      "antipatterns": [],
+      "references": [],
+      "related_rules": []
+    },
+    {
+      "id": "14",
+      "title": "Observability (trace_id Required)",
+      "severity": "CRITICAL",
+      "category": "Saga Mvp Specific Rules",
+      "tags": [],
+      "affected_artifacts": [
+        "all"
+      ],
+      "enforcement_phase": "pre-merge",
+      "description": "Every operation has trace_id Emit events for all state changes Why: Enables debugging, audit trail, LoreBook learning",
+      "checklist_item": "Ensure compliance with Observability (trace_id Required).",
+      "detection_hint": null,
+      "examples": [],
+      "antipatterns": [],
+      "references": [],
+      "related_rules": []
+    },
+    {
+      "id": "45",
+      "title": "Minimize Diff Surface for Safe Fixes",
+      "severity": "WARNING",
+      "category": "Process",
+      "tags": [
+        "refactoring",
+        "tests",
+        "mypy",
+        "diff-size"
+      ],
+      "affected_artifacts": [
+        "all"
+      ],
+      "enforcement_phase": "pre-merge",
+      "description": "Minimal changes for static-analysis-only fixes (mypy, lint) Why: Large diffs in tests mask regressions and make review impossible.",
+      "checklist_item": "When fixing lint/mypy-only issues, prefer adding annotations or small edits instead of rewriting entire files\u2014especially tests.",
+      "detection_hint": "Large diff in a test file where commit message mentions 'type hints' or 'mypy'.",
+      "examples": [],
+      "antipatterns": [],
+      "references": [],
+      "related_rules": []
+    }
+  ]
+}

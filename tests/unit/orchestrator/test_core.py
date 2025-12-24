@@ -21,9 +21,8 @@ from typing import Any
 from unittest.mock import patch
 
 import pytest
-import pytest_asyncio
 
-from arc_saga.orchestrator.core import (
+from saga.orchestrator.core import (
     Command,
     OperationContext,
     Orchestrator,
@@ -34,11 +33,11 @@ from arc_saga.orchestrator.core import (
     WorkflowError,
     WorkflowPattern,
 )
-from arc_saga.orchestrator.events import (
+from saga.orchestrator.events import (
     InMemoryEventStore,
     OrchestratorEvent,
 )
-from arc_saga.orchestrator.types import Result, Task, TaskStatus
+from saga.orchestrator.types import Result, Task, TaskStatus
 
 
 class TestWorkflowPattern:
@@ -222,7 +221,7 @@ class TestOrchestratorInitialization:
 
     def test_init_with_circuit_breaker(self) -> None:
         """Test initialization with circuit breaker."""
-        from arc_saga.integrations.circuit_breaker import CircuitBreaker
+        from saga.integrations.circuit_breaker import CircuitBreaker
 
         store = InMemoryEventStore()
         breaker = CircuitBreaker("test-service")
@@ -249,7 +248,7 @@ class TestOrchestratorInitialization:
 class TestOrchestratorWorkflow:
     """Tests for Orchestrator workflow execution."""
 
-    @pytest_asyncio.fixture
+    @pytest.fixture
     async def orchestrator(self) -> Orchestrator:
         """Create orchestrator with in-memory event store."""
         store = InMemoryEventStore()
@@ -395,7 +394,7 @@ class TestOrchestratorTaskExecution:
     @pytest.mark.asyncio
     async def test_task_execution_with_circuit_breaker(self) -> None:
         """Test task execution through circuit breaker."""
-        from arc_saga.integrations.circuit_breaker import CircuitBreaker
+        from saga.integrations.circuit_breaker import CircuitBreaker
 
         store = InMemoryEventStore()
         breaker = CircuitBreaker("test-service", failure_threshold=5)
@@ -422,7 +421,7 @@ class TestOrchestratorTaskExecution:
     @pytest.mark.asyncio
     async def test_task_execution_with_open_circuit_breaker(self) -> None:
         """Test task execution when circuit breaker is open."""
-        from arc_saga.integrations.circuit_breaker import (
+        from saga.integrations.circuit_breaker import (
             CircuitBreaker,
             CircuitState,
         )
@@ -498,7 +497,7 @@ class TestOrchestratorTaskExecution:
 class TestOrchestratorPolicy:
     """Tests for policy enforcement."""
 
-    @pytest_asyncio.fixture
+    @pytest.fixture
     async def orchestrator(self) -> Orchestrator:
         """Create orchestrator with in-memory event store."""
         store = InMemoryEventStore()
@@ -613,7 +612,7 @@ class TestOrchestratorPolicy:
 class TestOrchestratorLogging:
     """Tests for operation logging."""
 
-    @pytest_asyncio.fixture
+    @pytest.fixture
     async def orchestrator(self) -> Orchestrator:
         """Create orchestrator with in-memory event store."""
         store = InMemoryEventStore()
@@ -856,7 +855,7 @@ class TestOrchestratorEdgeCases:
 
         store.append = failing_append  # type: ignore[method-assign]
 
-        with patch("arc_saga.orchestrator.core.log_with_context") as mock_log:
+        with patch("saga.orchestrator.core.log_with_context") as mock_log:
             with pytest.raises(WorkflowError) as exc_info:
                 await orchestrator.execute_workflow(WorkflowPattern.SEQUENTIAL, tasks)
 

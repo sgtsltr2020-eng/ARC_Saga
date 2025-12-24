@@ -8,15 +8,15 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from arc_saga.orchestrator.arbitration_context import (
+from saga.orchestrator.arbitration_context import (
     ArbitrationContext,
     get_arbitration_context,
     set_arbitration_context,
 )
-from arc_saga.orchestrator.budget_enforcer import BudgetDecision, BudgetEnforcer
-from arc_saga.orchestrator.judgement import VerdictStatus
-from arc_saga.orchestrator.logging_context import with_trace_logging
-from arc_saga.orchestrator.metrics import MetricsAggregator, MetricsEvent
+from saga.orchestrator.budget_enforcer import BudgetDecision, BudgetEnforcer
+from saga.orchestrator.judgement import VerdictStatus
+from saga.orchestrator.logging_context import with_trace_logging
+from saga.orchestrator.metrics import MetricsAggregator, MetricsEvent
 
 # --- GUARDRAIL 1: ARBITRATION CONTEXT ---
 
@@ -136,8 +136,8 @@ def test_budget_enforcement_hard_cap():
 
 @pytest.mark.asyncio
 async def test_executor_blocks_on_hard_cap():
-    from arc_saga.orchestrator.executor import RegistryAwareTaskExecutor
-    from arc_saga.orchestrator.types import Task
+    from saga.orchestrator.executor import RegistryAwareTaskExecutor
+    from saga.orchestrator.types import Task
     
     router = Mock()
     budget_logic = BudgetEnforcer()

@@ -23,15 +23,15 @@ from unittest.mock import AsyncMock, patch
 import pytest
 import pytest_asyncio
 
-from arc_saga.orchestrator.events import InMemoryEventStore
-from arc_saga.orchestrator.token_manager import (
+from saga.orchestrator.events import InMemoryEventStore
+from saga.orchestrator.token_manager import (
     LocalTokenEstimator,
     ProviderTokenTracker,
     TokenBudget,
     TokenBudgetManager,
     TokenUsage,
 )
-from arc_saga.orchestrator.types import (
+from saga.orchestrator.types import (
     AIProvider,
     AIResult,
     AIResultOutput,
@@ -473,7 +473,7 @@ class TestTokenBudgetManager:
             provider=AIProvider.OPENAI,
         )
 
-        with patch("arc_saga.orchestrator.token_manager.log_with_context") as mock_log:
+        with patch("saga.orchestrator.token_manager.log_with_context") as mock_log:
             await manager.record_usage(usage)
 
             # Verify warning was logged exactly once
@@ -497,7 +497,7 @@ class TestTokenBudgetManager:
             provider=AIProvider.OPENAI,
         )
 
-        with patch("arc_saga.orchestrator.token_manager.log_with_context") as mock_log:
+        with patch("saga.orchestrator.token_manager.log_with_context") as mock_log:
             await manager.record_usage(usage)
 
             # Verify no warning was logged (remaining stays above threshold)
@@ -607,7 +607,7 @@ class TestTokenBudgetManager:
         )
 
         # Should not raise, but should log error
-        with patch("arc_saga.orchestrator.token_manager.log_with_context") as mock_log:
+        with patch("saga.orchestrator.token_manager.log_with_context") as mock_log:
             await manager.record_usage(usage)
 
             # Verify error was logged
@@ -648,7 +648,7 @@ class TestTokenBudgetManager:
         """Test manager logs on initialization."""
         budget = TokenBudget(total=50000, remaining=50000)
 
-        with patch("arc_saga.orchestrator.token_manager.log_with_context") as mock_log:
+        with patch("saga.orchestrator.token_manager.log_with_context") as mock_log:
             TokenBudgetManager(estimator, budget, event_store)
 
             # Verify initialization was logged

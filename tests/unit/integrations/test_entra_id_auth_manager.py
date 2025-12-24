@@ -16,13 +16,13 @@ import aiohttp
 import pytest
 import pytest_asyncio
 
-from arc_saga.exceptions.integration_exceptions import (
+from saga.exceptions.integration_exceptions import (
     AuthenticationError,
     RateLimitError,
     TokenStorageError,
     TransientError,
 )
-from arc_saga.integrations.entra_id_auth_manager import (
+from saga.integrations.entra_id_auth_manager import (
     EntraIDAuthManager,
     MAX_REFRESH_RETRIES,
 )

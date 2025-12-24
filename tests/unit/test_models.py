@@ -1,11 +1,11 @@
 """
-arc_saga/tests/unit/test_models.py
+saga/tests/unit/test_models.py
 Unit tests for data models.
 """
 
 import pytest
 from datetime import datetime, timezone
-from arc_saga.models import (
+from saga.models import (
     Message,
     File,
     Provider,

@@ -7,15 +7,15 @@ touching user data. Focus is verifying current behavior, not changing logic.
 
 from __future__ import annotations
 
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
 import pytest
 import pytest_asyncio
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 
-from arc_saga.api import server
-from arc_saga.api.health_monitor import health_monitor
-from arc_saga.integrations.circuit_breaker import CircuitBreaker, CircuitState
+from saga.api import server
+from saga.api.health_monitor import health_monitor
+from saga.integrations.circuit_breaker import CircuitBreaker, CircuitState
 
 
 @pytest_asyncio.fixture
@@ -32,7 +32,8 @@ async def test_client(tmp_path) -> AsyncIterator[AsyncClient]:
 
     await server.storage.initialize()
 
-    async with AsyncClient(app=server.app, base_url="http://testserver") as client:
+    transport = ASGITransport(app=server.app)  # type: ignore[arg-type]
+    async with AsyncClient(transport=transport, base_url="http://testserver") as client:
         yield client
 
 
