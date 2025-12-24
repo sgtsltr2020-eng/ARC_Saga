@@ -53,6 +53,12 @@ class RegistryAwareTaskExecutor:
         self.tokens = token_manager
         self._metrics = metrics_observer if metrics_observer is not None else []
 
+    async def __call__(self, task: Task[Any]) -> Result[Any]:
+        """
+        Allow the executor to be called directly (satisfies Orchestrator.task_executor interface).
+        """
+        return await self.execute_task(task)
+
     async def execute_task(self, task: Task[Any]) -> Result[Any]:
         """
         Execute a single task with full guardrails.
@@ -63,11 +69,16 @@ class RegistryAwareTaskExecutor:
         Returns:
             Result object (wrapping AIResult or Verdict if budget fails).
         """
-        
+        # Lazy imports to avoid circular dependency issues
+        from datetime import datetime, timezone
+
+        from saga.orchestrator.token_manager import TokenUsage
+        from saga.orchestrator.types import AIProvider
+
         # 1. TRACE ID & CONTEXT PROPAGATION
         parent_ctx = get_arbitration_context()
         span_id = str(uuid.uuid4())
-        
+
         if parent_ctx:
             ctx = parent_ctx.child_span(span_id)
         else:
@@ -81,66 +92,69 @@ class RegistryAwareTaskExecutor:
 
         with with_trace_logging(ctx):
             start_time = time.perf_counter()
-            
+
             # 2. PRE-FLIGHT BUDGET CHECK
-            # Estimate cost (Default 1000 if not specified? Or use manager logic)
-            # Assuming manager has a method to estimate or we pass expected output len
             estimated_tokens = 1000 # Placeholder: Phase 2 will have smarter estimation
-            
-            # Allocate/Check
-            # Manager logic might be: can_afford?
-            # Enforcer logic: decision = enforcer.pre_check(manager.get_budget(), cost)
-            
-            # Since TokenBudgetManager usually tracks specific workflows, we need that ID.
-            # Using 'default' for single-session Phase 1 if not in context.
-            wf_id = ctx.workflow_id
-            
-            # Get current budget snapshot
-            current_budget = await self.tokens.get_budget(wf_id)
-            if not current_budget:
-                # If no budget exists, maybe initialize one? Or assume unlimited?
-                # Guardrail policy: No budget -> Create default or Fail.
-                # Let's assume unlimited for 'unknown' flows, but strict for known.
-                pass 
-            else:
-                decision = self.budget.preflight_check(current_budget, estimated_tokens)
-                if decision == BudgetDecision.HARD_CAP_EXCEEDED:
-                    return self._fail_budget(task.id, "Pre-flight estimate exceeded budget.")
-            
+
+            # Get current budget snapshot (Global check)
+            current_budget = await self.tokens.check_budget()
+
+            decision = self.budget.preflight_check(current_budget, estimated_tokens)
+            if decision == BudgetDecision.HARD_CAP_EXCEEDED:
+                return self._fail_budget(task.id, "Pre-flight estimate exceeded budget.")
+
             # 3. EXECUTE PROVIDER CALL (ROUTING)
             # Convert generic Task to AITask if needed
             ai_task = self._adapt_to_ai_task(task)
-            
+
             try:
                 # Execute
                 ai_result = await self.router.route(ai_task, context={"correlation_id": str(ctx.trace_id)})
                 success = True
-                output = ai_result.response if hasattr(ai_result, 'response') else str(ai_result)
-                actual_tokens = getattr(ai_result, 'usage', {}).get('total_tokens', 0)
-                
+
+                # Extract output data (preserve object if available)
+                if hasattr(ai_result, 'output_data'):
+                    output = ai_result.output_data
+                    # Try to get usage from output_data if not found on result
+                    actual_tokens = getattr(output, 'tokens_used', 0)
+                elif hasattr(ai_result, 'response'):
+                    output = ai_result.response
+                    actual_tokens = 0
+                else:
+                    output = str(ai_result)
+                    actual_tokens = 0
+
+                # Check top-level usage if not found
+                if actual_tokens == 0 and hasattr(ai_result, 'usage'):
+                     actual_tokens = getattr(ai_result, 'usage', {}).get('total_tokens', 0)
+
             except Exception as e:
                 success = False
                 output = str(e)
                 actual_tokens = 0
                 log_with_context("error", "executor_provider_failure", error=str(e))
-                # We do NOT return generated MetricsEvent here usually, but we record failure?
-                # Letting exception bubble or wrapping it?
-                # Strategy expects Result object.
                 return Result(task_id=task.id, success=False, output_data=output)
 
             # 4. POST-EXECUTION BUDGET UPDATE & CHECK
-            if current_budget:
-                await self.tokens.record_usage(wf_id, actual_tokens)
-                updated_budget = await self.tokens.get_budget(wf_id)
-                # Runtime check
-                if updated_budget:
-                    decision = self.budget.runtime_check(updated_budget)
-                    if decision == BudgetDecision.HARD_CAP_EXCEEDED:
-                        # We succeeded in this call, but we must signal stop for next?
-                        # Or return a Verdict that poisons the well?
-                        # The executor result is success, but we log HArd Cap.
-                        pass # Strategy loop checks this too usually.
-            
+            usage = TokenUsage(
+                aggregate_id=ctx.trace_id or str(uuid.uuid4()),
+                estimated=estimated_tokens,
+                actual=actual_tokens,
+                provider=task.metadata.get("provider", AIProvider.OPENAI),
+                created_at=datetime.now(timezone.utc)
+            )
+
+            await self.tokens.record_usage(usage)
+            updated_budget = await self.tokens.check_budget()
+
+            # Runtime check
+            decision = self.budget.runtime_check(updated_budget)
+            if decision == BudgetDecision.HARD_CAP_EXCEEDED:
+                # We succeeded in this call, but we must signal stop for next?
+                # Or return a Verdict that poisons the well?
+                # The executor result is success, but we log HArd Cap.
+                pass # Strategy loop checks this too usually.
+
             end_time = time.perf_counter()
             latency = int((end_time - start_time) * 1000)
 
@@ -156,7 +170,7 @@ class RegistryAwareTaskExecutor:
                 pattern=WorkflowPattern.DYNAMIC # Placeholder
             )
             self._metrics.append(event)
-            
+
             return Result(task_id=task.id, success=success, output_data=output)
 
     def _fail_budget(self, task_id: str, reason: str) -> Result[Any]:
@@ -165,13 +179,13 @@ class RegistryAwareTaskExecutor:
         # Or just a failed result?
         # User requirement: "Return Verdict.BUDGET_EXHAUSTED"
         # Strategy will see success=True but output is a Verdict with status=exhausted
-        
+
         # We need a Verdict object
         v = Verdict(
             status=VerdictStatus.BUDGET_EXHAUSTED,
             rationale=f"Hard Budget Cap Hit: {reason}"
         )
-        return Result(task_id=task_id, success=True, output_data=v) 
+        return Result(task_id=task_id, success=True, output_data=v)
 
     def _adapt_to_ai_task(self, task: Task) -> AITask:
         """Helper to cast generic Task to AITask for Router."""

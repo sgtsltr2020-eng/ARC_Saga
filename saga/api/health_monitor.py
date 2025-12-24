@@ -10,7 +10,7 @@ from __future__ import annotations
 import shutil
 import time
 from collections import deque
-from typing import Any, Deque, Dict, Optional
+from typing import Any, Deque, Optional
 
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -37,10 +37,10 @@ class HealthMonitor:
 
     def __init__(self) -> None:
         """Initialize health monitor."""
-        self._endpoint_latencies: Dict[str, LatencyMetrics] = {}
-        self._recent_errors: Deque[Dict[str, Any]] = deque(maxlen=5)
-        self._circuit_breakers: Dict[str, Any] = {}
-        self._metrics_cache: Optional[Dict[str, Any]] = None
+        self._endpoint_latencies: dict[str, LatencyMetrics] = {}
+        self._recent_errors: Deque[dict[str, Any]] = deque(maxlen=5)
+        self._circuit_breakers: dict[str, Any] = {}
+        self._metrics_cache: Optional[dict[str, Any]] = None
         self._cache_timestamp: float = 0.0
         self._cache_ttl: float = 10.0  # 10 seconds
 
@@ -71,7 +71,7 @@ class HealthMonitor:
         self,
         operation: str,
         error: Exception,
-        context: Dict[str, Any],
+        context: dict[str, Any],
     ) -> None:
         """
         Record an error for health monitoring.
@@ -97,7 +97,7 @@ class HealthMonitor:
             error_type=type(error).__name__,
         )
 
-    def get_endpoint_latencies(self) -> Dict[str, Dict[str, float]]:
+    def get_endpoint_latencies(self) -> dict[str, dict[str, float]]:
         """
         Get latency metrics for all endpoints.
 
@@ -109,7 +109,7 @@ class HealthMonitor:
             for endpoint, metrics in self._endpoint_latencies.items()
         }
 
-    def get_recent_errors(self) -> list[Dict[str, Any]]:
+    def get_recent_errors(self) -> list[dict[str, Any]]:
         """
         Get last 5 errors.
 
@@ -118,14 +118,14 @@ class HealthMonitor:
         """
         return list(self._recent_errors)
 
-    def get_circuit_breaker_states(self) -> Dict[str, Dict[str, Any]]:
+    def get_circuit_breaker_states(self) -> dict[str, dict[str, Any]]:
         """
         Get circuit breaker states and metrics.
 
         Returns:
             Dictionary mapping service name to circuit breaker state and metrics
         """
-        states: Dict[str, Dict[str, Any]] = {}
+        states: dict[str, dict[str, Any]] = {}
 
         for service_name, breaker in self._circuit_breakers.items():
             states[service_name] = {
@@ -135,7 +135,7 @@ class HealthMonitor:
 
         return states
 
-    def get_cached_metrics(self) -> Optional[Dict[str, Any]]:
+    def get_cached_metrics(self) -> Optional[dict[str, Any]]:
         """
         Get cached metrics if still valid.
 
@@ -151,7 +151,7 @@ class HealthMonitor:
 
         return None
 
-    def set_cached_metrics(self, metrics: Dict[str, Any]) -> None:
+    def set_cached_metrics(self, metrics: dict[str, Any]) -> None:
         """
         Cache metrics for performance.
 
@@ -165,6 +165,13 @@ class HealthMonitor:
         """Clear metrics cache."""
         self._metrics_cache = None
         self._cache_timestamp = 0.0
+
+    def reset(self) -> None:
+        """Reset all state (for testing only)."""
+        self._endpoint_latencies.clear()
+        self._recent_errors.clear()
+        self._circuit_breakers.clear()
+        self.clear_cache()
 
 
 # Global health monitor instance
@@ -222,7 +229,7 @@ class LatencyTrackingMiddleware(BaseHTTPMiddleware):
             raise
 
 
-async def check_database_health(storage: Any) -> Dict[str, Any]:
+async def check_database_health(storage: Any) -> dict[str, Any]:
     """
     Check database health and performance.
 
@@ -261,7 +268,7 @@ async def check_database_health(storage: Any) -> Dict[str, Any]:
         }
 
 
-def check_storage_space(storage_path: Any) -> Dict[str, Any]:
+def check_storage_space(storage_path: Any) -> dict[str, Any]:
     """
     Check available storage space.
 
@@ -304,10 +311,10 @@ def check_storage_space(storage_path: Any) -> Dict[str, Any]:
 
 
 def determine_health_status(
-    db_health: Dict[str, Any],
-    storage_space: Dict[str, Any],
-    circuit_breakers: Dict[str, Dict[str, Any]],
-    endpoint_latencies: Dict[str, Dict[str, float]],
+    db_health: dict[str, Any],
+    storage_space: dict[str, Any],
+    circuit_breakers: dict[str, dict[str, Any]],
+    endpoint_latencies: dict[str, dict[str, float]],
 ) -> str:
     """
     Determine overall health status.

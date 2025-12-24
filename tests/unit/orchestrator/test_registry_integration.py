@@ -79,6 +79,9 @@ async def test_registry_aware_orchestration():
         budget_enforcer=budget_enforcer,
         token_manager=token_manager
     )
+    print(f"Is executor callable? {callable(executor)}")
+    print(f"Executor type: {type(executor)}")
+    print(f"Has __call__? {callable(executor)}")
 
     # 5. Setup Orchestrator
     event_store = InMemoryEventStore()
@@ -105,6 +108,10 @@ async def test_registry_aware_orchestration():
     )
 
     # 8. Verify
+    print(f"Results: {results}")
+    if results:
+        print(f"Result 0 success: {results[0].success}")
+        print(f"Result 0 output: {results[0].output_data}")
     assert len(results) == 1
     assert results[0].success
     assert results[0].output_data.response == "Mock response"

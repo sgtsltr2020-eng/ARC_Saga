@@ -92,6 +92,13 @@ async def test_metrics_reflect_circuit_breaker_state(test_client: AsyncClient) -
     )
     breaker._state = CircuitState.OPEN  # type: ignore[attr-defined]
     breaker.metrics.record_circuit_open()
+    # Reset state to ensure clean slate
+    health_monitor.reset()
+
+    # Debug singleton identity
+    print(f"DEBUG: Test HM ID: {id(health_monitor)}")
+    print(f"DEBUG: Server HM ID: {id(server.health_monitor)}")
+
     health_monitor.register_circuit_breaker("dummy", breaker)
 
     metrics_resp = await test_client.get("/metrics")
