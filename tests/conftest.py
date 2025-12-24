@@ -364,3 +364,32 @@ def reset_singletons() -> Generator[None, None, None]:
     # Cleanup after test
     if hasattr(profiles_module, '_manager'):
         profiles_module._manager = None # type: ignore
+
+
+@pytest.fixture(autouse=True)
+def reset_health_monitor() -> Generator[None, None, None]:
+    """
+    Reset HealthMonitor state between tests.
+
+    Ensures that metrics, circuit breakers, and caches from one test
+    do not leak into others.
+    """
+    from saga.api import health_monitor as hm_module
+
+    # Reset if method exists (added in fix)
+    if hasattr(hm_module.health_monitor, "reset"):
+        hm_module.health_monitor.reset()
+    else:
+        # Fallback for older versions or if method removed
+        hm_module.health_monitor.clear_cache()
+        if hasattr(hm_module.health_monitor, "_circuit_breakers"):
+             hm_module.health_monitor._circuit_breakers.clear()
+        if hasattr(hm_module.health_monitor, "_endpoint_latencies"):
+             hm_module.health_monitor._endpoint_latencies.clear()
+
+    yield
+
+    # Optional: cleanup after test too
+    if hasattr(hm_module.health_monitor, "reset"):
+        hm_module.health_monitor.reset()
+
