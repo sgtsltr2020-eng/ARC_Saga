@@ -99,3 +99,10 @@ __pycache__/
 
 # VS Code local settings (optional)
 .vscode/
+
+# === TEMPORARY & GENERATED FILES ===
+.tmp.driveupload/
+test_results*.txt
+.trunk/
+audit_log.txt
+wip-dec21.patch
