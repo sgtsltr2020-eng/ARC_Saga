@@ -1,0 +1,141 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.0, pytest-9.0.2, pluggy-1.6.0 -- C:\Users\sgtsl\AppData\Local\Programs\Python\Python312\python.exe
+cachedir: .pytest_cache
+benchmark: 5.2.3 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: C:\Users\sgtsl\PROJECTS\ARC_Saga
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: anyio-3.7.1, langsmith-0.5.1, asyncio-1.3.0, benchmark-5.2.3, cov-4.1.0, mock-3.15.1
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 1 item
+
+tests/integration/test_warden_langgraph.py::test_warden_graph_execution_flow 
+[TEST] Warden Result: {'status': 'error', 'message': "'Connection' object has no attribute 'is_alive'", 'history': []}
+FAILED
+
+================================== FAILURES ===================================
+______________________ test_warden_graph_execution_flow _______________________
+tests\integration\test_warden_langgraph.py:36: in test_warden_graph_execution_flow
+    assert status == "success", f"Graph execution failed. History: {history}"
+E   AssertionError: Graph execution failed. History: []
+E   assert 'error' == 'success'
+E     
+E     - success
+E     + error
+------------------------------ Captured log call ------------------------------
+WARNING  saga.llm.client:client.py:150 ANTHROPIC_API_KEY not set, LLM calls will fail
+ERROR    saga.core.warden:warden.py:884 Warden Graph Execution Failed
+Traceback (most recent call last):
+  File "C:\Users\sgtsl\PROJECTS\ARC_Saga\saga\core\warden.py", line 871, in solve_request
+    final_state = await self.graph.ainvoke(initial_state, config=config)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sgtsl\AppData\Local\Programs\Python\Python312\Lib\site-packages\langgraph\pregel\main.py", line 3158, in ainvoke
+    async for chunk in self.astream(
+  File "C:\Users\sgtsl\AppData\Local\Programs\Python\Python312\Lib\site-packages\langgraph\pregel\main.py", line 2888, in astream
+    async with AsyncPregelLoop(
+  File "C:\Users\sgtsl\AppData\Local\Programs\Python\Python312\Lib\site-packages\langgraph\pregel\_loop.py", line 1264, in __aenter__
+    saved = await self.checkpointer.aget_tuple(self.checkpoint_config)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sgtsl\AppData\Local\Programs\Python\Python312\Lib\site-packages\langgraph\checkpoint\sqlite\aio.py", line 330, in aget_tuple
+    await self.setup()
+  File "C:\Users\sgtsl\AppData\Local\Programs\Python\Python312\Lib\site-packages\langgraph\checkpoint\sqlite\aio.py", line 284, in setup
+    if not self.conn.is_alive():
+           ^^^^^^^^^^^^^^^^^^
+AttributeError: 'Connection' object has no attribute 'is_alive'
+
+---------- coverage: platform win32, python 3.12.0-final-0 -----------
+Name                                            Stmts   Miss   Cover   Missing
+------------------------------------------------------------------------------
+saga\__init__.py                                    0      0 100.00%
+saga\agents\coder.py                              102     69  32.35%   97-112, 135-230, 240-248, 260-294, 309-326
+saga\analysis\__init__.py                           0      0 100.00%
+saga\analysis\ast_checker.py                       52     39  25.00%   27-56, 60-76, 80-102
+saga\api\__init__.py                                2      0 100.00%
+saga\api\health_monitor.py                        105     67  36.19%   55, 65-68, 84-93, 107, 119, 128-136, 145-152, 161-162, 200-229, 242-263, 281-304, 337-361
+saga\api\routers\__init__.py                        2      2   0.00%   8-10
+saga\api\routers\approval.py                       60     60   0.00%   18-245
+saga\api\server.py                                260    139  46.54%   69-81, 117-123, 158, 172-220, 235-282, 289-315, 329-357, 371-389, 403-429, 507-540, 554-604, 636-670, 685-692, 702-742, 756-757
+saga\config\__init__.py                             0      0 100.00%
+saga\config\sagacodex_profiles.py                 112     27  75.89%   73, 155-158, 162, 166-174, 178, 556, 591-612, 628-633
+saga\config\sagarules_embedded.py                 168     95  43.45%   77, 323, 332, 337-340, 372-389, 420-452, 471-540, 584-647, 676-693
+saga\core\__init__.py                               0      0 100.00%
+saga\core\admin_approval.py                        52      0 100.00%
+saga\core\codex_index.py                          106    106   0.00%   9-187
+saga\core\codex_index_client.py                    62     47  24.19%   29-52, 56-57, 74-100, 106-121
+saga\core\debate_formatter.py                      72     46  36.11%   37-38, 58-75, 85-91, 95-98, 102-111, 115-117, 121-127, 131, 141-158
+saga\core\debate_manager.py                        96     70  27.08%   90-97, 105, 158-214, 222, 233, 241, 263-305, 321-327, 348-355, 382-397, 410-421, 429, 437-440, 455-457
+saga\core\exceptions.py                             6      2  66.67%   19-20
+saga\core\governance_graph.py                      58     21  63.79%   37-39, 47-58, 66-68, 76-78, 86-87, 97-102, 106-108
+saga\core\lorebook.py                             150     79  47.33%   52-54, 59-60, 78-80, 85-86, 101, 161, 196-248, 262-269, 292-312, 334-379, 387-390, 394-395
+saga\core\mimiry.py                               220    122  44.55%   113, 147, 176, 313-364, 394-434, 447-537, 550-643, 654-671, 679-692, 699-715
+saga\core\onboarding.py                           129    129   0.00%   14-277
+saga\core\task.py                                  23      1  95.65%   52
+saga\core\task_graph.py                            26     16  38.46%   27, 31-35, 43-55, 59, 63, 67-69
+saga\core\task_verifier.py                        149    120  19.46%   38, 81-152, 162-167, 176-183, 190-209, 212-234, 237-256, 259-275, 279-285, 295-314
+saga\core\warden.py                               254    168  33.86%   214-217, 235-308, 325-469, 511-590, 630-660, 677-713, 726-746, 777-833, 873-875, 919-1010
+saga\error_instrumentation.py                     123     79  35.77%   29, 45-49, 54, 71-84, 93-110, 117-118, 122-125, 129-133, 137-141, 144-147, 156, 176-180, 183, 194, 209-215, 218-222, 225-226, 235-238, 247-249, 253-255, 258
+saga\exceptions\__init__.py                         3      0 100.00%
+saga\exceptions\integration_exceptions.py          33     21  36.36%   42-45, 76-80, 105-108, 134-137, 163-166
+saga\exceptions\storage_exceptions.py              21     11  47.62%   11-13, 20-24, 31-35, 42-46, 53-57
+saga\integrations\__init__.py                       4      4   0.00%   7-11
+saga\integrations\circuit_breaker.py              152    152   0.00%   19-448
+saga\integrations\copilot_reasoning_engine.py     134    134   0.00%   13-563
+saga\integrations\encrypted_token_store.py         97     97   0.00%   13-293
+saga\integrations\entra_id_auth_manager.py        165    165   0.00%   13-555
+saga\integrations\perplexity_client.py             98     98   0.00%   10-406
+saga\knowledge\retriever.py                        33     17  48.48%   42-72
+saga\knowledge\vector_store.py                     55     20  63.64%   63, 101-137, 141
+saga\llm\__init__.py                                0      0 100.00%
+saga\llm\client.py                                186    111  40.32%   54, 162-163, 166-171, 182-183, 187-189, 218-253, 263-285, 304-325, 344-365, 385-402, 406-411, 431-481, 491-516, 520
+saga\llm\cost_tracker.py                           33     13  60.61%   55-62, 74, 82, 91-101, 105-106
+saga\llm\prompts.py                               119     92  22.69%   60, 79-88, 101-162, 166-190, 194-203, 207-221, 227-252, 256-267, 272-404, 408-425, 442-506
+saga\logging_config.py                             34     24  29.41%   22-44, 54-73
+saga\models\__init__.py                             2      0 100.00%
+saga\models\message.py                            104     18  82.69%   68-71, 75, 103-106, 131-133, 151-153, 159-161
+saga\monitoring\__init__.py                         0      0 100.00%
+saga\monitors\__init__.py                           0      0 100.00%
+saga\observability.py                              63     39  38.10%   71, 78-111, 130-134, 144-167, 178
+saga\orchestrator\__init__.py                       8      8   0.00%   24-88
+saga\orchestrator\admin.py                        214    214   0.00%   29-852
+saga\orchestrator\arbitration_context.py           29     29   0.00%   8-99
+saga\orchestrator\budget_enforcer.py               33     33   0.00%   8-103
+saga\orchestrator\config_gen.py                   136    136   0.00%   25-509
+saga\orchestrator\core.py                         207    207   0.00%   25-901
+saga\orchestrator\cost_models.py                  116    116   0.00%   8-254
+saga\orchestrator\cost_optimizer.py                96     96   0.00%   7-171
+saga\orchestrator\engine_registry.py               56     56   0.00%   3-165
+saga\orchestrator\errors.py                        31     31   0.00%   9-139
+saga\orchestrator\events.py                       192    192   0.00%   26-677
+saga\orchestrator\executor.py                      75     75   0.00%   8-196
+saga\orchestrator\judgement.py                     40     40   0.00%   8-111
+saga\orchestrator\logging_context.py               27     27   0.00%   8-75
+saga\orchestrator\metrics.py                       48     48   0.00%   7-114
+saga\orchestrator\patterns.py                     116    116   0.00%   8-324
+saga\orchestrator\profiles.py                       7      7   0.00%   7-59
+saga\orchestrator\protocols.py                     19     19   0.00%   12-181
+saga\orchestrator\provider_router.py              157    157   0.00%   37-508
+saga\orchestrator\roles.py                         17     17   0.00%   9-55
+saga\orchestrator\token_manager.py                 93     93   0.00%   37-503
+saga\orchestrator\types.py                        122    122   0.00%   27-341
+saga\orchestrator\workflows.py                     31     31   0.00%   8-112
+saga\resilience\__init__.py                         0      0 100.00%
+saga\resilience\async_utils.py                     38     20  47.37%   30-37, 54-76
+saga\security\__init__.py                           0      0 100.00%
+saga\security\injection_detector.py               105    105   0.00%   12-242
+saga\security\secrets_scanner.py                   29     29   0.00%   9-102
+saga\services\__init__.py                           0      0 100.00%
+saga\services\auto_tagger.py                       21     14  33.33%   21-45
+saga\services\file_processor.py                    49     36  26.53%   27-44, 48-57, 61-67, 71-76
+saga\storage\__init__.py                            0      0 100.00%
+saga\storage\base.py                               20      0 100.00%
+saga\storage\decision_store.py                     76     42  44.74%   83-110, 114-132, 136-146, 151, 159-176, 180-198, 202-207, 211-213, 217, 235
+saga\storage\sqlite.py                            143    115  19.58%   60, 77-87, 99-189, 204-244, 259-301, 323-371, 386-410, 425-449, 464-494, 503-511, 515-520
+saga\storage\task_store.py                         77     49  36.36%   112-172, 187-250, 262-266, 282-297, 301-303
+saga\storage\vector_search.py                      59     39  33.90%   20-22, 50, 72-75, 108-148, 157-170, 200-213, 217
+saga\validators.py                                 20     13  35.00%   15-16, 29-35, 40-42, 47
+------------------------------------------------------------------------------
+TOTAL                                            6232   4852  22.14%
+Coverage HTML written to dir htmlcov
+
+=========================== short test summary info ===========================
+FAILED tests/integration/test_warden_langgraph.py::test_warden_graph_execution_flow
+======================== 1 failed in 79.72s (0:01:19) =========================

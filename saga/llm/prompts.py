@@ -63,7 +63,8 @@ class PromptBuilder:
         self,
         task: Task,
         lorebook_patterns: Optional[list[Pattern]] = None,
-        project_context: Optional[dict[str, Any]] = None
+        project_context: Optional[dict[str, Any]] = None,
+        system_prompt_override: Optional[str] = None
     ) -> list[dict[str, str]]:
         """
         Build complete message list for LLM.
@@ -72,6 +73,7 @@ class PromptBuilder:
             task: Task to execute
             lorebook_patterns: Learned patterns from LoreBook
             project_context: Current project structure
+            system_prompt_override: Optional override for the system prompt
 
         Returns:
             List of chat messages (system + user)
@@ -80,7 +82,10 @@ class PromptBuilder:
         project_context = project_context or {}
 
         # Build system prompt
-        system_prompt = self._build_system_prompt(lorebook_patterns, project_context)
+        if system_prompt_override:
+            system_prompt = system_prompt_override
+        else:
+            system_prompt = self._build_system_prompt(lorebook_patterns, project_context)
 
         # Build task prompt
         task_prompt = self._build_task_prompt(task)

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Mimiry - The Immutable Oracle of Software Truth
 ================================================
@@ -48,10 +50,12 @@ Status: Phase 2 Week 1 - Foundation (Oracle Role)
 """
 
 import asyncio
+import inspect
 import logging
+import warnings
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Literal, Optional
+from typing import TYPE_CHECKING, Any, Literal, Optional
 
 from saga.analysis.ast_checker import ASTCodeChecker
 from saga.config.sagacodex_profiles import (
@@ -60,9 +64,33 @@ from saga.config.sagacodex_profiles import (
     get_codex_manager,
 )
 from saga.core.codex_index_client import CodexIndexClient
+from saga.knowledge.retriever import HybridRetriever
+from saga.knowledge.vector_store import ChromaVectorStore, DocumentChunk
 from saga.resilience.async_utils import with_retry, with_timeout
 
+# Conditional import to avoid circular dependency
+if TYPE_CHECKING:
+    from saga.core.mae.fql_schema import (
+        ComplianceResult,
+        FQLPacket,
+        PrincipleCitation,
+        RejectedAlternative,
+        ValidationCache,
+    )
+
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class Directive:
+    """
+    A compressed, actionable instruction derived from SagaCodex.
+    "Contextual Compression" - reduces token usage for agents.
+    """
+    title: str
+    instruction: str
+    priority: Literal["CRITICAL", "HIGH", "MEDIUM"]
+    source_rule: int
 
 
 @dataclass
@@ -75,19 +103,21 @@ class OracleResponse:
     Attributes:
         question: What was asked
         canonical_answer: What SagaCodex states
+        directives: Actionable compressed instructions (Contextual Compression)
         cited_rules: Which rules apply
         ideal_implementation: The platonic perfect approach
         violations_detected: Deviations from the ideal
         severity: How critical the deviation is
-        oracle_confidence: Mimiry's certainty (always high, based on SagaCodex clarity)
+        oracle_confidence: Mimiry's certainty
     """
     question: str
     canonical_answer: str
-    cited_rules: list[int]
+    directives: list[Directive] = field(default_factory=list)
+    cited_rules: list[int] = field(default_factory=list)
     ideal_implementation: Optional[str] = None
     violations_detected: list[str] = field(default_factory=list)
     severity: Literal["CRITICAL", "WARNING", "ACCEPTABLE"] = "ACCEPTABLE"
-    oracle_confidence: float = 100.0  # High by default - Mimiry knows SagaCodex
+    oracle_confidence: float = 100.0
     timestamp: datetime = field(default_factory=datetime.utcnow)
 
     def to_dict(self) -> dict[str, Any]:
@@ -95,6 +125,10 @@ class OracleResponse:
         return {
             "question": self.question,
             "canonical_answer": self.canonical_answer,
+            "directives": [
+                {"title": d.title, "instruction": d.instruction, "priority": d.priority, "source_rule": d.source_rule}
+                for d in self.directives
+            ],
             "cited_rules": self.cited_rules,
             "ideal_implementation": self.ideal_implementation,
             "violations_detected": self.violations_detected,
@@ -184,60 +218,104 @@ class Mimiry:
     - interpret_rule() - Explain what SagaCodex demands
     - measure_against_ideal() - Compare work to canonical standard
     - resolve_conflict() - Determine which agent is correct
-
-    NOT included (removed from previous version):
-    - provide_guidance() - Too proactive
-    - review_code() - Mimiry doesn't volunteer reviews
-    - get_personality_message() - Mimiry has no personality
-    - suggest_elite_pattern() - Mimiry doesn't suggest, only states
-
-    Usage (by The Warden):
-        mimiry = Mimiry()
-
-        # When agents disagree
-        resolution = await mimiry.resolve_conflict(
-            agents_outputs=[agent1_output, agent2_output],
-            task_context=context
-        )
-
-        # When Warden needs canonical interpretation
-        interpretation = await mimiry.interpret_rule(rule_number=1)
-
-        # When measuring work against ideal
-        measurement = await mimiry.measure_against_ideal(
-            code=agent_output,
-            domain="authentication"
-        )
-
-    Usage (by coding agents):
-        # When uncertain about approach
-        response = await mimiry.consult_on_discrepancy(
-            question="What is the canonical approach for async database queries?",
-            context={"language": "python", "framework": "fastapi"}
-        )
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        vector_store: Optional[ChromaVectorStore] = None,
+        retriever: Optional[HybridRetriever] = None
+    ) -> None:
         """
-        Initialize Mimiry - The Oracle.
-
-        Mimiry requires no configuration. She embodies SagaCodex eternally.
+        Initialize Mimiry - The Oracle of Software Truth.
+        Now powered by Advanced RAG (ChromaDB + BM25).
         """
         self.codex_manager = get_codex_manager()
         self.current_codex = self.codex_manager.get_current_profile()
-        self.codex_client = CodexIndexClient() # Default path
+        self.codex_client = CodexIndexClient()
+
+        # Initialize Advanced RAG Stack
+        # Allow dependency injection for testing
+        self.vector_store = vector_store or ChromaVectorStore()
+        self.retriever = retriever or HybridRetriever(self.vector_store)
+
+        # Ingest Codex immediately on startup (for now)
+        # In prod this would be async or pre-built
+        self._ingest_codex()
+
+        # FQL Gateway: Validation cache for efficient repeat queries
+        # Lazy-loaded to avoid circular imports
+        self._validation_cache: Optional[ValidationCache] = None
+        self._fql_enabled = True  # Zero-trust mode by default
 
         logger.info(
-            "Mimiry initialized - The Oracle of Software Truth",
+            "Mimiry initialized - The Semantic Oracle with FQL Gateway",
             extra={
-                "codex_language": self.current_codex.language,
-                "codex_framework": self.current_codex.framework,
-                "codex_version": self.current_codex.version,
                 "role": "immutable_oracle",
-                "speaks": "with_absolute_authority",
+                "fql_gateway": "enabled",
+                "memory_tier": "semantic",
+                "rag_engine": "hybrid_fusion"
             }
         )
         self.ast_checker = ASTCodeChecker()
+
+    def _ingest_codex(self):
+        """
+        Ingest SagaCodex into the Tri-Tier Memory.
+        Implements 'Parent-Document' splitting strategy.
+        """
+        chunks = []
+        parent_docs = {}
+        bm25_corpus = []
+        bm25_ids = []
+
+        for std in self.current_codex.standards:
+            # 1. Create Parent Document (Full Context)
+            parent_id = f"rule-{std.rule_number}-parent"
+            full_text = (
+                f"SagaCodex Rule {std.rule_number}: {std.name}\n"
+                f"Description: {std.description}\n"
+                f"Rationale: {std.rationale or ''}\n"
+                f"Tooling: {std.tool or 'None'}\n"
+                f"Ideal: {std.example_correct}\n"
+                f"Violation: {std.example_wrong}"
+            )
+            parent_docs[parent_id] = full_text
+
+            # 2. Create Child Chunks (Precise Search Targets)
+            # Chunk A: The Rule itself
+            chunks.append(DocumentChunk(
+                doc_id=f"rule-{std.rule_number}-desc",
+                content=f"Rule {std.rule_number} {std.name}: {std.description}",
+                metadata={"rule_number": std.rule_number, "type": "rule_def"},
+                parent_doc_id=parent_id
+            ))
+
+            # Chunk B: The Violation (allows finding rules by describing the error)
+            if std.example_wrong:
+                chunks.append(DocumentChunk(
+                    doc_id=f"rule-{std.rule_number}-wrong",
+                    content=f"Violation of Rule {std.rule_number}: {std.example_wrong}",
+                    metadata={"rule_number": std.rule_number, "type": "violation_example"},
+                    parent_doc_id=parent_id
+                ))
+
+            # Chunk C: Specific Tooling/Libraries
+            if std.tool:
+                chunks.append(DocumentChunk(
+                    doc_id=f"rule-{std.rule_number}-tool",
+                    content=f"Tool enforced by Rule {std.rule_number}: {std.tool}",
+                    metadata={"rule_number": std.rule_number, "type": "tooling"},
+                    parent_doc_id=parent_id
+                ))
+
+            # For BM25, index the full text to catch exact version numbers/keywords
+            bm25_corpus.append(full_text)
+            bm25_ids.append(parent_id)
+
+        # 3. Load into Stores
+        self.vector_store.add_documents(chunks, parent_docs)
+        self.retriever.fit_bm25(bm25_corpus, bm25_ids)
+        logger.info("Mimiry has ingested the SagaCodex.")
 
     @with_timeout(30.0)
     @with_retry(max_attempts=2, backoff=1.0)
@@ -248,86 +326,69 @@ class Mimiry:
         trace_id: Optional[str] = None
     ) -> OracleResponse:
         """
-        Answer a direct question about SagaCodex truth.
+        Answer a question using Hybrid RAG (Semantic + Keyword) with Contextual Compression.
         """
         logger.info(
-            "Mimiry consulted on discrepancy",
+            "Mimiry consulted via Hybrid RAG",
             extra={"question": question[:100], "trace_id": trace_id}
         )
 
-        # 1. Search existing Codex Manager (Primary Source)
-        relevant_standards = self.current_codex.search_standards(question)
+        # 1. Retrieve Canonical Knowledge (Parent Docs)
+        # 1. Retrieve Canonical Knowledge (Parent Docs)
+        hits = self.retriever.search(question, k=5)
 
-        # 2. Search new JSON Index (Metadata Source)
-        # Convert question into potential tags
-        q_tags = []
-        if "test" in question.lower(): q_tags.append("tests")
-        if "refactor" in question.lower(): q_tags.append("refactoring")
-        if "type" in question.lower(): q_tags.append("types")
 
-        index_rules = self.codex_client.find_rules(tags=q_tags)
 
-        # Merge knowledge
         canonical_answer = ""
+        directives: list[Directive] = []
         cited_rules = []
-        ideal = None
+        violations_detected = self._detect_violations(question, context)
         severity = "ACCEPTABLE"
 
-        # If we found relevant standards in Python codex
-        if relevant_standards:
-             primary = relevant_standards[0]
-             cited_rules.append(primary.rule_number)
-             ideal = primary.example_correct
+        if hits:
+            # Consolidate hits into an authoritative answer AND Directives
+            canonical_answer = "SagaCodex decrees the following ideals:\n\n"
+            for hit in hits:
+                content = hit["content"]
+                meta = hit["metadata"]
 
-             canonical_answer = self._construct_canonical_answer(primary, question, context)
-             if primary.severity == "CRITICAL": severity = "CRITICAL"
-             elif primary.severity == "WARNING" and severity != "CRITICAL": severity = "WARNING"
+                # Extract rule number if present in metadata or content
+                rule_num = meta.get("rule_number", 0)
+                if rule_num and rule_num not in cited_rules:
+                    cited_rules.append(rule_num)
 
-        # Rule 45 / Minimal Diff specific logic (requested in Prompt)
-        # If question involves tests/refactoring/diffs
-        rule_45 = self.codex_client.get_rule("45")
-        if rule_45 and ("diff" in question.lower() or "test" in question.lower() or "rewrite" in question.lower()):
-            # If we didn't find a primary standard yet, or if this is relevant
-            if not relevant_standards or "45" not in [str(r) for r in cited_rules]:
-                 canonical_answer += f"\n\nSagaCodex Rule 45: {rule_45['title']}.\n"
-                 canonical_answer += f"{rule_45['description']}\n"
-                 if rule_45.get('checklist_item'):
-                     canonical_answer += f"Directive: {rule_45['checklist_item']}\n"
+                # Create Compressed Directive
+                # "Contextual Compression": Turn the hit into a short instruction
+                directives.append(Directive(
+                    title=f"Rule {rule_num} Enforcement",
+                    instruction=f"Ensure compliance with: {content.splitlines()[0]}",  # First line usually has rule name
+                    priority="CRITICAL" if any(r in [15, 99] for r in [rule_num]) else "HIGH",
+                    source_rule=rule_num
+                ))
 
-                 cited_rules.append(45)
-                 if rule_45['severity'] == "CRITICAL": severity = "CRITICAL"
-                 elif rule_45['severity'] == "WARNING" and severity != "CRITICAL": severity = "WARNING"
+                canonical_answer += f"--- {meta.get('type', 'Standard')} ---\n{content}\n\n"
 
-        if not canonical_answer:
-            # Fallback if nothing found
-             return OracleResponse(
-                question=question,
-                canonical_answer=(
-                    "This question does not align with cataloged SagaCodex standards. "
-                    "The ideal cannot be stated without reference to established principles. "
-                    "Consult LoreBook for practical precedents."
-                ),
-                cited_rules=[],
-                oracle_confidence=50.0,
-                severity="ACCEPTABLE"
+            canonical_answer += "Deviating from these principles is unacceptable."
+
+            if any(d.priority == "CRITICAL" for d in directives):
+                severity = "CRITICAL"
+        else:
+            canonical_answer = (
+                "This query does not map to cataloged SagaCodex standards. "
+                "Consult the LoreBook for established precedents."
             )
+            severity = "ACCEPTABLE"
 
-        # Detect violations in the question itself
-        violations = self._detect_violations(question, context)
-        if violations:
-             severity = "CRITICAL" if any("CRITICAL" in v for v in violations) else "WARNING"
-
-        response = OracleResponse(
+        return OracleResponse(
             question=question,
             canonical_answer=canonical_answer,
+            directives=directives,
             cited_rules=cited_rules,
-            ideal_implementation=ideal,
-            violations_detected=violations,
+            ideal_implementation=None,
+            violations_detected=violations_detected,
             severity=severity,
-            oracle_confidence=95.0,
+            oracle_confidence=95.0 if hits else 50.0,
         )
-
-        return response
 
     @with_timeout(10.0)
     @with_retry(max_attempts=3, backoff=0.5)
@@ -347,14 +408,6 @@ class Mimiry:
 
         Returns:
             CanonicalInterpretation with immutable meaning
-
-        Example:
-            >>> interpretation = await mimiry.interpret_rule(rule_number=1)
-            >>> print(interpretation.canonical_meaning)
-            All public functions must have complete type hints.
-            Python's dynamic typing causes runtime errors.
-            Type hints catch bugs at development time.
-            This is not negotiable.
         """
         logger.info(
             "Mimiry interpreting SagaCodex rule",
@@ -368,7 +421,6 @@ class Mimiry:
                 "Rule not found in SagaCodex",
                 extra={"rule_number": rule_number, "trace_id": trace_id}
             )
-            # Even when rule doesn't exist, Mimiry is clear
             return CanonicalInterpretation(
                 rule_number=rule_number,
                 rule_name="Unknown Rule",
@@ -399,7 +451,7 @@ class Mimiry:
 
         return interpretation
 
-    @with_timeout(60.0)  # Analysis can be slow
+    @with_timeout(60.0)
     @with_retry(max_attempts=2, backoff=1.0)
     async def measure_against_ideal(
         self,
@@ -409,27 +461,6 @@ class Mimiry:
     ) -> OracleResponse:
         """
         Measure code against SagaCodex ideal.
-
-        Not a review with suggestions. A measurement against perfection.
-        States what IS (the ideal) and what IS NOT (the deviations).
-
-        Args:
-            code: Code to measure
-            domain: What this code does (e.g., "authentication", "database")
-            trace_id: Optional correlation ID
-
-        Returns:
-            OracleResponse with deviations from ideal
-
-        Example:
-            >>> response = await mimiry.measure_against_ideal(
-            ...     code="def get_user(db, user_id):\\n    return db.query(User).first()",
-            ...     domain="database"
-            ... )
-            >>> print(response.canonical_answer)
-            SagaCodex Rule 1: Type hints required. Violation detected.
-            SagaCodex Rule 2: Async required for database. Violation detected.
-            The ideal: async def get_user(db: AsyncSession, user_id: str) -> Optional[User]
         """
         logger.info(
             "Mimiry measuring code against ideal",
@@ -446,7 +477,7 @@ class Mimiry:
         # Check against anti-patterns
         anti_pattern_violations = self.codex_manager.check_code(
             code,
-            LanguageProfile.PYTHON_FASTAPI # Defaulting to main profile for now
+            LanguageProfile.PYTHON_FASTAPI  # Defaulting to main profile for now
         )
 
         for violation in anti_pattern_violations:
@@ -485,12 +516,7 @@ class Mimiry:
                     f"CRITICAL SECURITY VIOLATION: {secret.secret_type} detected at line {secret.line_number}. "
                     "Hardcoded secrets are strictly forbidden."
                 )
-            # Secrets are always critical
-            cited_rules.append(15)  # Rule 15 triggers safety checks (implied) or we can cite a specific security rule if one exists in Codex.
-            # MetaRule 14/15 are safety, but Codex Rule ? let's assume it's a general violation.
-            # I will just cite "Security Policy" in text, but cited_rules expects ints.
-            # Let's assume Rule 99 or just not cite a Codex rule number if not in Codex yet, but the scanner finding is critical.
-            # I'll rely on the text description.
+            cited_rules.append(15)
 
         # Construct response
         if violations:
@@ -513,7 +539,7 @@ class Mimiry:
             canonical_answer=canonical_answer,
             cited_rules=cited_rules,
             violations_detected=violations,
-            severity=severity, # type: ignore
+            severity=severity,
             oracle_confidence=90.0,
         )
 
@@ -538,30 +564,6 @@ class Mimiry:
     ) -> ConflictResolution:
         """
         Resolve conflict between coding agents by measuring against SagaCodex.
-
-        This is The Warden's primary consultation method when agents disagree.
-        Mimiry does not mediate or compromise - she states which approach
-        aligns with the ideal.
-
-        Args:
-            agents_outputs: List of agent outputs with their approaches
-            task_context: Context of what was being built
-            trace_id: Optional correlation ID
-
-        Returns:
-            ConflictResolution with canonical judgment
-
-        Example:
-            >>> resolution = await mimiry.resolve_conflict(
-            ...     agents_outputs=[
-            ...         {"agent": "A", "approach": "print('User created')"},
-            ...         {"agent": "B", "approach": "logger.info('User created', extra={...})"}
-            ...     ],
-            ...     task_context={"task": "log user creation"}
-            ... )
-            >>> print(resolution.canonical_approach)
-            Agent B's approach aligns with SagaCodex Rule 4 (Structured Logging).
-            Agent A's approach violates the ideal.
         """
         logger.info(
             "Mimiry resolving agent conflict",
@@ -666,8 +668,6 @@ class Mimiry:
     ) -> str:
         """
         Construct canonical answer from SagaCodex standard.
-
-        Mimiry speaks with authority, not suggestion.
         """
         answer_parts = [
             f"SagaCodex Rule {standard.rule_number} states:",
@@ -732,6 +732,393 @@ class Mimiry:
 
         return violations
 
+    # ============================================================
+    # FQL GATEWAY METHODS (Phase 8 - MAE Foundation)
+    # ============================================================
+
+    def _get_validation_cache(self) -> ValidationCache:
+        """Lazy-load ValidationCache to avoid circular imports."""
+        if self._validation_cache is None:
+            from saga.core.mae.fql_schema import ValidationCache
+            self._validation_cache = ValidationCache()
+        return self._validation_cache
+
+    @with_timeout(30.0)
+    @with_retry(max_attempts=2, backoff=1.0)
+    async def validate_proposal(
+        self,
+        fql_packet: FQLPacket,
+        trace_id: Optional[str] = None
+    ) -> ComplianceResult:
+        """
+        Stateless FQL validation endpoint.
+
+        CRITICAL: This is the canonical way to query Mimiry in Phase 8+.
+        Raw text queries are still supported but deprecated.
+
+        The FQL Gateway acts as a "Software Engineering Firewall":
+        1. Schema validation first (Pydantic)
+        2. Then Codex check (semantic + AST)
+        3. Returns ComplianceResult without storing failures
+
+        Args:
+            fql_packet: Validated FQL packet with action, subject, governance
+            trace_id: Optional correlation ID
+
+        Returns:
+            ComplianceResult with compliance score and principle citations.
+            Failures return corrections without polluting Mimiry's memory.
+        """
+        from saga.core.mae.fql_schema import (
+            ComplianceResult,
+            FQLAction,
+            PrincipleCitation,
+            RejectedAlternative,
+        )
+
+        logger.info(
+            "FQL Gateway: validate_proposal",
+            extra={
+                "action": fql_packet.payload.action.value,
+                "subject": fql_packet.payload.subject,
+                "strictness": fql_packet.governance.strictness_level.value,
+                "trace_id": trace_id or fql_packet.header.correlation_id,
+            }
+        )
+
+        # 1. Check cache first (efficient repeat queries)
+        cache = self._get_validation_cache()
+        cached_result = cache.get(fql_packet)
+        if cached_result is not None:
+            logger.debug("FQL Gateway: Cache hit")
+            return cached_result
+
+        # 2. Route based on action type
+        action = fql_packet.payload.action
+        subject = fql_packet.payload.subject
+        context = fql_packet.payload.context
+        principle_id = fql_packet.governance.mimiry_principle_id
+
+        citations: list[PrincipleCitation] = []
+        corrections: list[str] = []
+        rejected_alternatives: list[RejectedAlternative] = []
+        compliance_score = 100.0
+        validated_approach = ""
+        rationale = ""
+
+        if action == FQLAction.VALIDATE_PATTERN:
+            # Check AST meta-tags against Codex patterns
+            result = await self._validate_pattern_fql(
+                subject, context, fql_packet.payload.ast_tags, trace_id
+            )
+            compliance_score = result["score"]
+            citations = result["citations"]
+            corrections = result["corrections"]
+            rejected_alternatives = result["rejected"]
+            validated_approach = result.get("validated_approach", subject)
+            rationale = result.get("rationale", "")
+
+        elif action == FQLAction.INTERPRET_RULE:
+            # Extract rule number from principle_id or context
+            rule_num = context.get("rule_number", 0)
+            if "-" in principle_id:
+                try:
+                    rule_num = int(principle_id.split("-")[-1])
+                except ValueError:
+                    pass
+            interp = await self.interpret_rule(rule_num, trace_id)
+            compliance_score = 100.0 if interp.immutable else 75.0
+            citations.append(PrincipleCitation(
+                rule_id=interp.rule_number,
+                rule_name=interp.rule_name,
+                relevance="HIGH",
+                excerpt=interp.canonical_meaning[:200]
+            ))
+            validated_approach = interp.canonical_meaning
+            rationale = f"Rule {rule_num} interpretation from SagaCodex"
+
+        elif action == FQLAction.MEASURE_CODE:
+            # Measure code against ideal
+            code = context.get("code", "")
+            domain = context.get("domain", "general")
+            oracle_response = await self.measure_against_ideal(code, domain, trace_id)
+
+            # Convert OracleResponse to ComplianceResult
+            compliance_score = 100.0 - (len(oracle_response.violations_detected) * 10)
+            compliance_score = max(0.0, min(100.0, compliance_score))
+
+            for rule_id in oracle_response.cited_rules:
+                std = self.current_codex.get_standard(rule_id)
+                if std:
+                    citations.append(PrincipleCitation(
+                        rule_id=rule_id,
+                        rule_name=std.name,
+                        relevance="CRITICAL" if rule_id in [15, 99] else "HIGH",
+                        excerpt=std.description[:100]
+                    ))
+
+            corrections = oracle_response.violations_detected
+            validated_approach = oracle_response.canonical_answer[:200]
+            rationale = f"Measured against SagaCodex ideal. Severity: {oracle_response.severity}"
+
+        elif action == FQLAction.RESOLVE_CONFLICT:
+            # Agent conflict resolution
+            agents_outputs = context.get("agents_outputs", [])
+            task_context = context.get("task_context", {})
+            resolution = await self.resolve_conflict(agents_outputs, task_context, trace_id)
+
+            # Determine compliance based on resolution
+            if resolution.agents_in_violation:
+                compliance_score = 70.0
+                for agent in resolution.agents_in_violation:
+                    corrections.append(f"Agent {agent} deviates from SagaCodex ideal")
+            else:
+                compliance_score = 95.0
+
+            for rule_id in resolution.cited_rules:
+                std = self.current_codex.get_standard(rule_id)
+                if std:
+                    citations.append(PrincipleCitation(
+                        rule_id=rule_id,
+                        rule_name=std.name,
+                        relevance="HIGH"
+                    ))
+
+            validated_approach = resolution.canonical_approach
+            rationale = resolution.rationale
+
+            # Add rejected approaches as alternatives
+            for approach in resolution.conflicting_approaches:
+                if approach != resolution.canonical_approach:
+                    rejected_alternatives.append(RejectedAlternative(
+                        approach=approach,
+                        rejection_reason="Deviates further from SagaCodex ideal"
+                    ))
+
+        # 3. Determine compliance based on strictness level
+        from saga.core.mae.fql_schema import StrictnessLevel
+        strictness = fql_packet.governance.strictness_level
+
+        if strictness == StrictnessLevel.FAANG_GOLDEN_PATH:
+            is_compliant = compliance_score >= 95.0 and len(corrections) == 0
+        elif strictness == StrictnessLevel.SENIOR_DEV:
+            is_compliant = compliance_score >= 85.0 and len([c for c in corrections if "CRITICAL" in c]) == 0
+        else:  # ENTERPRISE
+            is_compliant = compliance_score >= 70.0
+
+        # 4. Build result (stateless - not stored on failure)
+        result = ComplianceResult(
+            is_compliant=is_compliant,
+            compliance_score=compliance_score,
+            principle_citations=citations,
+            corrections=corrections,
+            rejected_alternatives=rejected_alternatives,
+            validation_hash=fql_packet.compute_packet_hash(),
+            validated_approach=validated_approach,
+            rationale=rationale,
+        )
+
+        # 5. Cache the result
+        cache.put(fql_packet, result)
+
+        logger.info(
+            "FQL Gateway: validation complete",
+            extra={
+                "is_compliant": is_compliant,
+                "compliance_score": compliance_score,
+                "corrections_count": len(corrections),
+                "trace_id": trace_id,
+            }
+        )
+
+        return result
+
+    async def _validate_pattern_fql(
+        self,
+        subject: str,
+        context: dict[str, Any],
+        ast_tags: list,
+        trace_id: Optional[str] = None
+    ) -> dict[str, Any]:
+        """
+        Validate a pattern using FQL AST meta-tags.
+
+        Schema-driven validation: Uses structured AST tags instead
+        of natural language to prevent hallucination.
+        """
+        from saga.core.mae.fql_schema import PrincipleCitation, RejectedAlternative
+
+        citations: list[PrincipleCitation] = []
+        corrections: list[str] = []
+        rejected: list[RejectedAlternative] = []
+        score = 100.0
+
+        # Use hybrid retriever to find relevant Codex rules
+        query = f"{subject} {' '.join(str(tag) for tag in ast_tags)}"
+        hits = self.retriever.search(query, k=3)
+
+        validated_approach = subject
+        rationale = "Pattern validated against SagaCodex"
+
+        for hit in hits:
+            rule_num = hit.get("metadata", {}).get("rule_number", 0)
+            if rule_num:
+                std = self.current_codex.get_standard(rule_num)
+                if std:
+                    citations.append(PrincipleCitation(
+                        rule_id=rule_num,
+                        rule_name=std.name,
+                        relevance="HIGH",
+                        excerpt=hit.get("content", "")[:100]
+                    ))
+
+        # Check AST tags against known patterns
+        for tag in ast_tags:
+            pattern_type = getattr(tag, "pattern_type", None)
+            implementation = getattr(tag, "implementation", "")
+
+            # Validate common patterns
+            if pattern_type and "SINGLETON" in implementation:
+                if "THREAD_SAFE" not in implementation:
+                    corrections.append(
+                        "Singleton pattern must be thread-safe (SINGLETON_THREAD_SAFE)"
+                    )
+                    score -= 15
+                    rejected.append(RejectedAlternative(
+                        approach="Non-thread-safe Singleton",
+                        rejection_reason="Race condition vulnerability in async context"
+                    ))
+
+        return {
+            "score": max(0.0, score),
+            "citations": citations,
+            "corrections": corrections,
+            "rejected": rejected,
+            "validated_approach": validated_approach,
+            "rationale": rationale,
+        }
+
+
+# ============================================================
+# LEGACY ADAPTER (Zero-Trust Transition)
+# ============================================================
+
+class LegacyMimiryAdapter:
+    """
+    Adapter for backward compatibility during FQL migration.
+
+    Logs DeprecationWarning when raw text queries are attempted,
+    identifying the violating file for easier refactoring.
+
+    Usage:
+        # Instead of calling Mimiry directly with text:
+        adapter = LegacyMimiryAdapter(mimiry)
+        response = await adapter.legacy_consult("raw text question", {...})
+        # This will work but emit a deprecation warning
+
+    The goal is to identify all code paths that need FQL migration.
+    """
+
+    def __init__(self, mimiry: Mimiry) -> None:
+        """Initialize the legacy adapter."""
+        self._mimiry = mimiry
+        self._violation_log: list[dict[str, Any]] = []
+
+    def _log_violation(self, method_name: str, caller_info: str) -> None:
+        """Log a Zero-Trust policy violation."""
+        violation = {
+            "method": method_name,
+            "caller": caller_info,
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+        self._violation_log.append(violation)
+
+        # Emit deprecation warning with caller info
+        warnings.warn(
+            f"Zero-Trust Policy Violation: Direct Mimiry call to '{method_name}' "
+            f"from {caller_info}. Use FQL Gateway (validate_proposal) instead. "
+            "This method will be removed in Phase 9.",
+            DeprecationWarning,
+            stacklevel=3
+        )
+
+        logger.warning(
+            "Legacy Mimiry call detected - migrate to FQL",
+            extra={
+                "method": method_name,
+                "caller": caller_info,
+                "action": "migrate_to_fql",
+            }
+        )
+
+    def _get_caller_info(self) -> str:
+        """Get information about the calling code."""
+        frame = inspect.currentframe()
+        if frame and frame.f_back and frame.f_back.f_back:
+            caller_frame = frame.f_back.f_back
+            filename = caller_frame.f_code.co_filename
+            lineno = caller_frame.f_lineno
+            funcname = caller_frame.f_code.co_name
+            return f"{filename}:{lineno} in {funcname}()"
+        return "unknown"
+
+    async def legacy_consult(
+        self,
+        question: str,
+        context: dict[str, Any],
+        trace_id: Optional[str] = None
+    ) -> OracleResponse:
+        """
+        Deprecated: Use FQL Gateway instead.
+
+        This method wraps consult_on_discrepancy and logs a warning.
+        """
+        self._log_violation("consult_on_discrepancy", self._get_caller_info())
+        return await self._mimiry.consult_on_discrepancy(question, context, trace_id)
+
+    async def legacy_measure(
+        self,
+        code: str,
+        domain: str,
+        trace_id: Optional[str] = None
+    ) -> OracleResponse:
+        """
+        Deprecated: Use FQL Gateway with MEASURE_CODE action.
+
+        This method wraps measure_against_ideal and logs a warning.
+        """
+        self._log_violation("measure_against_ideal", self._get_caller_info())
+        return await self._mimiry.measure_against_ideal(code, domain, trace_id)
+
+    async def legacy_resolve(
+        self,
+        agents_outputs: list[dict[str, Any]],
+        task_context: dict[str, Any],
+        trace_id: Optional[str] = None
+    ) -> ConflictResolution:
+        """
+        Deprecated: Use FQL Gateway with RESOLVE_CONFLICT action.
+
+        This method wraps resolve_conflict and logs a warning.
+        """
+        self._log_violation("resolve_conflict", self._get_caller_info())
+        return await self._mimiry.resolve_conflict(agents_outputs, task_context, trace_id)
+
+    def get_violation_report(self) -> list[dict[str, Any]]:
+        """
+        Get all logged Zero-Trust violations.
+
+        Returns:
+            List of violation records with method, caller, and timestamp.
+        """
+        return self._violation_log.copy()
+
+    def clear_violations(self) -> int:
+        """Clear violation log and return count of cleared entries."""
+        count = len(self._violation_log)
+        self._violation_log.clear()
+        return count
+
 
 # Export main classes
 __all__ = [
@@ -739,4 +1126,6 @@ __all__ = [
     "OracleResponse",
     "CanonicalInterpretation",
     "ConflictResolution",
+    "Directive",
+    "LegacyMimiryAdapter",
 ]

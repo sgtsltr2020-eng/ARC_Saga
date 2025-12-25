@@ -266,8 +266,19 @@ class Orchestrator:
         self._circuit_breaker = circuit_breaker
         self._task_executor = task_executor or self._default_task_executor
         self._token_budget_manager = token_budget_manager
-        self._token_budget_manager = token_budget_manager
         self._policy_registry: dict[str, Callable[[Command], bool]] = {}
+
+        # Initialize Warden (Phase 2 Integration)
+        # Lazy import to avoid circular dependencies if any
+        try:
+            from saga.core.warden import Warden
+            self.warden = Warden()
+            log_with_context("info", "warden_integrated_in_orchestrator")
+        except ImportError as e:
+            log_with_context("warning", "warden_import_failed", error=str(e))
+            self.warden = None
+
+        # Register default workflow strategies
 
         # Register default workflow strategies
         self._strategies: dict[WorkflowPattern, IWorkflowStrategy] = {
@@ -283,7 +294,72 @@ class Orchestrator:
             has_circuit_breaker=circuit_breaker is not None,
             has_custom_executor=task_executor is not None,
             has_token_budget_manager=token_budget_manager is not None,
+            has_warden=self.warden is not None,
         )
+
+    async def process_natural_language_command(
+        self,
+        command: str,
+        user_context: dict[str, Any] | None = None,
+        trace_id: str | None = None
+    ) -> dict[str, Any]:
+        """
+        Process a natural language command from the user.
+
+        Workflow:
+        1. Optimize prompt (SAGA Logic)
+        2. Delegate to Warden (Governance & Execution)
+
+        Args:
+            command: User's raw input
+            user_context: Context (budget, preferences)
+            trace_id: Tracing ID
+
+        Returns:
+            Review/Result dictionary
+        """
+        trace_id = trace_id or str(uuid4())
+        user_context = user_context or {}
+
+        # STEP 1: Optimize Prompt (SAGA Layer)
+        # Future: Use LLM to optimize. For now, we wrap it structurally.
+        optimized_prompt = f"""
+        User Request: {command}
+
+        Optimization Hints:
+        - Ensure modular architecture
+        - Respect FAANG standards
+        - Focus on self-contained ecosystems
+        """
+
+        log_with_context(
+            "info",
+            "saga_optimizing_prompt",
+            original=command[:50],
+            trace_id=trace_id
+        )
+
+        # STEP 2: Delegate to Warden (Governance Layer)
+        if not self.warden:
+            raise OrchestratorError("Warden not initialized", "process_command")
+
+        # Initialize Warden dependencies if needed (lazy init)
+        await self.warden.initialize()
+
+        result = await self.warden.solve_request(
+            user_input=optimized_prompt,
+            context=user_context,
+            trace_id=trace_id
+        )
+
+        log_with_context(
+            "info",
+            "warden_execution_completed",
+            status=result.get("status"),
+            trace_id=trace_id
+        )
+
+        return result
 
     async def execute_workflow(
         self,

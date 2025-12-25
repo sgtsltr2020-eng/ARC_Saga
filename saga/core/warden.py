@@ -42,11 +42,24 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Literal, Optional
 
+import aiofiles  # Fix undefined name
+
 from saga.agents.coder import CodingAgent
 from saga.config.sagacodex_profiles import get_codex_manager
 from saga.config.sagarules_embedded import SagaConstitution
 from saga.core.codex_index_client import CodexIndexClient
+from saga.core.governance_graph import WardenState, create_warden_graph
 from saga.core.lorebook import LoreBook, Outcome
+
+# Phase 8: MAE Integration
+from saga.core.mae import (
+    FQLPacket,
+    Governor,
+    MASSTriggeredReason,
+    SwarmCoordinator,
+)
+from saga.core.mae.fql_schema import StrictnessLevel
+from saga.core.mae.swarm import DropoutReason
 from saga.core.mimiry import ConflictResolution, Mimiry, OracleResponse
 from saga.core.task import Task
 from saga.core.task_graph import TaskGraph
@@ -137,18 +150,29 @@ class Warden:
         self.codex_client = CodexIndexClient(Path(project_root) / ".saga" / "sagacodex_index.json")
 
         # Phase 3B Integration
-        self.lorebook: Optional[LoreBook] = None
-        self.llm_client: Optional[LLMClient] = None
-        self.cost_tracker: Optional[CostTracker] = None
-        self.task_store: Optional[TaskStore] = None
-        self.task_verifier: Optional[TaskVerifier] = None
+        self.lorebook: LoreBook | None = None
+        self.llm_client: LLMClient | None = None
+        self.cost_tracker: CostTracker | None = None
+        self.task_store: TaskStore | None = None
+        self.task_verifier: TaskVerifier | None = None
+
+        # Phase 8: MAE Integration - Governor and Swarm
+        self.governor = Governor()
+        self.swarm = SwarmCoordinator(self.governor)
+
+        # Phase 3: Governance Graph
+        # Use MemorySaver for sync initialization, proper checkpointer set in initialize()
+        import os
+        enable_hitl = os.environ.get("SAGA_ENABLE_HITL", "false").lower() == "true"
+        self.graph = create_warden_graph(checkpointer=None, enable_interrupt=enable_hitl)
 
         logger.info(
-            "The Warden initialized with Mimiry integration",
+            "The Warden initialized with Mimiry and MAE integration",
             extra={
                 "codex_language": self.current_codex.language,
                 "codex_framework": self.current_codex.framework,
-                "mimiry_role": "oracle_consultant"
+                "mimiry_role": "oracle_consultant",
+                "governor_mode": self.governor.current_mode.value,
             }
         )
 
@@ -158,6 +182,7 @@ class Warden:
 
         Call this after creating Warden instance.
         """
+
         # Initialize LoreBook
         if not self.lorebook:
             self.lorebook = LoreBook(project_root=self.project_root)
@@ -185,6 +210,14 @@ class Warden:
                 project_root=self.project_root,
                 mimiry=self.mimiry
             )
+
+        # Phase 3: Initialize graph with checkpointer
+        import os
+        enable_hitl = os.environ.get("SAGA_ENABLE_HITL", "false").lower() == "true"
+
+        # Use MemorySaver for now (AsyncSqliteSaver context manager has compatibility issues)
+        # This still supports async execution and HITL, just without persistent state across restarts
+        self.graph = create_warden_graph(checkpointer=None, enable_interrupt=enable_hitl)
 
         logger.info("Warden fully initialized with persistent state")
 
@@ -287,6 +320,12 @@ class Warden:
         """
         Execute task by spawning CodingAgent and generating code.
 
+        PHASE 8: Governor Turn Tracking + Citation Loop
+        -----------------------------------------------
+        - Tracks turn metrics via Governor
+        - If turn 1 fails, injects corrections for turn 2 (self-correction)
+        - On COMPLIANCE_REGRESSION, swaps to specialist agent
+
         Args:
             task: Task to execute
             project_root: Project root directory
@@ -295,40 +334,154 @@ class Warden:
             List of agent results in dict format
         """
         logger.info(
-            "Warden executing task",
+            "Warden executing task with Governor tracking",
             extra={"task_id": task.id, "description": task.description}
         )
 
-        # 1. Initialize CodingAgent
-        # Lazy import if needed or use existing import
+        agent_id = "CodingAgent"
+        current_turn = 1
+        max_turns = 2  # Allow 1 retry with self-correction
+
+        # Get FQL governance from task context (injected by receive_proposal)
+        fql_governance = task.context.get("fql_governance", {}) if task.context else {}
+        strictness = fql_governance.get("strictness", StrictnessLevel.ENTERPRISE.value)
+
+        # Track initial compliance
+        compliance_before = fql_governance.get("compliance_score", 50.0)
+
         agent = CodingAgent(
             llm_client=self.llm_client,
             lorebook=self.lorebook,
             mimiry=self.mimiry,
             sagacodex_profile=self.current_codex,
-            agent_name="warden_delegate"
+            agent_name=agent_id
         )
 
-        # 2. Execute task with agent
-        try:
-            output = await agent.solve_task(
-                task=task,
-                project_root=project_root if project_root != "." else self.project_root,
-                language_profile=f"{self.current_codex.language}_{self.current_codex.framework}",
-                critical=(task.weight == "complex")
-            )
+        output = None
+        result = None
 
-            # 3. Track cost
-            if self.cost_tracker:
-                self.cost_tracker.record_task_cost(
-                    task_id=task.id,
-                    cost=output.cost_usd,
-                    agent_name="CodingAgent"
+        try:
+            while current_turn <= max_turns:
+                logger.info(
+                    f"Executing turn {current_turn}/{max_turns}",
+                    extra={"task_id": task.id, "agent_id": agent_id, "turn": current_turn}
                 )
 
-            # 4. Transform AgentOutput to expected dict format
+                # Execute task with agent
+                output = await agent.solve_task(
+                    task=task,
+                    project_root=project_root if project_root != "." else self.project_root,
+                    language_profile=f"{self.current_codex.language}_{self.current_codex.framework}",
+                    critical=(task.weight == "complex")
+                )
+
+                # ============================================================
+                # PHASE 8: Governor Turn Tracking
+                # ============================================================
+                compliance_after = output.confidence  # Use confidence as proxy
+
+                turn_metrics = self.governor.track_turn(
+                    task_id=task.id,
+                    agent_id=agent_id,
+                    tokens=output.tokens_used,
+                    compliance_before=compliance_before,
+                    compliance_after=compliance_after
+                )
+
+                logger.info(
+                    "Turn tracked by Governor",
+                    extra={
+                        "task_id": task.id,
+                        "turn": current_turn,
+                        "tokens_used": output.tokens_used,
+                        "compliance_delta": turn_metrics.compliance_delta,
+                        "is_productive": turn_metrics.is_productive,
+                    }
+                )
+
+                # Track cost
+                if self.cost_tracker:
+                    self.cost_tracker.record_task_cost(
+                        task_id=task.id,
+                        cost=output.cost_usd,
+                        agent_name=agent_id
+                    )
+
+                # ============================================================
+                # CITATION LOOP: Check for violations and self-correct
+                # ============================================================
+                if output.mimiry_violations and current_turn < max_turns:
+                    logger.info(
+                        "Turn 1 non-compliant, injecting corrections for turn 2",
+                        extra={
+                            "task_id": task.id,
+                            "violations": output.mimiry_violations,
+                        }
+                    )
+
+                    # Inject corrections into task context for turn 2
+                    task.context = task.context or {}
+                    task.context["mimiry_corrections"] = output.mimiry_violations
+                    task.context["compliance_feedback"] = {
+                        "previous_confidence": output.confidence,
+                        "violations_to_fix": output.mimiry_violations,
+                        "instruction": "Address these violations in the revised code.",
+                    }
+
+                    compliance_before = compliance_after
+                    current_turn += 1
+                    continue
+
+                # Success or max turns reached
+                break
+
+            # ============================================================
+            # GOVERNANCE ESCALATION: Check for MASS trigger
+            # ============================================================
+            should_mass, mass_reason = self.governor.should_trigger_mass(task.id)
+
+            if should_mass and mass_reason == MASSTriggeredReason.COMPLIANCE_REGRESSION:
+                logger.warning(
+                    "Compliance regression detected - swapping to specialist",
+                    extra={
+                        "task_id": task.id,
+                        "mass_reason": mass_reason.value,
+                        "original_agent": agent_id,
+                    }
+                )
+
+                # Prune current agent
+                self.swarm._dropout.prune_agent(agent_id, DropoutReason.SUBSTANDARD_OUTPUT)
+
+                # Spawn specialist with FAANG strictness (per user directive)
+                task_desc = task.description.lower()
+                if "security" in task_desc or "auth" in task_desc:
+                    new_agent = self.swarm.spawn_for_complexity(
+                        0.9,
+                        {"task": "security audit", "strictness": "FAANG_GOLDEN_PATH"}
+                    )
+                else:
+                    new_agent = self.swarm._dropout.spawn_chameleon({"task": task.description})
+
+                # Update task assignment
+                task.assigned_agent = new_agent.agent_id if new_agent else agent_id
+
+                # Inject FAANG strictness for escalated agent
+                task.context = task.context or {}
+                task.context["fql_governance"]["strictness"] = StrictnessLevel.FAANG_GOLDEN_PATH.value
+
+                logger.info(
+                    "Agent swapped due to compliance regression",
+                    extra={
+                        "task_id": task.id,
+                        "new_agent": new_agent.agent_id if new_agent else "none",
+                        "new_type": new_agent.agent_type.value if new_agent else "none",
+                    }
+                )
+
+            # Build result dictionary
             result = {
-                "agent": "CodingAgent",
+                "agent": agent_id,
                 "code": {
                     output.file_path: output.production_code
                 } if output.production_code else {},
@@ -342,39 +495,40 @@ class Warden:
                 "violations": output.mimiry_violations,
                 "tokens_used": output.tokens_used,
                 "model": output.llm_model,
-                "lorebook_used": output.lorebook_context_used # Kept for compatibility
+                "lorebook_used": output.lorebook_context_used,
+                "turns_used": current_turn,
+                "governor_tracked": True,
             }
 
-            # Add basic vetting results (compatibility)
+            # Add vetting results
             if output.production_code:
-                 result["vetting_results"] = {
+                result["vetting_results"] = {
                     "mypy_strict": True,
                     "test_coverage": 99 if output.test_code else 0,
                     "security_scan": True
                 }
 
             logger.info(
-                "Task executed successfully",
+                "Task executed with Governor tracking",
                 extra={
                     "task_id": task.id,
                     "status": output.status,
-                    "cost": output.cost_usd,
-                    "confidence": output.confidence
+                    "turns_used": current_turn,
+                    "final_confidence": output.confidence,
                 }
             )
 
             # Record Outcome (Learning)
             if self.lorebook and (output.production_code or output.test_code):
-                 # Verify first
-                 verification = await self.verify_task_completion(task, result)
+                verification = await self.verify_task_completion(task, result)
 
-                 # NEW: Post-execution verification with TaskVerifier if success logic passed
-                 if output.status == "completed" and self.task_verifier:
+                # Post-execution verification
+                if output.status == "completed" and self.task_verifier:
                     verifier_result = await self.task_verifier.verify_task(
                         task=task,
-                        level="import", # Standard check
-                        code_files=result["code"], # type: ignore
-                        test_files=result["tests"] # type: ignore
+                        level="import",
+                        code_files=result["code"],
+                        test_files=result["tests"]
                     )
 
                     if not verifier_result.verified:
@@ -382,35 +536,17 @@ class Warden:
                             "Post-execution verification failed",
                             extra={"task_id": task.id, "issues": verifier_result.issues}
                         )
-
-                        # Check if escalation needed (complex issues)
-                        needs_mimiry = any("import" in issue.lower() for issue in verifier_result.issues)
-
-                        if needs_mimiry and self.mimiry:
-                            logger.info("Escalating to Mimiry verification", extra={"task_id": task.id})
-                            mimiry_verification = await self.task_verifier.verify_task(
-                                task=task,
-                                level="mimiry",
-                                code_files=result["code"], # type: ignore
-                                test_files=result["tests"] # type: ignore
-                            )
-                            verifier_result = mimiry_verification
-
-                        # Override status
                         result["status"] = "failed_verification"
                         result["verification_issues"] = verifier_result.issues
 
-                        # Update database
                         if self.task_store:
                             await self.task_store.update_task_status(
                                 task_id=task.id,
                                 status="needs_verification",
                                 warden_verification="rejected"
                             )
-
                         verification = "rejected"
                     else:
-                        # Update database with completion
                         if self.task_store:
                             await self.task_store.update_task_status(
                                 task_id=task.id,
@@ -418,15 +554,16 @@ class Warden:
                                 warden_verification="approved"
                             )
 
-                 outcome = Outcome(
-                    decision_id=task.trace_id, # Linking to trace_id as proxy
+                outcome = Outcome(
+                    decision_id=task.trace_id,
                     success=(verification == "approved"),
                     metrics={
                         "confidence": output.confidence,
-                        "cost": output.cost_usd
+                        "cost": output.cost_usd,
+                        "turns_used": current_turn,
                     }
-                 )
-                 await self.lorebook.record_outcome(outcome)
+                )
+                await self.lorebook.record_outcome(outcome)
 
             return [result]
 
@@ -437,104 +574,176 @@ class Warden:
                 exc_info=True
             )
 
-            # Return failure result
             return [{
-                "agent": "CodingAgent",
+                "agent": agent_id,
                 "code": {},
                 "tests": {},
                 "explanation": f"Task execution failed: {str(e)}",
                 "cost": 0.0,
-                "status": "failed"
+                "status": "failed",
+                "governor_tracked": False,
             }]
 
     async def receive_proposal(
         self,
-        saga_request: str,
-        context: dict[str, Any],
-        trace_id: str
+        fql_packet: FQLPacket | None = None,
+        saga_request: str = "",
+        context: dict[str, Any] | None = None,
+        trace_id: str = ""
     ) -> WardenProposal:
         """
         Receive delegation proposal from SAGA.
 
+        PHASE 8: Zero-Trust FQL Enforcement
+        -----------------------------------
+        Raw text proposals are REJECTED with 400 Bad Request.
+        Only FQLPacket requests are processed.
+
         Process:
-        1. Consult Mimiry about the request (check if it aligns with ideal)
-        2. Check for rule violations via Mimiry
+        1. Validate FQL packet (reject raw text with Protocol Hint)
+        2. Validate via Mimiry FQL Gateway
         3. Decompose into tasks
         4. Estimate costs
         5. Create TODO list or reject
 
         Args:
-            saga_request: What SAGA wants done
+            fql_packet: FQL structured request (REQUIRED for Phase 8+)
+            saga_request: DEPRECATED - Raw text request (will be rejected)
             context: Additional context (user preferences, budget, etc.)
             trace_id: Correlation ID for tracing
 
         Returns:
             WardenProposal with decision and rationale
 
-        Example:
-            >>> proposal = await warden.receive_proposal(
-            ...     saga_request="Create REST API endpoint for user creation",
-            ...     context={"budget": 100, "language": "python"},
-            ...     trace_id="xyz-789"
+        Example (FQL - Approved):
+            >>> packet = create_fql_packet(
+            ...     sender="SAGA-Orchestrator",
+            ...     action=FQLAction.VALIDATE_PATTERN,
+            ...     subject="CreateUserEndpoint",
+            ...     principle_id="SDLC-RESILIENCE-04"
             ... )
+            >>> proposal = await warden.receive_proposal(fql_packet=packet)
             >>> proposal.decision
             'approved'
+
+        Example (Raw Text - Rejected):
+            >>> proposal = await warden.receive_proposal(
+            ...     saga_request="Create user endpoint",  # DEPRECATED
+            ...     context={"budget": 100}
+            ... )
+            >>> proposal.decision
+            'rejected'
+            >>> "Non-FQL Protocol" in proposal.rationale
+            True
         """
+        context = context or {}
+
+        # ============================================================
+        # PHASE 8: Zero-Trust FQL Enforcement
+        # ============================================================
+        if fql_packet is None:
+            # Raw text detected - REJECT with Protocol Hint
+            logger.warning(
+                "Non-FQL protocol detected - rejecting raw text proposal",
+                extra={
+                    "raw_request": saga_request[:100] if saga_request else "empty",
+                    "trace_id": trace_id,
+                    "protocol_hint": "saga/core/mae/fql_schema.py",
+                }
+            )
+
+            return WardenProposal(
+                decision="rejected",
+                rationale=(
+                    "400 Bad Request: Non-FQL Protocol. "
+                    "Raw text queries are deprecated as of Phase 8. "
+                    "Use FQLPacket from saga/core/mae/fql_schema.py. "
+                    "See: create_fql_packet() for helper function."
+                ),
+                sagacodex_violations=[
+                    "PROTOCOL-001: Raw text queries deprecated",
+                    "PROTOCOL-002: Use FQLPacket for structured contracts",
+                ],
+            )
+
+        # FQL packet provided - extract request details
+        trace_id = trace_id or fql_packet.header.correlation_id
+        saga_request = f"{fql_packet.payload.action.value}: {fql_packet.payload.subject}"
+
         logger.info(
-            "Warden received proposal from SAGA",
+            "Warden received FQL proposal",
             extra={
-                "request": saga_request[:100],
+                "action": fql_packet.payload.action.value,
+                "subject": fql_packet.payload.subject,
+                "principle_id": fql_packet.governance.mimiry_principle_id,
+                "strictness": fql_packet.governance.strictness_level.value,
                 "trace_id": trace_id,
             }
         )
 
-        # STEP 1: Consult Mimiry about the request
-        mimiry_response = await self.mimiry.consult_on_discrepancy(
-            question=f"Does this request align with SagaCodex ideal? Request: {saga_request}",
-            context=context,
+        # ============================================================
+        # STEP 1: Validate via Mimiry FQL Gateway
+        # ============================================================
+        compliance_result = await self.mimiry.validate_proposal(
+            fql_packet=fql_packet,
             trace_id=trace_id
         )
 
         logger.info(
-            "Mimiry consulted on proposal",
+            "Mimiry FQL validation complete",
             extra={
-                "mimiry_severity": mimiry_response.severity,
-                "violations": len(mimiry_response.violations_detected),
+                "is_compliant": compliance_result.is_compliant,
+                "compliance_score": compliance_result.compliance_score,
+                "citations": len(compliance_result.principle_citations),
                 "trace_id": trace_id,
             }
         )
 
         # STEP 2: Check if violations are critical
-        if mimiry_response.severity == "CRITICAL":
+        if not compliance_result.is_compliant and compliance_result.compliance_score < 50.0:
             logger.warning(
-                "Proposal violates SagaCodex critically",
+                "FQL proposal failed compliance check",
                 extra={
-                    "violations": mimiry_response.violations_detected,
+                    "compliance_score": compliance_result.compliance_score,
+                    "corrections": compliance_result.corrections,
                     "trace_id": trace_id,
                 }
             )
 
             return WardenProposal(
                 decision="rejected",
-                rationale=mimiry_response.canonical_answer,
-                sagacodex_violations=mimiry_response.violations_detected,
-                mimiry_guidance=mimiry_response,
+                rationale="; ".join(compliance_result.corrections) if compliance_result.corrections else "FQL validation failed",
+                sagacodex_violations=compliance_result.corrections,
             )
 
-        # STEP 3: If warnings exist, note them but proceed
-        violations = mimiry_response.violations_detected if mimiry_response.severity == "WARNING" else []
+        # STEP 3: Extract warnings if partially compliant
+        violations = compliance_result.corrections if not compliance_result.is_compliant else []
+
+        # Merge FQL context with provided context
+        merged_context = {**fql_packet.payload.context, **context}
 
         # STEP 4: Decompose into tasks
-        tasks = await self.decompose_into_tasks(saga_request, context, trace_id)
+        tasks = await self.decompose_into_tasks(
+            request=fql_packet.payload.subject,
+            context=merged_context,
+            trace_id=trace_id
+        )
 
         # STEP 5: Create Task Graph
         task_graph = TaskGraph()
         for task in tasks:
+            # Inject FQL governance into task
+            task.context = task.context or {}
+            task.context["fql_governance"] = {
+                "principle_id": fql_packet.governance.mimiry_principle_id,
+                "strictness": fql_packet.governance.strictness_level.value,
+                "compliance_score": compliance_result.compliance_score,
+            }
             task_graph.add_task(task)
 
         # STEP 6: Estimate costs
         total_cost = sum(task.budget_allocation for task in tasks)
-        user_budget = context.get("budget", float('inf'))
+        user_budget = merged_context.get("budget", float('inf'))
 
         if total_cost > user_budget:
             logger.warning(
@@ -545,9 +754,8 @@ class Warden:
                     "trace_id": trace_id,
                 }
             )
-            # Triggers SagaConstitution Rule 14 (Budget Must Be Respected)
 
-        # STEP 7: Return approval
+        # STEP 7: Persist and return approval
         if self.task_store and task_graph:
             await self.task_store.save_task_graph(
                 graph=task_graph,
@@ -562,9 +770,8 @@ class Warden:
         return WardenProposal(
             decision="approved",
             task_graph=task_graph,
-            rationale="Tasks decomposed and validated via Mimiry consultation",
+            rationale=f"FQL validated with score {compliance_result.compliance_score:.1f}%. Tasks decomposed.",
             sagacodex_violations=violations,
-            mimiry_guidance=mimiry_response,
             estimated_cost=total_cost,
             estimated_time_minutes=len(tasks) * 5,
         )
@@ -791,7 +998,7 @@ class Warden:
                     id=f"task-{uuid.uuid4()}",
                     description=description,
                     weight=weight, # type: ignore
-                    budget_allocation=context.get("budget", 50.0),
+                    budget_allocation=context.get("budget", 100.0),
                     checklist=self.build_checklist_for_task(description, weight),
                     vetting_criteria={
                         "mypy_strict": True,
@@ -804,6 +1011,139 @@ class Warden:
 
         return tasks
 
+    async def solve_request(
+        self,
+        user_input: str,
+        context: dict[str, Any],
+        trace_id: Optional[str] = None
+    ) -> dict[str, Any]:
+        """
+        Execute the full 'Solve Request' loop via LangGraph Governance.
+        Refactored in Phase 3 to use Parallel Sovereignty Graph.
+
+        Uses async stream to implement "Double-Write Persistence" to JSON.
+        """
+
+        # 1. Enforce Trace ID (The Passport)
+        if not trace_id:
+            trace_id = f"gen-{uuid.uuid4()}"
+            logger.info(f"Generated new trace_id: {trace_id}")
+
+        logger.info(
+            "Warden received solve request (Parallel Graph Mode)",
+            extra={"input": user_input[:100], "trace_id": trace_id}
+        )
+
+        # 2. Initialize State (Phase 3 Structure)
+        initial_state: WardenState = {
+            "task_input": user_input,
+            "context": context,
+            "trace_id": trace_id,
+            "plan": None,
+            "alpha_output": None,
+            "beta_output": None,
+            "merged_result": None,
+            "conflict_detected": False,
+            "ledger_proposal": None,
+            "user_feedback": None,
+            "history": [],
+            "iteration_count": 0,
+            "status": "planning"
+        }
+
+        # Check for recovery if not provided explicit state
+        # (For now, we assume new request if passed arguments, or we could check DB)
+
+        # 3. Execute Graph with Double-Write
+        config = {"configurable": {"thread_id": trace_id}, "recursion_limit": 150}
+
+        # Check for existing state to resume
+        resume_input = initial_state
+        try:
+            snapshot = await self.graph.aget_state(config)
+            if snapshot.values:
+                logger.info(f"Resuming existing graph state for {trace_id}")
+                resume_input = None  # Resume from checkpoint
+        except Exception as e:
+            logger.warning(f"Could not check existing state, starting fresh: {e}")
+
+        final_state = initial_state
+
+        try:
+            # using astream to capture events for persistence
+            async for event in self.graph.astream(resume_input, config=config):
+                # event is a dict of node_name: state_update
+                for node, _ in event.items():
+                    logger.info(f"Graph Node '{node}' completed", extra={"trace_id": trace_id})
+
+                # Fetch full authoritative state
+                snapshot = await self.graph.aget_state(config)
+                current_state = snapshot.values
+                final_state = current_state  # Update tracker
+
+                # DOUBLE-WRITE: Persist to JSON
+                await self._save_checkpoint_json(current_state, trace_id)
+
+            logger.info("Warden Graph Execution Completed", extra={"status": final_state.get("status")})
+
+            # "proposing" is a valid success state (paused for HITL)
+            success_statuses = ["completed", "proposing"]
+            status = "success" if final_state.get("status") in success_statuses else "failed"
+
+            return {
+                "status": status,
+                "result": final_state.get("merged_result"),
+                "proposal": final_state.get("ledger_proposal"),
+                "history": final_state.get("history", []),
+                "artifacts": [final_state]
+            }
+
+        except Exception as e:
+            logger.error(
+                f"[{trace_id}] - Graph Failure! Dumping History...",
+                exc_info=True
+            )
+            return {
+                "status": "error",
+                "message": str(e),
+                "history": final_state.get("history", [])
+            }
+
+    async def _save_checkpoint_json(self, state: dict[str, Any], trace_id: str) -> None:
+        """
+        Phase 3: Double-Write Persistence.
+        Writes the current state to a JSON file as a fallback.
+        """
+        import json
+        try:
+            filename = f"state_checkpoint_{trace_id}.json"
+            path = Path(self.project_root) / ".saga" / "checkpoints" / filename
+            path.parent.mkdir(parents=True, exist_ok=True)
+
+            # Serialize state (handle non-serializable objects if any)
+            # WardenState should be mostly dicts/strings.
+            # If complex objects exist, we might need a custom encoder.
+
+            async with aiofiles.open(path, "w") as f:
+                await f.write(json.dumps(state, default=str, indent=2))
+
+        except Exception as e:
+            logger.warning(f"Failed to write JSON checkpoint: {e}")
+
+    async def _recover_from_json(self, trace_id: str) -> Optional[dict[str, Any]]:
+        """Attempt to load state from JSON checkpoint."""
+        import json
+        try:
+            filename = f"state_checkpoint_{trace_id}.json"
+            path = Path(self.project_root) / ".saga" / "checkpoints" / filename
+
+            if path.exists():
+                async with aiofiles.open(path, "r") as f:
+                    content = await f.read()
+                    return json.loads(content)
+        except Exception as e:
+            logger.warning(f"Failed to recover from JSON checkpoint: {e}")
+        return None
 
     async def verify_task_completion(
         self,

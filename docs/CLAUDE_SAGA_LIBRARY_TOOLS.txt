@@ -1,0 +1,736 @@
+# SAGA: Complete Granular Technical Stack
+
+I’ll map **every single library** needed for each component, from user keystroke to IDE execution.
+
+-----
+
+## LAYER 1: USER INTERFACE (Command Center)
+
+### Frontend Framework
+
+```bash
+# Desktop Framework
+tauri = "2.1.0" # Rust-based desktop wrapper
+tauri-cli = "2.1.0" # CLI for building Tauri apps
+
+# UI Framework (choose ONE)
+react = "18.2.0" # Component library
+react-dom = "18.2.0" # DOM rendering
+# OR
+svelte = "4.2.0" # Alternative (lighter)
+
+# Build tooling
+vite = "5.0.0" # Fast build tool
+typescript = "5.3.0" # Type safety
+```
+
+### UI Components
+
+```bash
+# Code display
+monaco-editor = "0.45.0" # VS Code's editor (for showing generated code)
+@monaco-editor/react = "4.6.0" # React wrapper
+
+# Terminal emulation
+xterm = "5.3.0" # Terminal component
+xterm-addon-fit = "0.8.0" # Auto-resize terminal
+
+# Real-time updates
+socket.io-client = "4.7.0" # WebSocket client
+
+# UI primitives
+@radix-ui/react-* = "latest" # Accessible components
+tailwindcss = "3.4.0" # Styling
+lucide-react = "0.294.0" # Icons
+```
+
+### State Management
+
+```bash
+zustand = "4.4.0" # Lightweight state management
+# OR
+jotai = "2.6.0" # Atomic state
+```
+
+-----
+
+## LAYER 2: BACKEND API (Saga’s Brain)
+
+### Core Framework
+
+```python
+# API Framework
+fastapi==0.109.0 # Async web framework
+uvicorn[standard]==0.27.0 # ASGI server
+python-multipart==0.0.6 # File upload support
+websockets==12.0 # WebSocket support
+
+# CORS & Security
+python-jose[cryptography]==3.3.0 # JWT tokens
+passlib[bcrypt]==1.7.4 # Password hashing
+python-dotenv==1.0.0 # Environment variables
+```
+
+### Async & Concurrency
+
+```python
+asyncio # Built-in (async operations)
+aiohttp==3.9.1 # Async HTTP client
+aiofiles==23.2.1 # Async file operations
+httpx==0.26.0 # Modern async HTTP
+```
+
+### Data Validation
+
+```python
+pydantic==2.5.0 # Data validation & serialization
+pydantic-settings==2.1.0 # Settings management
+email-validator==2.1.0 # Email validation
+```
+
+-----
+
+## LAYER 3: SAGA AGENT (User-Facing AI)
+
+### LLM Integration
+
+```python
+# Provider-agnostic LLM calls
+litellm==1.17.0 # Unified API for all LLM providers
+# (OpenAI, Anthropic, Cohere, local, etc.)
+
+# OR individual providers
+anthropic==0.8.0 # Claude API
+openai==1.7.0 # ChatGPT API
+cohere==4.38.0 # Cohere API
+
+# Prompt management
+jinja2==3.1.2 # Prompt templating
+langchain-core==0.1.10 # Core abstractions (if using LangChain)
+```
+
+### Structured Output Enforcement
+
+```python
+instructor==0.4.5 # Forces LLMs to return structured data
+# (works with OpenAI, Anthropic, etc.)
+jsonschema==4.20.0 # JSON schema validation
+```
+
+### Context Management
+
+```python
+tiktoken==0.5.2 # Token counting (OpenAI)
+anthropic-tokenizer==0.1.0 # Token counting (Claude)
+```
+
+### External Consultation APIs
+
+```python
+# When Saga needs outside help
+requests==2.31.0 # HTTP requests
+perplexity-python # Perplexity API (if available)
+# Note: Most external APIs use the LLM clients above
+```
+
+-----
+
+## LAYER 4: WARDEN (Task Orchestrator)
+
+### Multi-Agent Framework
+
+```python
+langgraph==0.0.20 # State machine for agent workflows
+# THIS IS CRITICAL - handles Warden's logic
+
+langchain==0.1.0 # Agent tooling
+langchain-community==0.0.13 # Community integrations
+```
+
+### Task Queue & Messaging
+
+```python
+# For managing subagent tasks
+celery==5.3.4 # Distributed task queue
+redis==5.0.1 # Message broker & cache
+kombu==5.3.4 # Celery messaging library
+
+# OR lighter alternative
+rq==1.15.1 # Simple task queue
+```
+
+### Workflow State Management
+
+```python
+# For tracking Warden's decisions
+sqlalchemy==2.0.25 # Database ORM (if persisting state)
+alembic==1.13.1 # Database migrations
+aiosqlite==0.19.0 # Async SQLite
+```
+
+-----
+
+## LAYER 5: MIMIR (Oracle/Knowledge Base)
+
+### Vector Database
+
+```python
+# For semantic search of best practices
+chromadb==0.4.22 # LOCAL vector database (RECOMMENDED)
+# Stores embeddings of coding standards
+
+# OR alternatives
+qdrant-client==1.7.0 # Production vector DB
+faiss-cpu==1.7.4 # Facebook's vector search
+
+# Embedding generation
+sentence-transformers==2.2.2 # Generate embeddings locally
+# Model: 'all-MiniLM-L6-v2'
+```
+
+### Document Processing (for loading standards into Mimir)
+
+```python
+# Parse documentation
+pypdf==3.17.4 # PDF parsing
+python-docx==1.1.0 # Word docs
+markdown==3.5.1 # Markdown parsing
+beautifulsoup4==4.12.2 # HTML parsing
+lxml==5.0.0 # XML/HTML parser
+
+# Unified document loader
+unstructured==0.11.6 # Parse ANY document format
+```
+
+### Knowledge Graph (Optional but powerful)
+
+```python
+networkx==3.2.1 # Graph analysis
+rdflib==7.0.0 # Semantic relationships
+```
+
+-----
+
+## LAYER 6: CODE QUALITY ENFORCEMENT
+
+### Linting & Formatting
+
+```python
+# ALL-IN-ONE (HIGHLY RECOMMENDED)
+ruff==0.1.11 # Replaces: flake8, isort, black, pylint
+# 10-100x faster than alternatives
+
+# OR individual tools
+black==23.12.1 # Code formatting
+isort==5.13.2 # Import sorting
+autopep8==2.0.4 # PEP 8 formatting
+```
+
+### Static Analysis
+
+```python
+# Code quality
+pylint==3.0.3 # Comprehensive linting
+flake8==7.0.0 # Style guide enforcement
+pyflakes==3.1.0 # Logical errors
+
+# Complexity analysis
+mccabe==0.7.0 # Cyclomatic complexity
+radon==6.0.1 # Maintainability metrics
+```
+
+### Type Checking
+
+```python
+mypy==1.8.0 # Static type checker
+pyright==1.1.347 # Microsoft's type checker (faster)
+pyre-check==0.9.19 # Facebook's type checker
+```
+
+### Security Scanning
+
+```python
+bandit==1.7.6 # Security vulnerability scanner
+safety==2.3.5 # Dependency vulnerability checker
+pip-audit==2.6.1 # Supply chain security
+dodgy==0.2.1 # Looks for secrets/passwords
+semgrep==1.50.0 # POWERFUL pattern-based scanner
+# Custom rules for architecture patterns
+```
+
+### Dead Code & Unused Dependencies
+
+```python
+vulture==2.11 # Dead code detection
+pydeps==1.12.17 # Dependency analysis
+pipdeptree==2.13.1 # Dependency tree visualization
+```
+
+### Code Metrics
+
+```python
+# For Mimir to judge "good code"
+wily==1.25.0 # Track code metrics over time
+cohesion==1.0.0 # Class cohesion metrics
+```
+
+-----
+
+## LAYER 7: AST MANIPULATION & CODE GENERATION
+
+### Abstract Syntax Tree
+
+```python
+ast # Built-in (parse Python code structure)
+astroid==3.0.2 # Enhanced AST (used by pylint)
+libcst==1.1.0 # Concrete syntax tree (preserves formatting)
+# USE THIS for code modifications
+```
+
+### Code Generation
+
+```python
+black==23.12.1 # Format generated code
+autopep8==2.0.4 # Alternative formatter
+```
+
+### Refactoring Tools
+
+```python
+rope==1.11.0 # Python refactoring library
+bowler==0.9.0 # Safe code modifications
+```
+
+-----
+
+## LAYER 8: IDE INTEGRATION (THE CRITICAL LAYER)
+
+### Language Server Protocol (PRIMARY METHOD)
+
+```python
+# LSP Server Implementation
+pygls==1.3.0 # Python LSP server framework
+# THIS IS HOW SAGA TALKS TO IDEs
+
+# LSP client (for testing)
+python-lsp-server==1.9.0 # Reference implementation
+```
+
+### File System Watching
+
+```python
+watchdog==3.0.0 # Monitor file changes in real-time
+# Saga watches IDE make changes
+```
+
+### IDE-Specific APIs
+
+#### VS Code / Cursor Extension
+
+```javascript
+// package.json dependencies
+{
+"@types/vscode": "^1.85.0",
+"vscode-languageclient": "^9.0.1", // LSP client
+"vscode-languageserver": "^9.0.1" // LSP server
+}
+```
+
+```python
+# Python bridge to VS Code extension
+websocket-client==1.7.0 # Talk to VS Code extension via WebSocket
+```
+
+#### Clipboard Automation (Fallback)
+
+```python
+pyperclip==1.8.2 # Cross-platform clipboard
+pyautogui==0.9.54 # Keyboard/mouse automation
+pynput==1.7.6 # Alternative input control
+```
+
+### Process Management
+
+```python
+psutil==5.9.7 # Monitor IDE process
+subprocess # Built-in (launch IDE)
+```
+
+-----
+
+## LAYER 9: TESTING & VALIDATION
+
+### Test Generation
+
+```python
+pytest==7.4.4 # Test framework
+hypothesis==6.92.2 # Property-based testing
+pytest-asyncio==0.23.3 # Async test support
+pytest-cov==4.1.0 # Coverage plugin
+coverage==7.4.0 # Coverage measurement
+```
+
+### Test Execution
+
+```python
+pytest-xdist==3.5.0 # Parallel test execution
+pytest-timeout==2.2.0 # Test timeouts
+```
+
+### Mocking
+
+```python
+unittest.mock # Built-in mocking
+pytest-mock==3.12.0 # Pytest mocking plugin
+responses==0.24.1 # Mock HTTP requests
+```
+
+-----
+
+## LAYER 10: LOGGING & MONITORING
+
+### Logging
+
+```python
+loguru==0.7.2 # Beautiful logging
+# Better than standard logging
+
+# Structured logging
+python-json-logger==2.0.7
+```
+
+### Performance Monitoring
+
+```python
+# Track Warden's performance
+prometheus-client==0.19.0 # Metrics
+py-spy==0.3.14 # Performance profiling
+memory-profiler==0.61.0 # Memory usage
+```
+
+### Error Tracking
+
+```python
+sentry-sdk==1.39.2 # Error monitoring (optional)
+```
+
+-----
+
+## LAYER 11: CONFIGURATION & DEPLOYMENT
+
+### Configuration Management
+
+```python
+pydantic-settings==2.1.0 # Settings from env vars
+python-decouple==3.8 # Separate config from code
+dynaconf==3.2.4 # Advanced config management
+```
+
+### Database (Optional - for persistence)
+
+```python
+# If storing conversation history, project metadata
+sqlalchemy==2.0.25 # ORM
+alembic==1.13.1 # Migrations
+aiosqlite==0.19.0 # Async SQLite
+asyncpg==0.29.0 # Async PostgreSQL
+```
+
+### Caching
+
+```python
+redis==5.0.1 # Cache LLM responses
+aiocache==0.12.2 # Async caching
+diskcache==5.6.3 # Persistent disk cache
+```
+
+-----
+
+## LAYER 12: UTILITIES
+
+### Data Structures
+
+```python
+attrs==23.2.0 # Better classes
+dataclasses # Built-in (Python 3.7+)
+```
+
+### Functional Utilities
+
+```python
+toolz==0.12.0 # Functional programming
+more-itertools==10.1.0 # Iterator recipes
+```
+
+### String Processing
+
+```python
+rich==13.7.0 # Beautiful terminal output
+click==8.1.7 # CLI framework (if needed)
+```
+
+### File Operations
+
+```python
+pathlib # Built-in (modern file paths)
+shutil # Built-in (file operations)
+```
+
+-----
+
+## COMPLETE REQUIREMENTS.TXT
+
+```txt
+# === LAYER 2: Backend API ===
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.6
+websockets==12.0
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-dotenv==1.0.0
+aiohttp==3.9.1
+aiofiles==23.2.1
+httpx==0.26.0
+pydantic==2.5.0
+pydantic-settings==2.1.0
+email-validator==2.1.0
+
+# === LAYER 3: Saga Agent ===
+litellm==1.17.0
+anthropic==0.8.0
+openai==1.7.0
+jinja2==3.1.2
+instructor==0.4.5
+jsonschema==4.20.0
+tiktoken==0.5.2
+requests==2.31.0
+
+# === LAYER 4: Warden ===
+langgraph==0.0.20
+langchain==0.1.0
+langchain-community==0.0.13
+celery==5.3.4
+redis==5.0.1
+kombu==5.3.4
+sqlalchemy==2.0.25
+alembic==1.13.1
+aiosqlite==0.19.0
+
+# === LAYER 5: Mimir ===
+chromadb==0.4.22
+sentence-transformers==2.2.2
+pypdf==3.17.4
+python-docx==1.1.0
+markdown==3.5.1
+beautifulsoup4==4.12.2
+lxml==5.0.0
+unstructured==0.11.6
+networkx==3.2.1
+
+# === LAYER 6: Code Quality ===
+ruff==0.1.11
+pylint==3.0.3
+mypy==1.8.0
+pyright==1.1.347
+bandit==1.7.6
+safety==2.3.5
+pip-audit==2.6.1
+semgrep==1.50.0
+vulture==2.11
+radon==6.0.1
+black==23.12.1
+
+# === LAYER 7: AST & Code Gen ===
+astroid==3.0.2
+libcst==1.1.0
+rope==1.11.0
+
+# === LAYER 8: IDE Integration ===
+pygls==1.3.0
+watchdog==3.0.0
+websocket-client==1.7.0
+pyperclip==1.8.2
+pyautogui==0.9.54
+psutil==5.9.7
+
+# === LAYER 9: Testing ===
+pytest==7.4.4
+hypothesis==6.92.2
+pytest-asyncio==0.23.3
+pytest-cov==4.1.0
+coverage==7.4.0
+
+# === LAYER 10: Logging ===
+loguru==0.7.2
+python-json-logger==2.0.7
+
+# === LAYER 11: Config ===
+pydantic-settings==2.1.0
+python-decouple==3.8
+diskcache==5.6.3
+
+# === LAYER 12: Utilities ===
+attrs==23.2.0
+rich==13.7.0
+```
+
+-----
+
+## EXECUTION FLOW WITH EXACT LIBRARIES
+
+### Step 1: User Input
+
+```
+User types in Tauri UI (React)
+↓ [socket.io-client]
+FastAPI backend receives via WebSocket
+↓ [pydantic]
+Input validation
+```
+
+### Step 2: Saga Processes
+
+```python
+# saga_agent.py
+from instructor import from_openai # Structured output
+from anthropic import Anthropic # Claude API
+from jinja2 import Template # Prompt formatting
+import tiktoken # Token counting
+
+# Saga reformats user input into optimized prompt
+optimized_prompt = Template(prompt_template).render(user_input)
+```
+
+### Step 3: Warden Receives Task
+
+```python
+# warden.py
+from langgraph.graph import StateGraph # State machine
+from langchain.agents import Agent # Agent framework
+import redis # Task queue
+
+# Warden breaks down into subtasks
+graph = StateGraph(...)
+subagent_tasks = graph.invoke(optimized_prompt)
+```
+
+### Step 4: Mimir Consultation
+
+```python
+# mimir.py
+import chromadb # Vector DB
+from sentence_transformers import SentenceTransformer # Embeddings
+
+# Query best practices
+collection = chroma_client.get_collection("best_practices")
+relevant_standards = collection.query(
+query_texts=[task_description],
+n_results=5
+)
+```
+
+### Step 5: Subagent Code Generation
+
+```python
+# subagent.py
+from instructor import from_anthropic
+import libcst as cst # Code manipulation
+
+# Generate code with structure
+generated_code = llm_call_with_structure(...)
+parsed_tree = cst.parse_module(generated_code)
+```
+
+### Step 6: Quality Checks
+
+```python
+# quality_checker.py
+import ruff # Linting
+from bandit import run_bandit # Security
+import mypy.api # Type checking
+from semgrep import semgrep_main # Pattern analysis
+
+# Run all checks
+ruff_results = ruff.check(code)
+security_issues = run_bandit(code)
+type_errors = mypy.api.run([file_path])
+```
+
+### Step 7: Warden Consolidates
+
+```python
+# warden.py
+from langchain.output_parsers import PydanticOutputParser
+
+# Resolve discrepancies between subagents
+final_code = warden_graph.consolidate(
+subagent_outputs,
+quality_checks
+)
+```
+
+### Step 8: Saga Final Review
+
+```python
+# saga_agent.py
+# External consultation if needed
+if needs_external_help:
+perplexity_response = httpx.post(
+"https://api.perplexity.ai/...",
+json={"query": question}
+)
+```
+
+### Step 9: Send to IDE
+
+```python
+# ide_bridge.py
+from pygls import server # LSP server
+import watchdog # File watching
+import websocket # Communication
+
+# Method 1: LSP
+lsp_server.text_document_did_change(uri, final_code)
+
+# Method 2: Direct file write + watch
+with open(file_path, 'w') as f:
+f.write(final_code)
+
+# Watch IDE implement changes
+observer = watchdog.observers.Observer()
+observer.schedule(handler, path, recursive=True)
+```
+
+### Step 10: Real-time Monitoring
+
+```python
+# monitor.py
+from pygls import server
+from watchdog.events import FileSystemEventHandler
+
+class SagaWatcher(FileSystemEventHandler):
+def on_modified(self, event):
+# Saga sees IDE making changes
+new_code = read_file(event.src_path)
+quality_check_realtime(new_code)
+```
+
+-----
+
+## CRITICAL DEPENDENCIES SUMMARY
+
+**Absolute Must-Haves:**
+
+1. `fastapi` - Backend API
+1. `langgraph` - Warden’s state machine
+1. `chromadb` - Mimir’s knowledge base
+1. `pygls` - IDE communication via LSP
+1. `ruff` + `bandit` + `mypy` - Code quality
+1. `litellm` or `anthropic`/`openai` - LLM calls
+1. `instructor` - Structured LLM outputs
+1. `watchdog` - File monitoring
+1. `libcst` - Code manipulation
+1. `pydantic` - Data validation everywhere
+
+This is your complete technical blueprint. Every library has a specific purpose in Saga’s workflow.​​​​​​​​​​​​​​​​

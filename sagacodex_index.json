@@ -1,0 +1,221 @@
+{
+  "version": "1.0.0",
+  "language": "Python",
+  "framework": "FastAPI",
+  "generated_at": "2025-12-24T19:01:56.714657Z",
+  "rules": [
+    {
+      "id": "1",
+      "title": "Type Safety (MANDATORY)",
+      "severity": "CRITICAL",
+      "category": "General",
+      "tags": [],
+      "affected_artifacts": [
+        "all"
+      ],
+      "enforcement_phase": "pre-merge",
+      "description": "Type Safety (MANDATORY)",
+      "checklist_item": "Every function signature must have complete type hints."
+    },
+    {
+      "id": "2",
+      "title": "Async/Await Best Practices",
+      "severity": "CRITICAL",
+      "category": "Technical",
+      "tags": [
+        "async",
+        "io",
+        "fastapi",
+        "performance"
+      ],
+      "affected_artifacts": [
+        "all"
+      ],
+      "enforcement_phase": "pre-merge",
+      "description": "Async/Await Best Practices",
+      "checklist_item": "Use `async/await` for I/O-bound operations (database, API calls, file I/O)  "
+    },
+    {
+      "id": "3",
+      "title": "Error Handling (Explicit & Contextual)",
+      "severity": "ERROR",
+      "category": "Technical",
+      "tags": [
+        "error-handling",
+        "exceptions",
+        "defensive"
+      ],
+      "affected_artifacts": [
+        "all"
+      ],
+      "enforcement_phase": "pre-merge",
+      "description": "Error Handling (Explicit & Contextual)",
+      "checklist_item": "Custom exceptions with context  "
+    },
+    {
+      "id": "4",
+      "title": "Structured Logging (No Print Statements)",
+      "severity": "WARNING",
+      "category": "Technical",
+      "tags": [
+        "logging",
+        "observability",
+        "debugging"
+      ],
+      "affected_artifacts": [
+        "all"
+      ],
+      "enforcement_phase": "pre-merge",
+      "description": "Structured Logging (No Print Statements)",
+      "checklist_item": "All logs include `trace_id`, `user_id`, `operation`, `outcome`  "
+    },
+    {
+      "id": "5",
+      "title": "Input Validation at Boundaries",
+      "severity": "CRITICAL",
+      "category": "General",
+      "tags": [],
+      "affected_artifacts": [
+        "all"
+      ],
+      "enforcement_phase": "pre-merge",
+      "description": "Input Validation at Boundaries",
+      "checklist_item": "Validate all external inputs before use  "
+    },
+    {
+      "id": "6",
+      "title": "Dependency Injection (Always)",
+      "severity": "CRITICAL",
+      "category": "General",
+      "tags": [],
+      "affected_artifacts": [
+        "all"
+      ],
+      "enforcement_phase": "pre-merge",
+      "description": "Dependency Injection (Always)",
+      "checklist_item": "Use FastAPI's `Depends()` for all external dependencies  "
+    },
+    {
+      "id": "7",
+      "title": "Pydantic Models for Request/Response",
+      "severity": "CRITICAL",
+      "category": "General",
+      "tags": [],
+      "affected_artifacts": [
+        "all"
+      ],
+      "enforcement_phase": "pre-merge",
+      "description": "Pydantic Models for Request/Response",
+      "checklist_item": "All API inputs and outputs use Pydantic models  "
+    },
+    {
+      "id": "8",
+      "title": "Background Tasks for Long Operations",
+      "severity": "CRITICAL",
+      "category": "General",
+      "tags": [],
+      "affected_artifacts": [
+        "all"
+      ],
+      "enforcement_phase": "pre-merge",
+      "description": "Background Tasks for Long Operations",
+      "checklist_item": "Operations >100ms use `BackgroundTasks`  "
+    },
+    {
+      "id": "9",
+      "title": "Session Management (Context Manager)",
+      "severity": "CRITICAL",
+      "category": "General",
+      "tags": [],
+      "affected_artifacts": [
+        "all"
+      ],
+      "enforcement_phase": "pre-merge",
+      "description": "Session Management (Context Manager)",
+      "checklist_item": "Use async context manager for session lifecycle  "
+    },
+    {
+      "id": "10",
+      "title": "Explicit Queries (No Lazy Loading)",
+      "severity": "CRITICAL",
+      "category": "General",
+      "tags": [],
+      "affected_artifacts": [
+        "all"
+      ],
+      "enforcement_phase": "pre-merge",
+      "description": "Explicit Queries (No Lazy Loading)",
+      "checklist_item": "Use `selectinload()` or `joinedload()` for relationships  "
+    },
+    {
+      "id": "11",
+      "title": "Pytest + Async",
+      "severity": "CRITICAL",
+      "category": "General",
+      "tags": [],
+      "affected_artifacts": [
+        "all"
+      ],
+      "enforcement_phase": "pre-merge",
+      "description": "Pytest + Async",
+      "checklist_item": "Pytest + Async"
+    },
+    {
+      "id": "12",
+      "title": "Event Sourcing Pattern (Phase 1 Architecture)",
+      "severity": "CRITICAL",
+      "category": "General",
+      "tags": [],
+      "affected_artifacts": [
+        "all"
+      ],
+      "enforcement_phase": "pre-merge",
+      "description": "Event Sourcing Pattern (Phase 1 Architecture)",
+      "checklist_item": "Use existing event-sourced architecture  "
+    },
+    {
+      "id": "13",
+      "title": "Circuit Breaker for External APIs (Phase 1 Pattern)",
+      "severity": "CRITICAL",
+      "category": "General",
+      "tags": [],
+      "affected_artifacts": [
+        "all"
+      ],
+      "enforcement_phase": "pre-merge",
+      "description": "Circuit Breaker for External APIs (Phase 1 Pattern)",
+      "checklist_item": "All external API calls use circuit breaker  "
+    },
+    {
+      "id": "14",
+      "title": "Observability (trace_id Required)",
+      "severity": "CRITICAL",
+      "category": "General",
+      "tags": [],
+      "affected_artifacts": [
+        "all"
+      ],
+      "enforcement_phase": "pre-merge",
+      "description": "Observability (trace_id Required)",
+      "checklist_item": "Every operation has trace_id  "
+    },
+    {
+      "id": "45",
+      "title": "Minimize Diff Surface for Safe Fixes",
+      "severity": "CRITICAL",
+      "category": "General",
+      "tags": [
+        "refactoring",
+        "tests",
+        "mypy",
+        "diff-size"
+      ],
+      "affected_artifacts": [
+        "all"
+      ],
+      "enforcement_phase": "pre-merge",
+      "description": "Minimize Diff Surface for Safe Fixes",
+      "checklist_item": "Minimal changes for static-analysis-only fixes (mypy, lint)  "
+    }
+  ]
+}

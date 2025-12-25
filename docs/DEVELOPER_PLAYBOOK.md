@@ -28,6 +28,7 @@ If tests fail due to dependency version mismatches (e.g., `AsyncClient` errors):
    ```
 
 3. **Install**:
+
    ```powershell
    pip install -r requirements-dev.txt
    pip install -e .
@@ -55,6 +56,7 @@ If E2E tests are flaky or see "ghost" metrics:
 - Ensure the singleton `HealthMonitor` is reset between tests.
 - Check `tests/conftest.py` for the `reset_health_monitor` autouse fixture.
 - If debugging, compare object IDs:
+
   ```python
   from saga.api import server, health_monitor
   print(id(server.health_monitor), id(health_monitor.health_monitor))

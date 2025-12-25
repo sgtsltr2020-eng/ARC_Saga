@@ -119,6 +119,7 @@ class CodingAgent:
         project_root: str, # Compatibility arg
         language_profile: str = "python_fastapi", # Compatibility arg
         critical: bool = False, # Compatibility arg
+        persona: Any = None # NEW: Accepted Persona object
     ) -> AgentOutput:
         """
         Execute task - generate code via LLM.
@@ -128,6 +129,7 @@ class CodingAgent:
             project_root: Project root path
             language_profile: Profile name
             critical: Critical tasks use verification
+            persona: Optional Persona object defining system prompt/role
 
         Returns:
             AgentOutput with generated code and validation results
@@ -137,7 +139,8 @@ class CodingAgent:
             extra={
                 "task_id": task.id,
                 "description": task.description,
-                "agent": self.agent_name
+                "agent": self.agent_name,
+                "persona": persona.name if persona else "Default"
             }
         )
 
@@ -150,10 +153,17 @@ class CodingAgent:
         lorebook_patterns = await self._get_lorebook_patterns()
 
         # 2. Build prompt
+        # If persona is provided, we might want to override the system prompt
+        # For now, we'll pass it in project_context or handle it in prompt_builder
+        # Assuming prompt_builder needs update or we hack it here
+
+        system_prompt_override = persona.system_prompt if persona else None
+
         messages = self.prompt_builder.build_messages(
             task=task,
             lorebook_patterns=lorebook_patterns,
-            project_context=project_context
+            project_context=project_context,
+            system_prompt_override=system_prompt_override # Assuming we will update PromptBuilder to accept this
         )
 
         # 3. Call LLM

@@ -1,8 +1,0 @@
-httpx==0.23.3
-httpcore==0.16.3
-pytest
-pytest-asyncio
-anyio
-starlette
-fastapi
-# Add other project deps effectively or install in editable mode

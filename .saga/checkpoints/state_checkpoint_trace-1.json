@@ -1,0 +1,17 @@
+{
+  "task_input": "test",
+  "context": {},
+  "trace_id": "trace-1",
+  "plan": "Architect Plan: Implement test",
+  "alpha_output": null,
+  "beta_output": null,
+  "merged_result": null,
+  "conflict_detected": false,
+  "ledger_proposal": null,
+  "user_feedback": null,
+  "history": [
+    "Planner: Plan created."
+  ],
+  "iteration_count": 0,
+  "status": "constructing"
+}

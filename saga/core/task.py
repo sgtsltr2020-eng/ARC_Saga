@@ -8,14 +8,14 @@ Defines the Task unit of work.
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Literal, Optional
 
 
 @dataclass
 class Task:
     """
     A unit of work to be executed by a subagent.
-    
+
     Attributes:
         id: Unique task identifier
         description: What needs to be done
@@ -36,18 +36,19 @@ class Task:
     weight: Literal["simple", "complex"]
     assigned_agent: Optional[str] = None
     status: Literal["pending", "in_progress", "done", "blocked", "conflict"] = "pending"
-    dependencies: List[str] = field(default_factory=list)
+    dependencies: list[str] = field(default_factory=list)
     budget_allocation: float = 0.0
-    checklist: List[str] = field(default_factory=list)
-    vetting_criteria: Dict[str, Any] = field(default_factory=dict)
-    self_check_result: Optional[Dict[str, Any]] = None
+    checklist: list[str] = field(default_factory=list)
+    vetting_criteria: dict[str, Any] = field(default_factory=dict)
+    self_check_result: Optional[dict[str, Any]] = None
     warden_verification: Optional[Literal["approved", "rejected"]] = None
-    mimiry_measurement: Optional[Dict[str, Any]] = None  # NEW: Oracle measurement
+    mimiry_measurement: Optional[dict[str, Any]] = None  # NEW: Oracle measurement
     trace_id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    context: dict[str, Any] = field(default_factory=dict)  # Phase 8: FQL governance
     created_at: datetime = field(default_factory=datetime.utcnow)
     completed_at: Optional[datetime] = None
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             "id": self.id,

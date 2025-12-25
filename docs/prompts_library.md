@@ -2,7 +2,7 @@
 
 # Pre-Optimized, Surgical Prompts for Maximum Token Efficiency
 
-# Copy, paste, customize, done.
+# Copy, paste, customize, done
 
 ---
 
@@ -271,7 +271,7 @@ Requirements:
 
 File: tests/test_{function_name}.py
 
-Reference: See testing requirements in testing.mdc
+Reference: See testing requirements in sagacodex_python_fastapi.md
 ```
 
 **Token Cost:** ~1-2 requests
@@ -409,7 +409,7 @@ Requirements:
 
 File: {file}
 
-Reference: See code quality standards in python_standards.mdc
+Reference: See code quality standards in sagacodex_python_fastapi.md
 ```
 
 **Token Cost:** ~2 requests
@@ -607,6 +607,7 @@ File: {file}
    ```
 
 6. **Deploy** (use PROMPT-META-002)
+
    ```
    @codebase Prepare PerplexityConversationCapture for production.
    ```
@@ -840,7 +841,8 @@ Bonus: Reasoning trace captured for future use
 - v2.0 (2024-12-02): Added token optimization prompts and memory tier guidance
 - v1.0 (2024-12-01): Initial prompts library
 
-##Prompt Template for Feature Building##
+## Prompt Template for Feature Building
+
 @codebase Implement the following feature in this project, following our established patterns and quality bars:
 
 Feature:
