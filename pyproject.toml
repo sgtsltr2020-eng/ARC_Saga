@@ -29,7 +29,7 @@ ai = [
     "langchain-community>=0.0.13",
     "litellm==1.50.1",
     "instructor>=0.4.5",
-    "aiohttp==3.9.5", # Guardrail: Stable with LiteLLM 1.50.1
+    "aiohttp==3.12.14", # Guardrail: Stable with LiteLLM 1.50.1
 ]
 knowledge = [
     "chromadb>=0.4.22",
