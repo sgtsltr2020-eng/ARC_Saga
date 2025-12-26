@@ -46,7 +46,7 @@ msgpack>=1.0.0
 # --- Monitoring & Observability ---
 watchdog==3.0.0
 python-json-logger==2.0.7
-prometheus-client==0.20.0
+prometheus-client==0.23.1
 opentelemetry-api>=1.39.1
 opentelemetry-sdk>=1.39.1
 slowapi==0.1.9           
