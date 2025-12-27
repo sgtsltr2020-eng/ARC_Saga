@@ -116,9 +116,9 @@ async def lifespan(app: FastAPI):
     # Startup
     try:
         await storage.initialize()
-        print(f"✅ Database initialized at {storage_path}")
+        print(f"[OK] Database initialized at {storage_path}")
     except Exception as e:
-        print(f"⚠️  Database initialization warning: {e}")
+        print(f"[WARN] Database initialization warning: {e}")
 
     yield
 

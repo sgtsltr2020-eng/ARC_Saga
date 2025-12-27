@@ -22,7 +22,7 @@ from saga.config.sagarules_embedded import EscalationContext, SagaConstitution
 from saga.core.mimiry import Mimiry
 from saga.core.task import Task
 from saga.core.task_graph import TaskGraph
-from saga.core.warden import Warden
+from saga.core.warden.agent import Warden
 
 # ============================================================
 # ASYNC SUPPORT

@@ -32,6 +32,7 @@ class NodeType(str, Enum):
 
 class EdgeType(str, Enum):
     """Edge types representing relationships between nodes."""
+    # Core structural relationships
     IMPORTS = "IMPORTS"           # File/module imports another
     CALLS = "CALLS"               # Function calls another function
     INHERITS = "INHERITS"         # Class inherits from another class
@@ -40,16 +41,53 @@ class EdgeType(str, Enum):
     CONTAINS = "CONTAINS"         # File contains class/function
     AFFECTS = "AFFECTS"           # Change impact relationship
 
+    # Enhanced semantic relationships
+    DATA_FLOW = "DATA_FLOW"       # Variable assignment/usage across functions
+    INTER_REPO = "INTER_REPO"     # Cross-repository dependency
+    PROVENANCE = "PROVENANCE"     # Link to LoreBook/Mythos source
+
 
 @dataclass
 class GraphNode:
-    """Represents a node in the knowledge graph."""
+    """
+    Represents a node in the knowledge graph.
+
+    Enriched with semantic content for deep codebase understanding.
+    """
+    # Core identification
     node_id: str
     node_type: NodeType
     name: str
     file_path: str | None = None
     line_number: int | None = None
+    end_line: int | None = None  # End line for range
+
+    # Rich semantic content
+    docstring: str | None = None            # Full docstring from source
+    summary: str | None = None              # Auto-generated summary (LLM/heuristic)
+    source_snippet: str | None = None       # First N lines of source (for context)
+
+    # Execution and learning signals
+    execution_traces: list[dict[str, Any]] = field(default_factory=list)  # Shadow trial outcomes
+    lore_entry_ids: list[str] = field(default_factory=list)  # Linked LoreBook entries
+    mythos_chapter_ids: list[str] = field(default_factory=list)  # Linked Mythos chapters
+
+    # Embeddings and metadata
     metadata: dict[str, Any] = field(default_factory=dict)
+    embedding_vector: Any = None  # np.ndarray or list[float], 384-dim
+    last_accessed: float | None = None  # Unix timestamp of last access
+    last_modified: float | None = None  # Unix timestamp of last file modification
+    content_hash: str | None = None  # Hash of content for dirty detection
+
+    @property
+    def id(self) -> str:
+        """Alias for node_id for compatibility."""
+        return self.node_id
+
+    def touch(self) -> None:
+        """Update last_accessed timestamp to now."""
+        import time
+        self.last_accessed = time.time()
 
 
 @dataclass

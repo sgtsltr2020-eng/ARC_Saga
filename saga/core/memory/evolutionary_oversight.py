@@ -540,19 +540,111 @@ class SovereignOptimizer:
 
     # --- Synthesis Placeholder ---
 
-    def synthesis_utility(self, creative_connection: dict[str, Any]) -> float:
+    # --- Information-Gain Rewards (Uncanny Triad) ---
+
+    def calculate_novelty_bonus(self, context_vector: list[float], history_vectors: list[list[float]]) -> float:
         """
-        Placeholder for "Synthesis Sparks" utility scoring.
-        Will reward Saga's creative connections in future phases.
+        Calculate novelty bonus based on cosine distance to history.
 
         Args:
-            creative_connection: Description of the synthesis
+            context_vector: Current state vector
+            history_vectors: List of past state vectors
 
         Returns:
-            Utility score (currently returns 0.5 as neutral)
+            Novelty bonus (0.0 to 2.0+)
         """
-        # TODO: Phase 4 - Implement creative synthesis evaluation
-        return 0.5
+        if not history_vectors:
+            return 2.0  # First experience is maximally novel
+
+        # Convert to numpy
+        vec = np.array(context_vector)
+        hist = np.array(history_vectors)
+
+        # Pad if dimensions feature_dim mismatch (defensive)
+        if vec.shape[0] != hist.shape[1]:
+             # Just return base novelty if dims mismatch to avoid crash
+             return 0.5
+
+        # Normalize
+        norm_vec = np.linalg.norm(vec)
+        norm_hist = np.linalg.norm(hist, axis=1)
+
+        if norm_vec == 0:
+            return 0.0
+
+        # Cosine similarity
+        sims = np.dot(hist, vec) / (norm_hist * norm_vec + 1e-9)
+
+        # Distance = 1 - Max Similarity
+        min_dist = 1.0 - np.max(sims) if len(sims) > 0 else 1.0
+
+        # Reward logic: Base +2.0 if distance > 0.6
+        if min_dist > 0.6:
+            return 2.0 + (min_dist - 0.6)  # Linear boost beyond threshold
+
+        return max(0.0, min_dist)
+
+    def _get_lm_judge_score(self, proposal_summary: str) -> float:
+        """
+        Get qualitative score from LM Judge (Mock/Placeholder).
+        In production, this calls the LLM with a rubric.
+
+        Rubric:
+        - Originality (0-10) -> 0.4 weight
+        - Criticality (0-10) -> 0.4 weight
+        - Feasibility (0-10) -> 0.2 weight
+        """
+        # Placeholder heuristic: Length/complexity proxy for now
+        # Real impl would await self.llm_client.evaluate(...)
+        return 0.5  # Neutral default
+
+    def synthesis_utility(
+        self,
+        context_vector: list[float],
+        history_vectors: list[list[float]],
+        proposal_summary: str = ""
+    ) -> float:
+        """
+        Calculate Information-Gain Utility with Heuristic Pre-Filter.
+
+        Logic:
+        1. Base Utility (from model/heuristic)
+        2. Novelty Bonus (Vector Distance)
+        3. If Novelty > Threshold:
+           - Check additional heuristics (keyword diversity)
+           - Only then trigger expensive LM-Judge (simulated here)
+        """
+        # 1. Base Utility (Predicted)
+        base_utility = self.predict_utility(np.array(context_vector))
+
+        # 2. Novelty Bonus
+        novelty_bonus = self.calculate_novelty_bonus(context_vector, history_vectors)
+
+        lm_bonus = 0.0
+
+        # HEURISTIC PRE-FILTER: Only escalate to LM Judge if genuine potential detected
+        # Threshold: >2.2 means high distance (>0.7) + base interest
+        if novelty_bonus > 1.5 and proposal_summary:
+            # Quick check for strong keywords before calling LLM
+            strong_signals = ["breakthrough", "novel", "critical", "unexpected", "synthesis"]
+            signal_score = sum(1 for s in strong_signals if s in proposal_summary.lower())
+
+            # Escalate if vector novelty is extreme OR moderate novelty + strong signals
+            should_escalate = (novelty_bonus > 2.0) or (novelty_bonus > 1.0 and signal_score >= 1)
+
+            if should_escalate:
+                logger.info(f"Escalating to LM Judge (Novelty: {novelty_bonus:.2f}, Signals: {signal_score})")
+                lm_score = self._get_lm_judge_score(proposal_summary)
+                lm_bonus = lm_score * 1.0
+            else:
+                logger.debug("Novelty detected but pre-filter skipped LM Judge.")
+
+        total_utility = base_utility + novelty_bonus + lm_bonus
+
+        if total_utility > 2.5:
+            logger.info(f"EXPLOSIVE REWARD: Synthesis Utility {total_utility:.2f} (Novelty: {novelty_bonus:.2f})")
+
+        return total_utility
 
     def get_stats(self) -> dict[str, Any]:
         """Get optimizer statistics."""
